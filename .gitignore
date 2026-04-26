@@ -1,3 +1,7 @@
+# Godot add-on ignores
+*.import
+*.uid
+
 # Godot 4+ specific ignores
 .godot/
 .nomedia
