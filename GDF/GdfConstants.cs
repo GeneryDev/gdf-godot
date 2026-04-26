@@ -1,4 +1,6 @@
-﻿namespace GDF;
+﻿using GDF.Networking;
+
+namespace GDF;
 
 /// <summary>
 /// Holds user-configurable constants that affect GDF behavior.
@@ -25,4 +27,13 @@ public static class GdfConstants
     /// </summary>
     // (Change if this conflicts with another plugin notification, or a newer Godot notification)
     public const int NotificationDeepSceneInstantiated = 5012;
+}
+
+/// <summary>
+/// Holds user-configurable, named, RPC presets. These are used for Custom RPCs.
+/// These presets are found through Reflection.
+/// </summary>
+public static class RpcChannels
+{
+    public static readonly RpcChannelPreset Default = new(GdfConstants.DefaultRpcTransferChannel);
 }
