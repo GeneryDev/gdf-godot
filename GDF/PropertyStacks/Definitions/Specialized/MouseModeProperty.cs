@@ -4,6 +4,8 @@ using Godot;
 
 namespace GDF.PropertyStacks.Definitions.Specialized;
 
+using Input = Godot.Input;
+
 [GlobalClass]
 [Tool]
 public partial class MouseModeProperty : PropertyDefinitionResource, IPropertyDefinition<Input.MouseModeEnum, Input.MouseModeEnum, Empty>

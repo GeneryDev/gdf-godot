@@ -146,7 +146,7 @@ public partial class PropertyStackWatcher : Node
         }
         if (propertyId == MouseModePropertyId)
         {
-            Input.MouseMode = newValue.As<Input.MouseModeEnum>();
+            Godot.Input.MouseMode = newValue.As<Godot.Input.MouseModeEnum>();
         }
         if (propertyId == CurrentCamera2DPropertyId)
         {
