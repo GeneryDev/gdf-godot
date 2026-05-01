@@ -6,7 +6,10 @@ namespace GDF.PropertyStacks.Definitions;
 
 [GlobalClass]
 [Tool]
-public partial class ResourceProperty : PropertyDefinitionResource, IPropertyDefinition<Resource, Resource, Empty>
+public partial class ResourceProperty : PropertyDefinitionResource,
+    IPropertyDefinition<Resource, Resource, Empty>,
+    IPropertyAcceptsInput<Resource, Resource>,
+    IPropertyAcceptsInput<Variant, Resource>
 {
     [Export] public Resource DefaultValue;
 
@@ -15,15 +18,14 @@ public partial class ResourceProperty : PropertyDefinitionResource, IPropertyDef
         return DefaultValue;
     }
 
-    public Resource InputToIntermediate(object input)
+    public Resource InputToIntermediate(Resource input)
     {
-        return input switch
-        {
-            Resource res => res,
-            Variant v => v.As<Resource>(),
-            _ => throw new ArgumentOutOfRangeException(nameof(input), input,
-                $"Provided type {input?.GetType().Name} is not supported in resource property")
-        };
+        return input;
+    }
+
+    public Resource InputToIntermediate(Variant input)
+    {
+        return input.As<Resource>();
     }
 
     public Resource Reduce(Resource lower, Resource higher, float weight,

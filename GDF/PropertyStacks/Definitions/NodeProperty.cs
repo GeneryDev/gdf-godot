@@ -6,22 +6,24 @@ namespace GDF.PropertyStacks.Definitions;
 
 [GlobalClass]
 [Tool]
-public partial class NodeProperty : PropertyDefinitionResource, IPropertyDefinition<Node, Node, Empty>
+public partial class NodeProperty : PropertyDefinitionResource,
+    IPropertyDefinition<Node, Node, Empty>,
+    IPropertyAcceptsInput<Node, Node>,
+    IPropertyAcceptsInput<Variant, Node>
 {
     public Node GetInitialValue(Empty cache)
     {
         return null;
     }
 
-    public Node InputToIntermediate(object input)
+    public Node InputToIntermediate(Node input)
     {
-        return input switch
-        {
-            Node node => node,
-            Variant v => v.As<Node>(),
-            _ => throw new ArgumentOutOfRangeException(nameof(input), input,
-                $"Provided type {input?.GetType().Name} is not supported in node property")
-        };
+        return input;
+    }
+
+    public Node InputToIntermediate(Variant input)
+    {
+        return input.As<Node>();
     }
 
     public Node Reduce(Node lower, Node higher, float weight,

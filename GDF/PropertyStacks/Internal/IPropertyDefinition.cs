@@ -10,7 +10,6 @@ public interface IPropertyDefinition
 public interface IPropertyDefinition<TMed, TOut, TCache> : IPropertyDefinition
 {
     public TMed GetInitialValue(TCache cache);
-    public TMed InputToIntermediate(object input);
     public TMed Reduce(TMed lower, TMed higher, float weight, PropertyFrameHandle handle);
     public TOut IntermediateToOutput(TMed value);
     public Variant OutputToVariant(TOut value);
@@ -28,4 +27,9 @@ public interface IPropertyDefinition<TMed, TOut, TCache> : IPropertyDefinition
     TCache CreateCache();
     
     public bool IsInheritable();
+}
+
+public interface IPropertyAcceptsInput<in TIn, out TMed>
+{
+    public TMed InputToIntermediate(TIn input);
 }

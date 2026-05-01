@@ -1,16 +1,28 @@
-﻿using Godot;
+﻿using GDF.PropertyStacks.Internal;
+using Godot;
 
 namespace GDF.PropertyStacks.Definitions;
 
 [GlobalClass]
 [Tool]
-public partial class BoolProperty : StandardPropertyDefinition<bool>
+public partial class BoolProperty : StandardPropertyDefinition<bool>,
+    IPropertyAcceptsInput<bool, VectorModification<bool>>,
+    IPropertyAcceptsInput<VectorModification<bool>, VectorModification<bool>>
 {
     [Export] public bool DefaultValue;
 
     public override bool GetDefaultValue()
     {
         return DefaultValue;
+    }
+
+    public VectorModification<bool> InputToIntermediate(bool input)
+    {
+        return new VectorModification<bool>() { Value = input, Operation = DefaultOperator };
+    }
+    public VectorModification<bool> InputToIntermediate(VectorModification<bool> input)
+    {
+        return input;
     }
     
     public override bool ApplyAnd(bool a, bool b)

@@ -6,7 +6,10 @@ using Godot.Collections;
 
 namespace GDF.PropertyStacks.Definitions;
 
-public abstract partial class StandardPropertyDefinition<[MustBeVariant] T> : PropertyDefinitionResource, IPropertyDefinition<VectorModification<T>, T, Empty>
+public abstract partial class StandardPropertyDefinition<[MustBeVariant] T> : PropertyDefinitionResource,
+    IPropertyDefinition<VectorModification<T>, T, Empty>,
+    IPropertyAcceptsInput<Variant, VectorModification<T>>,
+    IPropertyAcceptsInput<VectorModification<Variant>, VectorModification<T>>
 {
     [Export] public ModificationOperation DefaultOperator;
     
@@ -40,16 +43,14 @@ public abstract partial class StandardPropertyDefinition<[MustBeVariant] T> : Pr
         return new VectorModification<T>() { Value = GetDefaultValue(), Operation = DefaultOperator};
     }
 
-    public virtual VectorModification<T> InputToIntermediate(object input)
+    public VectorModification<T> InputToIntermediate(Variant input)
     {
-        return input switch
-        {
-            VectorModification<T> modT => modT,
-            VectorModification<Variant> modV => new VectorModification<T>() {Value = modV.Value.As<T>(), Operation = modV.Operation},
-            Variant v => new VectorModification<T>() { Value = v.As<T>(), Operation = DefaultOperator },
-            T t => new VectorModification<T>() { Value = t, Operation = DefaultOperator},
-            _ => throw new ArgumentException($"Unsupported object of type {input?.GetType()} in vector property {PropertyId}", nameof(input))
-        };
+        return new VectorModification<T>() { Value = input.As<T>(), Operation = DefaultOperator };
+    }
+
+    public VectorModification<T> InputToIntermediate(VectorModification<Variant> input)
+    {
+        return new VectorModification<T>() { Value = input.Value.As<T>(), Operation = input.Operation };
     }
 
     public virtual VectorModification<T> Reduce(VectorModification<T> lower, VectorModification<T> higher, float weight,

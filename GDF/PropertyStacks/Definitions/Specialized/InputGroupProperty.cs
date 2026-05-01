@@ -6,22 +6,30 @@ namespace GDF.PropertyStacks.Definitions.Specialized;
 
 [GlobalClass]
 [Tool]
-public partial class InputGroupProperty : PropertyDefinitionResource, IPropertyDefinition<InputGroupProperty.FrameData, InputGroupProperty.FrameData, Empty>
+public partial class InputGroupProperty : PropertyDefinitionResource,
+    IPropertyDefinition<InputGroupProperty.FrameData, InputGroupProperty.FrameData, Empty>,
+    IPropertyAcceptsInput<InputGroupProperty.FrameData, InputGroupProperty.FrameData>,
+    IPropertyAcceptsInput<InputGroupMode, InputGroupProperty.FrameData>,
+    IPropertyAcceptsInput<Variant, InputGroupProperty.FrameData>
 {
     public FrameData GetInitialValue(Empty cache)
     {
         return new FrameData() { BlockingHandle = default };
     }
 
-    public FrameData InputToIntermediate(object input)
+    public FrameData InputToIntermediate(FrameData input)
     {
-        return input switch
-        {
-            InputGroupMode mode => new FrameData() { Mode = mode },
-            Variant v => new FrameData() { Mode = v.As<InputGroupMode>() },
-            _ => throw new ArgumentOutOfRangeException(nameof(input), input,
-                $"Provided type {input?.GetType().Name} is not supported in input group property")
-        };
+        return input;
+    }
+
+    public FrameData InputToIntermediate(InputGroupMode input)
+    {
+        return new FrameData() { Mode = input };
+    }
+
+    public FrameData InputToIntermediate(Variant input)
+    {
+        return new FrameData() { Mode = input.As<InputGroupMode>() };
     }
 
     public FrameData Reduce(FrameData lower, FrameData higher, float weight, PropertyFrameHandle handle)

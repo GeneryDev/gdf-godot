@@ -24,8 +24,15 @@ public class PropertyImpl<TMed, TOut, TCache> : IProperty, IProperty<TOut>
 
     public void Set<T>(PropertyFrameHandle handle, T input)
     {
-        var asTMed = _def.InputToIntermediate(input);
-        Set(handle, asTMed);
+        if (_def is IPropertyAcceptsInput<T, TMed> converter)
+        {
+            var asTMed = converter.InputToIntermediate(input);
+            Set(handle, asTMed);
+        }
+        else
+        {
+            GD.PrintErr($"Failed to set value of type {input?.GetType().Name} for stack property of type {_def.GetType().Name}");
+        }
     }
 
     private void Set(PropertyFrameHandle handle, TMed med)

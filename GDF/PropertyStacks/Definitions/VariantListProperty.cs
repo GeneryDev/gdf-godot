@@ -5,7 +5,10 @@ using Godot;
 
 namespace GDF.PropertyStacks.Definitions;
 
-public partial class VariantListProperty<T, TMeta> : PropertyDefinitionResource, IPropertyDefinition<VariantListEntry<T, TMeta>, VariantListOutput<T, TMeta>, List<T>>
+public partial class VariantListProperty<T, TMeta> : PropertyDefinitionResource,
+    IPropertyDefinition<VariantListEntry<T, TMeta>, VariantListOutput<T, TMeta>, List<T>>,
+    IPropertyAcceptsInput<VariantListEntry<T, TMeta>, VariantListEntry<T, TMeta>>,
+    IPropertyAcceptsInput<Variant, VariantListEntry<T, TMeta>>
 {
     public virtual VariantListEntry<T, TMeta> GetInitialValue(List<T> cache)
     {
@@ -13,28 +16,20 @@ public partial class VariantListProperty<T, TMeta> : PropertyDefinitionResource,
         return new VariantListEntry<T, TMeta>() {Group = 0, List = cache};
     }
 
-    public virtual VariantListEntry<T, TMeta> InputToIntermediate(object input)
+    public VariantListEntry<T, TMeta> InputToIntermediate(VariantListEntry<T, TMeta> input)
     {
-        switch (input)
+        return input;
+    }
+
+    public VariantListEntry<T, TMeta> InputToIntermediate(Variant input)
+    {
+        if (VariantIsT(input, out var t))
         {
-            case VariantListEntry<T, TMeta> listT:
-                return listT;
-            case Variant v:
-            {
-                if (VariantIsT(v, out var t))
-                {
-                    return VariantListEntry.Create<T, TMeta>(t, 0);
-                }
-                else
-                {
-                    return new VariantListEntry<T, TMeta>(); // empty
-                }
-            }
-            case T t:
-                return VariantListEntry.Create<T, TMeta>(t, 0);
-            default:
-                throw new ArgumentException($"Unsupported object of type {input?.GetType()} in variant list property {PropertyId}",
-                    nameof(input));
+            return VariantListEntry.Create<T, TMeta>(t, 0);
+        }
+        else
+        {
+            return new VariantListEntry<T, TMeta>(); // empty
         }
     }
 

@@ -1,16 +1,28 @@
-﻿using Godot;
+﻿using GDF.PropertyStacks.Internal;
+using Godot;
 
 namespace GDF.PropertyStacks.Definitions;
 
 [GlobalClass]
 [Tool]
-public partial class ColorProperty : StandardPropertyDefinition<Color>
+public partial class ColorProperty : StandardPropertyDefinition<Color>,
+    IPropertyAcceptsInput<Color, VectorModification<Color>>,
+    IPropertyAcceptsInput<VectorModification<Color>, VectorModification<Color>>
 {
     [Export] public Color DefaultValue;
 
     public override Color GetDefaultValue()
     {
         return DefaultValue;
+    }
+
+    public VectorModification<Color> InputToIntermediate(Color input)
+    {
+        return new VectorModification<Color>() { Value = input, Operation = DefaultOperator };
+    }
+    public VectorModification<Color> InputToIntermediate(VectorModification<Color> input)
+    {
+        return input;
     }
     
     public override Color ApplyAdd(Color a, Color b)

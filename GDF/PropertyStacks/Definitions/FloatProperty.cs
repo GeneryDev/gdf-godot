@@ -1,10 +1,14 @@
-﻿using Godot;
+﻿using GDF.PropertyStacks.Internal;
+using Godot;
 
 namespace GDF.PropertyStacks.Definitions;
 
 [GlobalClass]
 [Tool]
-public partial class FloatProperty : StandardPropertyDefinition<float>
+public partial class FloatProperty : StandardPropertyDefinition<float>,
+    IPropertyAcceptsInput<float, VectorModification<float>>,
+    IPropertyAcceptsInput<int, VectorModification<float>>,
+    IPropertyAcceptsInput<VectorModification<float>, VectorModification<float>>
 {
     public const int InterpolationModeLinear = 0;
     public const int InterpolationModeRadians = 1;
@@ -17,12 +21,19 @@ public partial class FloatProperty : StandardPropertyDefinition<float>
     {
         return DefaultValue;
     }
-    
-    public override VectorModification<float> InputToIntermediate(object input)
+
+    public VectorModification<float> InputToIntermediate(float input)
     {
-        if (input is int i) return new VectorModification<float>() { Value = i, Operation = DefaultOperator};
-        if (input is double d) return new VectorModification<float>() { Value = (float)d, Operation = DefaultOperator };
-        return base.InputToIntermediate(input);
+        return new VectorModification<float>() { Value = input, Operation = DefaultOperator };
+    }
+
+    public VectorModification<float> InputToIntermediate(int input)
+    {
+        return new VectorModification<float>() { Value = input, Operation = DefaultOperator };
+    }
+    public VectorModification<float> InputToIntermediate(VectorModification<float> input)
+    {
+        return input;
     }
 
     public override float ApplyAdd(float a, float b)

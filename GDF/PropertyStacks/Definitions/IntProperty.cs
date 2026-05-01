@@ -1,10 +1,15 @@
-﻿using Godot;
+﻿using GDF.PropertyStacks.Internal;
+using Godot;
 
 namespace GDF.PropertyStacks.Definitions;
 
 [GlobalClass]
 [Tool]
-public partial class IntProperty : StandardPropertyDefinition<int>
+public partial class IntProperty : StandardPropertyDefinition<int>,
+    IPropertyAcceptsInput<int, VectorModification<int>>,
+    IPropertyAcceptsInput<float, VectorModification<int>>,
+    IPropertyAcceptsInput<double, VectorModification<int>>,
+    IPropertyAcceptsInput<VectorModification<int>, VectorModification<int>>
 {
     [Export] public int DefaultValue;
 
@@ -12,13 +17,24 @@ public partial class IntProperty : StandardPropertyDefinition<int>
     {
         return DefaultValue;
     }
-    
-    public override VectorModification<int> InputToIntermediate(object input)
+
+    public VectorModification<int> InputToIntermediate(int input)
     {
-        if (input is int i) return new VectorModification<int>() { Value = i, Operation = DefaultOperator};
-        if (input is float f) return new VectorModification<int>() { Value = (int)f, Operation = DefaultOperator };
-        if (input is double d) return new VectorModification<int>() { Value = (int)d, Operation = DefaultOperator };
-        return base.InputToIntermediate(input);
+        return new VectorModification<int>() { Value = input, Operation = DefaultOperator };
+    }
+
+    public VectorModification<int> InputToIntermediate(float input)
+    {
+        return new VectorModification<int>() { Value = (int)input, Operation = DefaultOperator };
+    }
+
+    public VectorModification<int> InputToIntermediate(double input)
+    {
+        return new VectorModification<int>() { Value = (int)input, Operation = DefaultOperator };
+    }
+    public VectorModification<int> InputToIntermediate(VectorModification<int> input)
+    {
+        return input;
     }
 
     public override int ApplyAdd(int a, int b)

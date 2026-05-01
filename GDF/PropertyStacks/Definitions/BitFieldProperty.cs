@@ -7,7 +7,9 @@ namespace GDF.PropertyStacks.Definitions;
 
 [GlobalClass]
 [Tool]
-public partial class BitFieldProperty : PropertyDefinitionResource, IPropertyDefinition<BitFieldModification, uint, Empty>
+public partial class BitFieldProperty : PropertyDefinitionResource,
+    IPropertyDefinition<BitFieldModification, uint, Empty>,
+    IPropertyAcceptsInput<BitFieldModification, BitFieldModification>
 {
     [Export(PropertyHint.Layers3DRender)] public uint DefaultValue;
     
@@ -20,15 +22,9 @@ public partial class BitFieldProperty : PropertyDefinitionResource, IPropertyDef
         };
     }
 
-    public BitFieldModification InputToIntermediate(object input)
+    public BitFieldModification InputToIntermediate(BitFieldModification input)
     {
-        return input switch
-        {
-            BitFieldModification modT => modT,
-            // Variant v => new VectorModification<T>() { Value = v.As<T>(), Operation = DefaultOperator },
-            // T t => new VectorModification<T>() { Value = t, Operation = DefaultOperator},
-            _ => throw new ArgumentException($"Unsupported object of type {input?.GetType()} in vector property {PropertyId}", nameof(input))
-        };
+        return input;
     }
 
     public BitFieldModification Reduce(BitFieldModification lower, BitFieldModification higher, float weight,

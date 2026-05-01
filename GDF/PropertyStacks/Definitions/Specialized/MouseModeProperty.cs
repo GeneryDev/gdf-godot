@@ -8,7 +8,10 @@ using Input = Godot.Input;
 
 [GlobalClass]
 [Tool]
-public partial class MouseModeProperty : PropertyDefinitionResource, IPropertyDefinition<Input.MouseModeEnum, Input.MouseModeEnum, Empty>
+public partial class MouseModeProperty : PropertyDefinitionResource,
+    IPropertyDefinition<Input.MouseModeEnum, Input.MouseModeEnum, Empty>,
+    IPropertyAcceptsInput<Input.MouseModeEnum, Input.MouseModeEnum>,
+    IPropertyAcceptsInput<Variant, Input.MouseModeEnum>
 {
     [Export] public Input.MouseModeEnum DefaultValue;
 
@@ -17,15 +20,14 @@ public partial class MouseModeProperty : PropertyDefinitionResource, IPropertyDe
         return DefaultValue;
     }
 
-    public Input.MouseModeEnum InputToIntermediate(object input)
+    public Input.MouseModeEnum InputToIntermediate(Input.MouseModeEnum input)
     {
-        return input switch
-        {
-            Input.MouseModeEnum mode => mode,
-            Variant v => v.As<Input.MouseModeEnum>(),
-            _ => throw new ArgumentOutOfRangeException(nameof(input), input,
-                $"Provided type {input?.GetType().Name} is not supported in mouse mode property")
-        };
+        return input;
+    }
+
+    public Input.MouseModeEnum InputToIntermediate(Variant input)
+    {
+        return input.As<Input.MouseModeEnum>();
     }
 
     public Input.MouseModeEnum Reduce(Input.MouseModeEnum lower, Input.MouseModeEnum higher, float weight,

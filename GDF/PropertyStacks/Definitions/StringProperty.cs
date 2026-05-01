@@ -6,7 +6,10 @@ namespace GDF.PropertyStacks.Definitions;
 
 [GlobalClass]
 [Tool]
-public partial class StringProperty : PropertyDefinitionResource, IPropertyDefinition<string, string, Empty>
+public partial class StringProperty : PropertyDefinitionResource,
+    IPropertyDefinition<string, string, Empty>,
+    IPropertyAcceptsInput<string, string>,
+    IPropertyAcceptsInput<Variant, string>
 {
     [Export] public string DefaultValue;
 
@@ -15,15 +18,14 @@ public partial class StringProperty : PropertyDefinitionResource, IPropertyDefin
         return DefaultValue;
     }
 
-    public string InputToIntermediate(object input)
+    public string InputToIntermediate(string input)
     {
-        return input switch
-        {
-            string str => str,
-            Variant v => v.AsString(),
-            _ => throw new ArgumentOutOfRangeException(nameof(input), input,
-                $"Provided type {input?.GetType().Name} is not supported in string property")
-        };
+        return input;
+    }
+
+    public string InputToIntermediate(Variant input)
+    {
+        return input.AsString();
     }
 
     public string Reduce(string lower, string higher, float weight,
