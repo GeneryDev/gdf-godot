@@ -4,7 +4,7 @@ using Godot;
 
 namespace GDF.PropertyStacks.Internal;
 
-public class PropertyImpl<TMed, TOut, TCache> : IProperty, IProperty<TOut>
+public class PropertyImpl<TMed, TOut, TCache> : IProperty, IProperty<TOut>, IPropertyComputableAsVariant
 {
     private readonly IPropertyDefinition<TMed, TOut, TCache> _def;
     private readonly TCache _cache;
@@ -150,6 +150,11 @@ public class PropertyImpl<TMed, TOut, TCache> : IProperty, IProperty<TOut>
     public Variant OutputToVariant(object value)
     {
         return _def.OutputToVariant((TOut)value);
+    }
+
+    public Variant ComputeAsVariant()
+    {
+        return _def.OutputToVariant(Compute());
     }
 
     private int EntryIndexOfHandle(PropertyFrameHandle handle)

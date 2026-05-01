@@ -33,3 +33,8 @@ public interface IPropertyAcceptsInput<in TIn, out TMed>
 {
     public TMed InputToIntermediate(TIn input);
 }
+
+public interface IPropertyComputableAsVariant
+{
+    public Variant ComputeAsVariant();
+}

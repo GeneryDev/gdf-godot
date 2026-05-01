@@ -3,7 +3,7 @@ using Godot;
 
 namespace GDF.PropertyStacks.Internal;
 
-public interface IProperty
+public interface IProperty : IPropertyComputableAsVariant
 {
     public bool ContainsHandle(PropertyFrameHandle handle);
     public void Set<T>(PropertyFrameHandle handle, T input);

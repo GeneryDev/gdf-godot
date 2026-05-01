@@ -297,6 +297,10 @@ public partial class PropertyStack : Node
         }
         
         property.Order(_frameHandles);
+        if (property is IPropertyComputableAsVariant variantProperty)
+        {
+            return variantProperty.ComputeAsVariant();
+        }
         object computedValue = property.Compute();
         return property.OutputToVariant(computedValue);
     }
