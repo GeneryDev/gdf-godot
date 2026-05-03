@@ -23,6 +23,11 @@ public static class GdfConstants
     public const int DefaultRpcTransferChannel = 1;
 
     /// <summary>
+    /// The name of the default RPC channel preset used for custom RPCs.
+    /// </summary>
+    public const string DefaultRpcChannelPresetName = nameof(RpcChannels.Default);
+
+    /// <summary>
     /// Notification received by all the nodes in the newly instantiated scene, when <see cref="GDF.Util.PackedSceneExtensions.GdfInstantiate"/> is completed.
     /// </summary>
     // (Change if this conflicts with another plugin notification, or a newer Godot notification)
