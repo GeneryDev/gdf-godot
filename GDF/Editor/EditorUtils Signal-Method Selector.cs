@@ -5,7 +5,7 @@ using Godot.Collections;
 
 namespace GDF.Editor;
 
-public partial class EditorUtils
+public static partial class EditorUtils
 {
     private static int _lastSelectedSignalMethodTabIndex = 0;
 

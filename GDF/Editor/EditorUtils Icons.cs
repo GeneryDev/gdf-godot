@@ -5,7 +5,7 @@ using Godot;
 
 namespace GDF.Editor;
 
-public partial class EditorUtils
+public static partial class EditorUtils
 {
     public static readonly StringName IconNameSignal = "Signal";
     public static readonly StringName IconNameMethod = "Slot";

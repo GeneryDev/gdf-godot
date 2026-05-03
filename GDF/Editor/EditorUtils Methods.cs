@@ -6,7 +6,7 @@ using Godot.Collections;
 
 namespace GDF.Editor;
 
-public partial class EditorUtils
+public static partial class EditorUtils
 {
     public static string GetMethodSignatureText(Dictionary info)
     {

@@ -4,7 +4,7 @@ using Godot;
 
 namespace GDF.Editor;
 
-public partial class EditorUtils
+public static partial class EditorUtils
 {
     public delegate void NodeAndPropertySelectedEventHandler(NodePath nodePath, string propertyPath);
     public delegate void NodeSelectedEventHandler(NodePath nodePath);
