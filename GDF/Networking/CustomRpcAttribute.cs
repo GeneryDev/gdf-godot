@@ -14,7 +14,7 @@ public class CustomRpcAttribute : Attribute
     public MultiplayerApi.RpcMode Mode = MultiplayerApi.RpcMode.AnyPeer;
     public bool CallLocal = true;
 
-    public CustomRpcAttribute(string channelPresetName)
+    public CustomRpcAttribute(string channelPresetName = GdfConstants.DefaultRpcChannelPresetName)
     {
         ChannelPresetName = channelPresetName;
     }
