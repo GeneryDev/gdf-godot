@@ -5,6 +5,7 @@ namespace GDF.Input;
 
 [Tool]
 [GlobalClass]
+[Icon($"{GdfConstants.IconRoot}/input_trigger_mixer.png")]
 public partial class GdfInputTriggerMixer : GdfInputTrigger
 {
     [Export] public float LimitLength = 1.0f;

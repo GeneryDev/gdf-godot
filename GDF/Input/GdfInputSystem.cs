@@ -1,14 +1,14 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using GDF.Util;
 using Godot;
 
 namespace GDF.Input;
 
 [GlobalClass]
-public partial class GdfInputManager : Node
+[Icon($"{GdfConstants.IconRoot}/input_system.png")]
+public partial class GdfInputSystem : SingletonNode<GdfInputSystem>
 {
-    public static GdfInputManager Singleton;
-
     [Export]
     public bool AcceptJoypadInputsInBackground = true;
     [Export]
@@ -54,8 +54,7 @@ public partial class GdfInputManager : Node
 
     public override void _EnterTree()
     {
-        Singleton = this;
-        
+        base._EnterTree();
         var applicationWindow = GetWindow();
         ApplicationFocused = applicationWindow.HasFocus();
         applicationWindow.FocusEntered += OnApplicationWindowFocusEnter;
@@ -64,9 +63,7 @@ public partial class GdfInputManager : Node
 
     public override void _ExitTree()
     {
-        if(Singleton == this)
-            Singleton = null;
-        
+        base._ExitTree();
         var applicationWindow = GetWindow();
         ApplicationFocused = false;
         applicationWindow.FocusEntered -= OnApplicationWindowFocusEnter;

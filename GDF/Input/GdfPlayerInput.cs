@@ -6,11 +6,12 @@ namespace GDF.Input;
 
 [Tool]
 [GlobalClass]
+[Icon($"{GdfConstants.IconRoot}/player_input.png")]
 public partial class GdfPlayerInput : Node
 {
     [Signal]
     public delegate void PlayerIdChangedEventHandler(int playerId);
-
+    
     [Export]
     public int PlayerId
     {
@@ -20,9 +21,28 @@ public partial class GdfPlayerInput : Node
             if (_playerId == value) return;
             _playerId = value;
             EmitSignalPlayerIdChanged(_playerId);
+            UpdateWithAutoConfig();
         }
     }
 
+    [Export(PropertyHint.ResourceType, nameof(GdfInputAutoConfiguration))]
+    public Resource InputAutoConfig
+    {
+        get => _inputAutoConfig;
+        set
+        {
+            if (_inputAutoConfig == value) return;
+            if (!Engine.IsEditorHint())
+                (_inputAutoConfig as GdfInputAutoConfiguration)?.DisconnectUpdateSignal(new Callable(this,
+                    MethodName.UpdateWithAutoConfig));
+            _inputAutoConfig = value;
+            if (!Engine.IsEditorHint())
+                (_inputAutoConfig as GdfInputAutoConfiguration)?.ConnectUpdateSignal(new Callable(this,
+                    MethodName.UpdateWithAutoConfig));
+        }
+    }
+    
+    [ExportGroup("Manual Config")]
     [Export] public int[] DeviceIndices = System.Array.Empty<int>();
     [Export] public bool UsesKeyboard;
     [Export] public bool UsesMouse;
@@ -31,13 +51,14 @@ public partial class GdfPlayerInput : Node
     private HashSet<InputActionEventPair> _actionsNeedUpdating = new();
     private List<InputActionEvent> _actionEventBuffer = new();
     private int _playerId = 0;
+    private Resource _inputAutoConfig;
 
     public override void _EnterTree()
     {
         if (!Engine.IsEditorHint())
         {
             ResetActionStates();
-            GdfInputManager.Singleton?.ConnectPlayer(this);
+            GdfInputSystem.Instance?.ConnectPlayer(this);
         }
     }
 
@@ -47,7 +68,7 @@ public partial class GdfPlayerInput : Node
         if (InputContexts == null) return;
         foreach (var contextScene in InputContexts)
         {
-            var context = GdfInputManager.Singleton?.GetContextInstance(contextScene);
+            var context = GdfInputSystem.Instance?.GetContextInstance(contextScene);
             context?.MergeActionStates(this);
         }
     }
@@ -55,7 +76,7 @@ public partial class GdfPlayerInput : Node
     public override void _ExitTree()
     {
         if(!Engine.IsEditorHint())
-            GdfInputManager.Singleton?.DisconnectPlayer(this);
+            GdfInputSystem.Instance?.DisconnectPlayer(this);
     }
 
     public bool UsesDevice(int deviceIndex)
@@ -85,7 +106,7 @@ public partial class GdfPlayerInput : Node
         
         foreach (var contextScene in InputContexts)
         {
-            var context = GdfInputManager.Singleton.GetContextInstance(contextScene);
+            var context = GdfInputSystem.Instance.GetContextInstance(contextScene);
             context.HandleInput(this, evt);
         }
     }
@@ -124,7 +145,7 @@ public partial class GdfPlayerInput : Node
 
     public void NotifyUsed(GdfInputAction action, GdfInputContext context, InputEvent associatedEvent)
     {
-        GdfInputManager.Singleton.NotifyUsed(this, action, context, associatedEvent);
+        GdfInputSystem.Instance.NotifyUsed(this, action, context, associatedEvent);
     }
 
     private void UpdateAction(GdfInputAction action, InputEvent associatedInputEvent)
@@ -134,7 +155,7 @@ public partial class GdfPlayerInput : Node
         {
             foreach (var contextScene in InputContexts)
             {
-                var context = GdfInputManager.Singleton.GetContextInstance(contextScene);
+                var context = GdfInputSystem.Instance.GetContextInstance(contextScene);
                 var state = context.GetActionState(this, action);
                 if (state.Strength >= maxStrengthState.Strength) maxStrengthState = state;
             }
@@ -236,7 +257,7 @@ public partial class GdfPlayerInput : Node
             {
                 _actionEventBuffer.RemoveAt(i);
                 if (evt.AssociatedInputEvent != null)
-                    GdfInputManager.Singleton.RetroactivelyConsumeInputEvent(evt.AssociatedInputEvent);
+                    GdfInputSystem.Instance.RetroactivelyConsumeInputEvent(evt.AssociatedInputEvent);
             }
 
             return true;
@@ -259,7 +280,7 @@ public partial class GdfPlayerInput : Node
             {
                 _actionEventBuffer.RemoveAt(i);
                 if (evt.AssociatedInputEvent != null)
-                    GdfInputManager.Singleton.RetroactivelyConsumeInputEvent(evt.AssociatedInputEvent);
+                    GdfInputSystem.Instance.RetroactivelyConsumeInputEvent(evt.AssociatedInputEvent);
             }
 
             foundEvent = evt;
@@ -325,7 +346,27 @@ public partial class GdfPlayerInput : Node
     {
         return GetActionState(action).Axis3Value;
     }
-    
+
+    private void UpdateWithAutoConfig()
+    {
+        if (Engine.IsEditorHint()) return;
+        if (_inputAutoConfig is GdfInputAutoConfiguration autoConfig)
+        {
+            autoConfig.Configure(this);
+        }
+    }
+
+    public override void _Notification(int what)
+    {
+        base._Notification(what);
+        if (what == NotificationPredelete)
+        {
+            if (!Engine.IsEditorHint())
+                (_inputAutoConfig as GdfInputAutoConfiguration)?.DisconnectUpdateSignal(new Callable(this,
+                    MethodName.UpdateWithAutoConfig));
+        }
+    }
+
     public struct InputActionEvent
     {
         public GdfInputAction Action;

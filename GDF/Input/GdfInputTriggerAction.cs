@@ -4,6 +4,7 @@ namespace GDF.Input;
 
 [Tool]
 [GlobalClass]
+[Icon($"{GdfConstants.IconRoot}/input_trigger_action.png")]
 public partial class GdfInputTriggerAction : GdfInputTrigger
 {
     [Export] public GdfInputAction Action;

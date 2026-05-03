@@ -6,6 +6,7 @@ using Godot;
 namespace GDF.Input;
 
 [GlobalClass]
+[Icon($"{GdfConstants.IconRoot}/input_map.png")]
 public partial class GdfInputMap : Resource
 {
     public const char TagPathSeparator = ':';

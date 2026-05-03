@@ -5,6 +5,7 @@ namespace GDF.Input;
 
 [Tool]
 [GlobalClass]
+[Icon($"{GdfConstants.IconRoot}/input_trigger_input.png")]
 public partial class GdfInputTriggerInput : GdfInputTrigger
 {
     // Modifiers are not well implemented and take up a lot of space on the inspector.

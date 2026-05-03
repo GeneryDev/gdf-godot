@@ -5,6 +5,7 @@ namespace GDF.Input;
 
 [Tool]
 [GlobalClass]
+[Icon($"{GdfConstants.IconRoot}/input_action.png")]
 public partial class GdfInputAction : Resource
 {
     [Export]

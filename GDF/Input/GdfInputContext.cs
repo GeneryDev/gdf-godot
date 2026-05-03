@@ -7,10 +7,11 @@ namespace GDF.Input;
 
 [Tool]
 [GlobalClass]
+[Icon($"{GdfConstants.IconRoot}/input_context.png")]
 public partial class GdfInputContext : Node
 {
     [Export]
-    public Array<string> Tags;
+    public Array<string> Tags = new();
 
     private readonly List<GdfInputActionInstance> _actionInstances = new();
     private readonly Godot.Collections.Array<NodePath> _appliedMappings = new();
