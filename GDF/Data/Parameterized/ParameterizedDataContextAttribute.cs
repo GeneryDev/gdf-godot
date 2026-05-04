@@ -52,7 +52,7 @@ public static class ParameterizedDataContexts
         
         return parameters == null ? def.Constructor() : def.ParameterizedArrayConstructor(parameters);
     }
-    public static IDataContext CreateV(string id, params Variant[] parameters)
+    public static IDataContext CreateInline(string id, params Variant[] parameters)
     {
         if (GetDefinitionOrNull(id) is not { } def) return null;
         
