@@ -58,7 +58,7 @@ public class RootDataContext : IDataContext, ITextPreprocessor
         return false;
     }
 
-    public bool GetCollection(string key, string input, List<IDataContext> output, IDataQueryOptions options)
+    public bool GetContextCollection(string key, string input, List<IDataContext> output, IDataQueryOptions options)
     {
         switch (key)
         {

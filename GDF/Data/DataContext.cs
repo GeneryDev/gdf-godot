@@ -407,7 +407,7 @@ public static class DataContext
 
         foreach (var ctx in EnumerateContextHierarchy(context))
         {
-            if (ctx.GetCollection(key, input, output, options))
+            if (ctx.GetContextCollection(key, input, output, options))
                 return true;
             
             {

@@ -28,7 +28,7 @@ public interface IDataContext
         return false;
     }
 
-    public virtual bool GetCollection(string key, string input, List<IDataContext> output,
+    public virtual bool GetContextCollection(string key, string input, List<IDataContext> output,
         IDataQueryOptions options)
     {
         return false;

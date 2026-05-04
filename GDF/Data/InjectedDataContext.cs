@@ -116,10 +116,10 @@ public partial class InjectedDataContext : Node, IDataContext, IDataContextInjec
         return _itemContextNode?.GetSubContext(key, input, ref output, options) ?? false;
     }
 
-    bool IDataContext.GetCollection(string key, string input, List<IDataContext> output,
+    bool IDataContext.GetContextCollection(string key, string input, List<IDataContext> output,
         IDataQueryOptions options)
     {
-        if (_itemContextNode?.GetCollection(key, input, output, options) ?? false) return true;
+        if (_itemContextNode?.GetContextCollection(key, input, output, options) ?? false) return true;
 
         if (DefaultCollections != null)
             if (DefaultCollections.TryGetValue(key, out var rawElements))
