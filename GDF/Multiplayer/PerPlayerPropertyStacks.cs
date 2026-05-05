@@ -8,6 +8,8 @@ using Systems.Inputs;
 
 namespace GDF.Multiplayer;
 
+[GlobalClass]
+[Icon($"{GdfConstants.IconRoot}/per_player_property_stacks.png")]
 public partial class PerPlayerPropertyStacks : SingletonNode<PerPlayerPropertyStacks>
 {
     [Signal]

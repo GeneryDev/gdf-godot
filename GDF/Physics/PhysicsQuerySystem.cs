@@ -4,6 +4,7 @@ using Godot.Collections;
 
 namespace GDF.Physics;
 
+[GlobalClass]
 public partial class PhysicsQuerySystem : SingletonNode<PhysicsQuerySystem>
 {
     [Export] public ImplementationMode Mode = default;

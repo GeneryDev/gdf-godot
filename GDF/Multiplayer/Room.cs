@@ -3,6 +3,7 @@ using Godot;
 
 namespace GDF.Multiplayer;
 
+[GlobalClass]
 public abstract partial class Room : SingletonNode<Room>
 {
     public abstract int PeerId { get; }

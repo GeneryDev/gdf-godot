@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using GDF.PropertyStacks.Internal;
 using GDF.Util;
 using Godot;
@@ -10,11 +10,9 @@ namespace GDF.PropertyStacks;
 [Icon($"{GdfConstants.IconRoot}/property_stack.png")]
 public partial class PropertyStack : Node
 {
-    public static PropertyStack GlobalInstance { get; private set; }
+    public static PropertyStack GlobalInstance => GlobalPropertyStack.Instance;
 
     private static readonly List<PropertyStack> AllActiveStacks = new();
-    
-    [Export] public bool IsGlobal = false;
     
     [Export]
     public PropertyRegistry PropertyRegistry;
@@ -22,9 +20,9 @@ public partial class PropertyStack : Node
     [Export]
     public Godot.Collections.Dictionary<string, Variant> OverrideDefaultValues;
     
-    private System.Collections.Generic.Dictionary<string, IProperty> _properties;
-    private List<PropertyFrameHandle> _frameHandles;
-    private List<FrameValidator> _frameValidationRules;
+    private readonly System.Collections.Generic.Dictionary<string, IProperty> _properties = new();
+    private readonly List<PropertyFrameHandle> _frameHandles = new();
+    private readonly List<FrameValidator> _frameValidationRules = new();
     private int _nextFrameHandleId = 1;
 
     private PropertyStackDebugger _debugger;
@@ -39,13 +37,6 @@ public partial class PropertyStack : Node
     [Export]
     public bool DumpFrameData = false;
     [Export] public Dictionary DebuggerOutput;
-
-    public PropertyStack()
-    {
-        _properties = new System.Collections.Generic.Dictionary<string, IProperty>();
-        _frameHandles = new List<PropertyFrameHandle>();
-        _frameValidationRules = new List<FrameValidator>();
-    }
 
     public override void _Ready()
     {
@@ -402,14 +393,14 @@ public partial class PropertyStack : Node
 
     public override void _EnterTree()
     {
+        base._EnterTree();
         TreeOrderUtil.InsertInTreeOrder(AllActiveStacks, this);
-        if (IsGlobal) GlobalInstance = this;
     }
 
     public override void _ExitTree()
     {
-        if (GlobalInstance == this) GlobalInstance = null;
         AllActiveStacks.Remove(this);
+        base._ExitTree();
     }
 
     public static PropertyStack GetGlobalInstance()
