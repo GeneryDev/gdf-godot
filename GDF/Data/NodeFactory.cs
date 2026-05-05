@@ -14,23 +14,24 @@ public partial class NodeFactory : Node, IDataContext, IDataQueryOptions
     [Signal]
     public delegate void UpdatedEventHandler();
 
-    [Signal]
-    public delegate void NodeCreatedEventHandler(Node node);
-    [Signal]
-    public delegate void NodeRemovedEventHandler(Node node);
-
     [Export]
-    public DataQueryType QueryType
+    public Node DataContext
     {
-        get => _queryType;
+        get => _contextNode;
         set
         {
-            if (_queryType == value) return;
-            _queryType = value;
+            if (Engine.IsEditorHint())
+            {
+                _contextNode = value;
+                return;
+            }
+            (_contextNode as IDataContext)?.DisconnectUpdateSignal(new Callable(this, MethodName.OnContextUpdated));
+            _contextNode = value;
+            (_contextNode as IDataContext)?.ConnectUpdateSignal(new Callable(this, MethodName.OnContextUpdated));
             OnContextUpdated();
         }
     }
-
+    
     [Export(PropertyHint.MultilineText)]
     public string CollectionQuery
     {
@@ -54,49 +55,43 @@ public partial class NodeFactory : Node, IDataContext, IDataQueryOptions
                 OnContextUpdated();
         }
     }
-
+    
     [Export]
-    public Node DataContext
+    public DataQueryType QueryType
     {
-        get => _contextNode;
+        get => _queryType;
         set
         {
-            if (Engine.IsEditorHint())
-            {
-                _contextNode = value;
-                return;
-            }
-            (_contextNode as IDataContext)?.DisconnectUpdateSignal(new Callable(this, MethodName.OnContextUpdated));
-            _contextNode = value;
-            (_contextNode as IDataContext)?.ConnectUpdateSignal(new Callable(this, MethodName.OnContextUpdated));
+            if (_queryType == value) return;
+            _queryType = value;
             OnContextUpdated();
-        }
-    }
-
-    [Export]
-    public Godot.Collections.Dictionary<StringName, NodePath> DataContextsBySlot
-    {
-        get => _dataContextsBySlot;
-        set
-        {
-            if (Engine.IsEditorHint())
-            {
-                _dataContextsBySlot = value;
-                return;
-            }
-            if (_dataContextsBySlot != null)
-                foreach(var nodePath in _dataContextsBySlot.Values)
-                    (GetNodeOrNull(nodePath) as IDataContext)?.DisconnectUpdateSignal(new Callable(this, MethodName.OnContextUpdated));
-            _dataContextsBySlot = value;
-            if (_dataContextsBySlot != null)
-                foreach(var nodePath in _dataContextsBySlot.Values)
-                    (GetNodeOrNull(nodePath) as IDataContext)?.ConnectUpdateSignal(new Callable(this, MethodName.OnContextUpdated));
         }
     }
 
     [Export] public NodeTemplate DefaultTemplate;
 
-    [Export] public Godot.Collections.Array<NodeFactoryConditionalTemplate> ConditionalTemplates;
+    [Export] public Godot.Collections.Array<NodeFactoryConditionalTemplate> ConditionalTemplates = new();
+
+    [Export]
+    public Godot.Collections.Dictionary<StringName, NodePath> InjectDataContextsBySlot
+    {
+        get => _injectDataContextsBySlot;
+        set
+        {
+            if (Engine.IsEditorHint())
+            {
+                _injectDataContextsBySlot = value;
+                return;
+            }
+            if (_injectDataContextsBySlot != null)
+                foreach(var nodePath in _injectDataContextsBySlot.Values)
+                    (GetNodeOrNull(nodePath) as IDataContext)?.DisconnectUpdateSignal(new Callable(this, MethodName.OnContextUpdated));
+            _injectDataContextsBySlot = value;
+            if (_injectDataContextsBySlot != null)
+                foreach(var nodePath in _injectDataContextsBySlot.Values)
+                    (GetNodeOrNull(nodePath) as IDataContext)?.ConnectUpdateSignal(new Callable(this, MethodName.OnContextUpdated));
+        }
+    }
 
     [ExportGroup("Optimization")]
     [Export] public UpdateModeEnum UpdateMode = UpdateModeEnum.Automatic;
@@ -122,13 +117,12 @@ public partial class NodeFactory : Node, IDataContext, IDataQueryOptions
     [Export] public string NodeNameFormat;
     [Export] public string MultiplayerAuthorityQuery;
     [Export] public SignalStation ConnectSignalStation;
-    [Export] public bool EmitNodeUpdateSignals = false;
     [Export] public bool InjectFactoryItemContext = false;
 
     private string _collectionQuery;
     private string _subContextQuery;
     private Node _contextNode;
-    private Godot.Collections.Dictionary<StringName, NodePath> _dataContextsBySlot;
+    private Godot.Collections.Dictionary<StringName, NodePath> _injectDataContextsBySlot = new();
     private bool _updateQueued = false;
     private bool _everUpdated = false;
 
@@ -146,10 +140,13 @@ public partial class NodeFactory : Node, IDataContext, IDataQueryOptions
     private ParsedDataQuery _nameQueryCache;
     private ParsedDataQuery _authorityQueryCache;
     private Dictionary<NodePath, NodeTemplate> _cachedTemplatesByPath = new();
+    
+    private bool _sceneComplete = false;
 
     public override void _Ready()
     {
         RequestReady();
+        MarkSceneComplete(update: false);
         if (UpdateMode is UpdateModeEnum.Automatic)
         {
             switch (UpdateOnTreeEntered)
@@ -168,7 +165,7 @@ public partial class NodeFactory : Node, IDataContext, IDataQueryOptions
     private void OnContextUpdated()
     {
         if (Engine.IsEditorHint()) return;
-        if (UpdateMode is UpdateModeEnum.Automatic)
+        if (_sceneComplete && UpdateMode is UpdateModeEnum.Automatic)
             Update();
     }
 
@@ -274,8 +271,6 @@ public partial class NodeFactory : Node, IDataContext, IDataQueryOptions
         // Remove old nodes not reused.
         foreach (var item in _createdItems)
         {
-            if(item.IsValid)
-                EmitSignalNodeRemoved(item.CreatedNode);
             item.Remove();
             anyRemoved = true;
         }
@@ -358,11 +353,6 @@ public partial class NodeFactory : Node, IDataContext, IDataQueryOptions
 
             if (ConnectSignalStation != null)
                 SignalUtils.ConnectSignalStation(ConnectSignalStation, newTask.Instance);
-
-            if (EmitNodeUpdateSignals)
-            {
-                EmitSignalNodeCreated(item.CreatedNode);
-            }
         }
         
         if (ItemSortMode != ItemSortModeEnum.Disabled) SortItems();
@@ -379,9 +369,9 @@ public partial class NodeFactory : Node, IDataContext, IDataQueryOptions
         var node = item.CreatedNode;
         var context = item.ItemContext;
         node.InjectContext(context);
-        if (_dataContextsBySlot != null)
+        if (_injectDataContextsBySlot != null)
         {
-            foreach (var (slotId, contextNode) in _dataContextsBySlot)
+            foreach (var (slotId, contextNode) in _injectDataContextsBySlot)
             {
                 node.InjectContext(slotId, this.GetNodeOrNull(contextNode) as IDataContext);
             }
@@ -487,10 +477,21 @@ public partial class NodeFactory : Node, IDataContext, IDataQueryOptions
         if (what == NotificationPredelete)
         {
             (_contextNode as IDataContext)?.DisconnectUpdateSignal(new Callable(this, MethodName.OnContextUpdated));
-            if (_dataContextsBySlot != null)
-                foreach(var nodePath in _dataContextsBySlot.Values)
+            if (_injectDataContextsBySlot != null)
+                foreach(var nodePath in _injectDataContextsBySlot.Values)
                     (GetNodeOrNull(nodePath) as IDataContext)?.DisconnectUpdateSignal(new Callable(this, MethodName.OnContextUpdated));
         }
+
+        if (what == GdfConstants.NotificationDeepSceneInstantiated)
+            MarkSceneComplete(update: true);
+    }
+
+    private void MarkSceneComplete(bool update)
+    {
+        if (_sceneComplete) return;
+        _sceneComplete = true;
+        if (update && UpdateMode is UpdateModeEnum.Automatic)
+            Update();
     }
 
     public List<Node> GetCreatedNodes()
