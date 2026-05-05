@@ -2,6 +2,7 @@
 
 namespace GDF.Util;
 
+[Icon($"{GdfConstants.IconRoot}/simple.png")]
 public abstract partial class SingletonNode<T> : Node where T : SingletonNode<T>
 {
     public static T Instance

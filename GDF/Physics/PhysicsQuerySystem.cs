@@ -1,26 +1,15 @@
-﻿using Godot;
+﻿using GDF.Util;
+using Godot;
 using Godot.Collections;
 
 namespace GDF.Physics;
 
-public partial class PhysicsQuerySystem : Node
+public partial class PhysicsQuerySystem : SingletonNode<PhysicsQuerySystem>
 {
-    public static PhysicsQuerySystem Instance { get; private set; }
-
     [Export] public ImplementationMode Mode = default;
 
     private RayCast3D _rayCast3D;
     private RayQuery3D? _lastRayQuery;
-
-    public override void _EnterTree()
-    {
-        Instance = this;
-    }
-
-    public override void _ExitTree()
-    {
-        if (Instance == this) Instance = null;
-    }
 
     public override void _Ready()
     {
