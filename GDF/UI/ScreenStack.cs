@@ -1,11 +1,10 @@
-﻿using GDF.Util;
-using Godot;
+﻿using Godot;
 
 namespace GDF.UI;
 
 [GlobalClass]
 [Icon($"{GdfConstants.IconRoot}/screen_stack.png")]
-public partial class ScreenStack : Control, ISingletonNode<ScreenStack>
+public partial class ScreenStack : Control
 {
     public static ScreenStack Instance
     {
