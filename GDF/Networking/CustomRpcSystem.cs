@@ -5,6 +5,7 @@ using Godot.Collections;
 
 namespace GDF.Networking;
 
+[GlobalClass]
 public partial class CustomRpcSystem : SingletonNode<CustomRpcSystem>
 {
     private System.Collections.Generic.Dictionary<string, CustomRpcChannelInstance> _instancesByPresetName;
