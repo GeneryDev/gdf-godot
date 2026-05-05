@@ -6,7 +6,6 @@ using GDF.PropertyStacks;
 using GDF.PropertyStacks.Definitions.Specialized;
 using GDF.Util;
 using Godot;
-using Systems.Inputs;
 
 namespace GDF.UI;
 
@@ -95,8 +94,8 @@ public partial class Screen : Control
             // Prepare controls
             var affectedStack = Mode switch
             {
-                UIModeEnum.Overlay => PropertyStack.GlobalInstance,
-                UIModeEnum.Modal => PropertyStack.GlobalInstance,
+                UIModeEnum.Overlay => GlobalPropertyStack.Instance,
+                UIModeEnum.Modal => GlobalPropertyStack.Instance,
                 UIModeEnum.NonModal => PerPlayerPropertyStacks.GetForPlayer(ExclusiveToPlayerId),
                 UIModeEnum.ParallelLane => PerPlayerPropertyStacks.GetForPlayer(ExclusiveToPlayerId),
                 UIModeEnum.PassthroughNonModal => PerPlayerPropertyStacks.GetForPlayer(ExclusiveToPlayerId),
@@ -114,9 +113,8 @@ public partial class Screen : Control
             ControlFrame ??= affectedStack?.NewFrame($"Screen: {Name}", GetEffectiveOrder())
                 .BindToNode(this);
 
-            ControlFrame?
-                .Set(InputGroups.Default, inputGroupMode)
-                .Set(InputGroups.Mouse, inputGroupMode);
+            foreach (string id in InputGroups.GetAll())
+                ControlFrame?.Set(id, inputGroupMode);
 
             if (UserInterface != null)
             {
@@ -191,8 +189,8 @@ public partial class Screen : Control
         {
             if (ControlFrame != null && Mode is UIModeEnum.Modal or UIModeEnum.NonModal)
             {
-                ControlFrame.Set(InputGroups.Default, InputGroupMode.Disable);
-                ControlFrame.Set(InputGroups.Mouse, InputGroupMode.Disable);
+                foreach (string id in InputGroups.GetAll())
+                    ControlFrame.Set(id, InputGroupMode.Disable);
             }
 
             Showing = false;

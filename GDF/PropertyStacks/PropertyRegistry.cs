@@ -12,7 +12,7 @@ public partial class PropertyRegistry : Resource
     [Export] public PropertyDefinitionResource[] Definitions;
     [Export] public PropertyRegistry[] OtherRegistries;
 
-    public void PopulatePropertiesDictionary(Dictionary<string, IProperty> properties)
+    public virtual void PopulatePropertiesDictionary(Dictionary<string, IProperty> properties)
     {
         if (Definitions != null)
         {

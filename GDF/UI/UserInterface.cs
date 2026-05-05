@@ -9,7 +9,6 @@ using GDF.PropertyStacks;
 using GDF.PropertyStacks.Extensions;
 using GDF.Util;
 using Godot;
-using Systems.Inputs;
 
 namespace GDF.UI;
 
@@ -60,7 +59,7 @@ public partial class UserInterface : Node, IResynchronizable
 
     public int ExclusiveToPlayerId = -1;
     public PropertyFrame RequireFrameControl;
-    public string RequireFrameControlPropertyId = InputGroups.Default;
+    public string RequireFrameControlPropertyId = GdfConstants.UserInterfaceRequiredInputGroup;
 
     private Dictionary<int, PlayerFocusState> _playerFocusStates = new();
     private Dictionary<int, PlayerInputState> _playerInputStates = new();

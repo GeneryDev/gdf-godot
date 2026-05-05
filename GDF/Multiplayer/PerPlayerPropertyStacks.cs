@@ -4,7 +4,6 @@ using GDF.PropertyStacks.Definitions.Specialized;
 using GDF.PropertyStacks.Extensions;
 using GDF.Util;
 using Godot;
-using Systems.Inputs;
 
 namespace GDF.Multiplayer;
 
@@ -27,11 +26,14 @@ public partial class PerPlayerPropertyStacks : SingletonNode<PerPlayerPropertySt
     public override void _Ready()
     {
         base._Ready();
-        NonModalFrame ??= PropertyStack.GlobalInstance.NewFrame("Non-modal Control", NonModalFrameOrder)
-                .Set(InputGroups.Default, InputGroupMode.Capture)
-                .Set(InputGroups.Mouse, InputGroupMode.PassThrough)
-                .BindToNode(this)
-            ;
+        if (NonModalFrame == null)
+        {
+            NonModalFrame = GlobalPropertyStack.Instance.NewFrame("Non-modal Control", NonModalFrameOrder).BindToNode(this);
+            foreach (string id in InputGroups.GetAll())
+            {
+                NonModalFrame.Set(id, InputGroupMode.PassThrough);
+            }
+        }
     }
 
     /// <summary>
@@ -40,7 +42,7 @@ public partial class PerPlayerPropertyStacks : SingletonNode<PerPlayerPropertySt
     /// </summary>
     public static PropertyStack GetForPlayer(int playerId)
     {
-        if (playerId == -1) return PropertyStack.GlobalInstance;
+        if (playerId == -1) return GlobalPropertyStack.Instance;
         if (Instance == null) return null;
         if (Instance._perPlayerStacks.TryGetValue(playerId, out var existing)) return existing;
 
@@ -48,16 +50,19 @@ public partial class PerPlayerPropertyStacks : SingletonNode<PerPlayerPropertySt
         Instance._perPlayerStacks[playerId] = stack;
         stack.PropertyRegistry = Instance.PerPlayerProperties;
         Instance.AddChild(stack);
-        Instance._perPlayerBaseControlFrames[playerId] = stack.NewFrame("Base Control", -99)
-                .Set(InputGroups.Default, InputGroupMode.Capture)
-                .Set(InputGroups.Mouse, InputGroupMode.PassThrough)
-            ;
+        var baseControlFrame = Instance._perPlayerBaseControlFrames[playerId] = stack.NewFrame("Base Control", -99);
+        foreach (string key in InputGroups.GetAll())
+        {
+            baseControlFrame.Set(key, InputGroupMode.PassThrough);
+        }
 
         UpdatePlayerModalFrame(playerId);
 
         var watcher = new PropertyStackWatcher() { Name = "Watcher", Stack = stack };
-        watcher.StartObserving(InputGroups.Default);
-        watcher.StartObserving(InputGroups.Mouse);
+        foreach (string key in InputGroups.GetAll())
+        {
+            watcher.StartObserving(key);
+        }
         stack.AddChild(watcher);
         watcher.PropertyChanged += WatcherOnPropertyChanged;
 
@@ -85,13 +90,14 @@ public partial class PerPlayerPropertyStacks : SingletonNode<PerPlayerPropertySt
             playerModalFrame = playerStack.NewFrame("Modal Control", 1000);
             Instance._perPlayerModalFrames[playerId] = playerModalFrame;
         }
-
-        playerModalFrame.Set(InputGroups.Default,
-            Instance.NonModalFrame.HasControl(InputGroups.Default)
+        
+        
+        foreach (string key in InputGroups.GetAll())
+        {
+            playerModalFrame.Set(key, Instance.NonModalFrame.HasControl(key)
                 ? InputGroupMode.PassThrough
                 : InputGroupMode.Capture);
-        playerModalFrame.Set(InputGroups.Mouse,
-            Instance.NonModalFrame.HasControl(InputGroups.Mouse) ? InputGroupMode.PassThrough : InputGroupMode.Capture);
+        }
     }
 
     public override void _Process(double delta)
@@ -106,8 +112,8 @@ public partial class PerPlayerPropertyStacks : SingletonNode<PerPlayerPropertySt
                playerFrame.HasControl(propertyId);
     }
 
-    public static bool HasNonModalControl()
+    public static bool HasNonModalControl(string propertyId)
     {
-        return Instance.NonModalFrame.HasControl(InputGroups.Default);
+        return Instance.NonModalFrame.HasControl(propertyId);
     }
 }
