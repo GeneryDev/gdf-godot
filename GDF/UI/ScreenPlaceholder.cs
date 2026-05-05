@@ -10,26 +10,26 @@ public partial class ScreenPlaceholder : Node
     [Export]
     public bool Visible
     {
-        get => _uiRoot.Showing;
+        get => _screen.Showing;
         set
         {
-            if (value) ShowUI();
-            else HideUI();
+            if (value) ShowScreen();
+            else HideScreen();
         }
     }
 
     public bool DeriveNameFromPath = false;
 
     // This node is NOT inside the tree unless Show is called
-    private Screen _uiRoot;
+    private Screen _screen;
 
     public ScreenPlaceholder()
     {
     }
 
-    public ScreenPlaceholder(Screen ui)
+    public ScreenPlaceholder(Screen screen)
     {
-        _uiRoot = ui;
+        _screen = screen;
     }
 
     public bool IsVisible()
@@ -42,32 +42,32 @@ public partial class ScreenPlaceholder : Node
         return Visible = visible;
     }
 
-    public void ShowUI()
+    public void ShowScreen()
     {
-        _uiRoot.ShowUI();
+        _screen.ShowScreen();
     }
 
-    public void HideUI()
+    public void HideScreen()
     {
-        _uiRoot.HideUI();
+        _screen.HideScreen();
     }
 
-    public void HideAndFreeUI()
+    public void HideAndFreeScreen()
     {
-        _uiRoot.HideAndFreeUI();
+        _screen.HideAndFreeScreen();
     }
 
-    public void FadeOutUI()
+    public void FadeOutScreen()
     {
-        _uiRoot.FadeOutUI();
+        _screen.FadeOutScreen();
     }
 
-    public void ForceFadeOutUI()
+    public void ForceFadeOutScreen()
     {
-        _uiRoot.ForceFadeOutUI();
+        _screen.ForceFadeOutScreen();
     }
 
-    public bool PrepareRootToEnterTree()
+    public bool PrepareScreenToEnterTree()
     {
         if (!IsInsideTree())
         {
@@ -75,32 +75,32 @@ public partial class ScreenPlaceholder : Node
             return false;
         }
 
-        _uiRoot.OriginalNodePath = GetPath();
+        _screen.OriginalNodePath = GetPath();
         if (DeriveNameFromPath)
-            _uiRoot.Name = $"{Name} [{_uiRoot.OriginalNodePath.GetHashCode()}]";
-        _uiRoot.Owner = null;
+            _screen.Name = $"{Name} [{_screen.OriginalNodePath.GetHashCode()}]";
+        _screen.Owner = null;
         return true;
     }
 
     [CustomRpc]
-    public void CallUIMethod(StringName methodName)
+    public void CallScreenMethod(StringName methodName)
     {
-        _uiRoot.Call(methodName);
+        _screen.Call(methodName);
     }
 
     [CustomRpc]
-    public void CallUIMethod(StringName methodName, Array args)
+    public void CallScreenMethod(StringName methodName, Array args)
     {
-        _uiRoot.Callv(methodName, args);
+        _screen.Callv(methodName, args);
     }
 
     public override void _Notification(int what)
     {
         if (what == NotificationExitTree)
-            if (IsInstanceValid(_uiRoot))
-                _uiRoot.CallDeferred(Screen.MethodName.ForceHideUI);
+            if (IsInstanceValid(_screen))
+                _screen.CallDeferred(Screen.MethodName.ForceHideScreen);
         if (what == NotificationPredelete)
-            if (IsInstanceValid(_uiRoot))
-                _uiRoot.QueueFree();
+            if (IsInstanceValid(_screen))
+                _screen.QueueFree();
     }
 }

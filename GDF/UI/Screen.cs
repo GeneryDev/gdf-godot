@@ -14,22 +14,22 @@ namespace GDF.UI;
 public partial class Screen : Control
 {
     [Signal]
-    public delegate void UIShownEventHandler();
+    public delegate void ScreenShownEventHandler();
 
     [Signal]
-    public delegate void UIFadingOutEventHandler();
+    public delegate void ScreenFadingOutEventHandler();
 
     [Signal]
-    public delegate void UIHiddenEventHandler();
+    public delegate void ScreenHiddenEventHandler();
 
     [Signal]
-    public delegate void UIShadowingStartedEventHandler();
+    public delegate void ScreenShadowingStartedEventHandler();
 
     [Signal]
-    public delegate void UIShadowingEndedEventHandler();
+    public delegate void ScreenShadowingEndedEventHandler();
 
     [Export] public int Order = 0;
-    [Export] public UIModeEnum Mode = UIModeEnum.Overlay;
+    [Export] public ScreenModeEnum Mode = ScreenModeEnum.Overlay;
     [Export] public bool AutomaticLayering = true;
     [Export] public UserInterface UserInterface;
 
@@ -43,19 +43,27 @@ public partial class Screen : Control
     [Export] public bool HideOnShadowed = true;
 
     /// <summary>
-    /// Controls which peers are allowed to call methods (such as <see cref="ShowUI"/>/<see cref="HideUI"/>) on this UI.
+    /// Controls which peers are allowed to call methods (such as <see cref="ShowScreen"/>/<see cref="HideScreen"/>) on this Screen.
     /// Does not affect Force___ methods.
     /// </summary>
     [ExportGroup("Networking")]
     [Export] public AuthorityMode AuthorityMode = AuthorityMode.AnyPeer;
 
     /// <summary>
-    /// If true, calls to methods (such as <see cref="ShowUI"/>/<see cref="HideUI"/>) on this UI will be replicated to peers.
+    /// If true, calls to methods (such as <see cref="ShowScreen"/>/<see cref="HideScreen"/>) on this Screen will be replicated to peers.
     /// Does not affect Force___ methods.
     /// </summary>
     [Export] public bool ReplicateToPeers;
 
-    public int ExclusiveToPlayerId = -1;
+    public int ExclusiveToPlayerId
+    {
+        get => _exclusiveToPlayerId;
+        set
+        {
+            _exclusiveToPlayerId = value;
+            if (UserInterface != null) UserInterface.ExclusiveToPlayerId = value;
+        }
+    }
 
     public NodePath OriginalNodePath;
     public PropertyFrame ControlFrame;
@@ -67,47 +75,50 @@ public partial class Screen : Control
     public Node SpawnedByNode = null;
     public Node OriginalOwner;
     public bool Shadowed = false;
+    private int _exclusiveToPlayerId = -1;
 
     public override void _Ready()
     {
         OriginalOwner ??= Owner;
         if (AutomaticLayering) TopLevel = true;
-
-        if (Visible && !AutomaticLayering) ShowUI();
+        else if (Visible)
+        {
+            ShowScreen();
+        }
         if (!_customInstantiated && AutomaticLayering)
             GD.PushWarning(
-                $"User interface {Name} was added to the scene tree without being properly instantiated via EGInstantiate()! This is currently not supported for UIs with automatic layering.\nIf you intended this UI to not use automatic layering, set the property to false.");
+                $"User interface {Name} was added to the scene tree without being properly instantiated via GdfInstantiate()! This is currently not supported for Screens with automatic layering.\nIf you intended this Screen to not use automatic layering, set the property to false.");
     }
 
-    public void ShowUI()
+    public void ShowScreen()
     {
         if (!AuthorityMode.CanExecuteNoTree(this)) return;
 
-        NetworkingCall(MethodName.ForceShowUI);
+        NetworkingCall(MethodName.ForceShowScreen);
     }
 
     [CustomRpc]
-    public void ForceShowUI()
+    public void ForceShowScreen()
     {
-        if (!Showing && (_placeholder?.PrepareRootToEnterTree() ?? true))
+        if (!Showing && (_placeholder?.PrepareScreenToEnterTree() ?? true))
         {
             // Prepare controls
             var affectedStack = Mode switch
             {
-                UIModeEnum.Overlay => GlobalPropertyStack.Instance,
-                UIModeEnum.Modal => GlobalPropertyStack.Instance,
-                UIModeEnum.NonModal => PerPlayerPropertyStacks.GetForPlayer(ExclusiveToPlayerId),
-                UIModeEnum.ParallelLane => PerPlayerPropertyStacks.GetForPlayer(ExclusiveToPlayerId),
-                UIModeEnum.PassthroughNonModal => PerPlayerPropertyStacks.GetForPlayer(ExclusiveToPlayerId),
+                ScreenModeEnum.Overlay => GlobalPropertyStack.Instance,
+                ScreenModeEnum.Modal => GlobalPropertyStack.Instance,
+                ScreenModeEnum.NonModal => PerPlayerPropertyStacks.GetForPlayer(ExclusiveToPlayerId),
+                ScreenModeEnum.ParallelLane => PerPlayerPropertyStacks.GetForPlayer(ExclusiveToPlayerId),
+                ScreenModeEnum.PassthroughNonModal => PerPlayerPropertyStacks.GetForPlayer(ExclusiveToPlayerId),
                 _ => throw new ArgumentOutOfRangeException()
             };
             var inputGroupMode = Mode switch
             {
-                UIModeEnum.Overlay => InputGroupMode.PassThrough,
-                UIModeEnum.Modal => InputGroupMode.Capture,
-                UIModeEnum.NonModal => InputGroupMode.Capture,
-                UIModeEnum.ParallelLane => InputGroupMode.PassThrough,
-                UIModeEnum.PassthroughNonModal => InputGroupMode.PassThrough,
+                ScreenModeEnum.Overlay => InputGroupMode.PassThrough,
+                ScreenModeEnum.Modal => InputGroupMode.Capture,
+                ScreenModeEnum.NonModal => InputGroupMode.Capture,
+                ScreenModeEnum.ParallelLane => InputGroupMode.PassThrough,
+                ScreenModeEnum.PassthroughNonModal => InputGroupMode.PassThrough,
                 _ => throw new ArgumentOutOfRangeException()
             };
             ControlFrame ??= affectedStack?.NewFrame($"Screen: {Name}", GetEffectiveOrder())
@@ -119,10 +130,10 @@ public partial class Screen : Control
             if (UserInterface != null)
             {
                 UserInterface.ExclusiveToPlayerId = ExclusiveToPlayerId;
-                if (Mode == UIModeEnum.ParallelLane && UserInterface.RequireFrameControl == null)
+                if (Mode == ScreenModeEnum.ParallelLane && UserInterface.RequireFrameControl == null)
                 {
-                    var modalParent = FindAncestorUI(this);
-                    if (modalParent?.Mode == UIModeEnum.Modal)
+                    var modalParent = FindAncestorScreen(this);
+                    if (modalParent?.Mode == ScreenModeEnum.Modal)
                         UserInterface.RequireFrameControl = modalParent?.ControlFrame;
                     if (UserInterface.RequireFrameControl == null)
                         GD.PushWarning(
@@ -137,7 +148,7 @@ public partial class Screen : Control
             FadingOut = false;
             if (AutomaticLayering && !IsInsideTree())
                 ScreenStack.Instance.Push(this);
-            EmitSignalUIShown();
+            EmitSignalScreenShown();
         }
     }
 
@@ -145,20 +156,20 @@ public partial class Screen : Control
     {
         if (OrderAsRelative)
         {
-            return FindAncestorUIOrder(this.GetParent(), 0) + Order;
+            return FindAncestorScreenOrder(this.GetParent(), 0) + Order;
         }
         return Order;
     }
 
-    public void HideUI()
+    public void HideScreen()
     {
         if (!AuthorityMode.CanExecuteNoTree(this)) return;
 
-        NetworkingCall(MethodName.ForceHideUI);
+        NetworkingCall(MethodName.ForceHideScreen);
     }
 
     [CustomRpc]
-    public void ForceHideUI()
+    public void ForceHideScreen()
     {
         if (IsInsideTree() && (Showing || Visible || FadingOut))
         {
@@ -171,23 +182,23 @@ public partial class Screen : Control
             Visible = false;
             Showing = false;
             FadingOut = false;
-            EmitSignalUIHidden();
+            EmitSignalScreenHidden();
         }
     }
 
-    public void FadeOutUI()
+    public void FadeOutScreen()
     {
         if (!AuthorityMode.CanExecuteNoTree(this)) return;
 
-        NetworkingCall(MethodName.ForceFadeOutUI);
+        NetworkingCall(MethodName.ForceFadeOutScreen);
     }
 
     [CustomRpc]
-    public void ForceFadeOutUI()
+    public void ForceFadeOutScreen()
     {
         if (IsInsideTree() && Showing)
         {
-            if (ControlFrame != null && Mode is UIModeEnum.Modal or UIModeEnum.NonModal)
+            if (ControlFrame != null && Mode is ScreenModeEnum.Modal or ScreenModeEnum.NonModal)
             {
                 foreach (string id in InputGroups.GetAll())
                     ControlFrame.Set(id, InputGroupMode.Disable);
@@ -195,22 +206,22 @@ public partial class Screen : Control
 
             Showing = false;
             FadingOut = true;
-            EmitSignalUIFadingOut();
+            EmitSignalScreenFadingOut();
             ScreenStack.Instance.UpdateLayeredVisibility();
         }
     }
 
-    public void HideAndFreeUI()
+    public void HideAndFreeScreen()
     {
         if (!AuthorityMode.CanExecuteNoTree(this)) return;
 
-        NetworkingCall(MethodName.ForceHideAndFreeUI);
+        NetworkingCall(MethodName.ForceHideAndFreeScreen);
     }
 
     [CustomRpc]
-    public void ForceHideAndFreeUI()
+    public void ForceHideAndFreeScreen()
     {
-        ForceHideUI();
+        ForceHideScreen();
         QueueFree();
         _placeholder?.QueueFree();
     }
@@ -223,10 +234,10 @@ public partial class Screen : Control
             {
                 // call it on the placeholder
                 if (_placeholder.IsInsideTree())
-                    _placeholder.CustomRpc(ScreenPlaceholder.MethodName.CallUIMethod, methodName, new Godot.Collections.Array(args));
+                    _placeholder.CustomRpc(ScreenPlaceholder.MethodName.CallScreenMethod, methodName, new Godot.Collections.Array(args));
                 else
                     GD.PrintErr(
-                        $"Tried to call method {methodName} on UI root {Name}, but the placeholder is not inside the tree");
+                        $"Tried to call method {methodName} on Screen {Name}, but the placeholder is not inside the tree");
             }
             else if (IsInsideTree())
             {
@@ -234,7 +245,7 @@ public partial class Screen : Control
             }
             else
             {
-                GD.PrintErr($"Tried to call method {methodName} on UI root {Name}, but it is not inside the tree");
+                GD.PrintErr($"Tried to call method {methodName} on Screen {Name}, but it is not inside the tree");
             }
         }
         else
@@ -254,7 +265,7 @@ public partial class Screen : Control
 
         if (what == NotificationExitTree)
             if (!AutomaticLayering)
-                HideUI();
+                HideScreen();
         if (what == NotificationPredelete)
             if (IsInstanceValid(_placeholder))
                 _placeholder.QueueFree();
@@ -281,7 +292,7 @@ public partial class Screen : Control
         var prevName = Name;
         var prevOwner = Owner;
         bool replaceInParent = GetParent() == parent;
-        // Remove this UI from the scene
+        // Remove this Screen from the scene
         if (replaceInParent)
             parent.RemoveChild(this);
 
@@ -308,25 +319,6 @@ public partial class Screen : Control
         return placeholder;
     }
 
-    public int GetExclusiveToPlayerId()
-    {
-        return ExclusiveToPlayerId;
-    }
-
-    public void SetExclusiveToPlayerId(int value)
-    {
-        if (!AuthorityMode.CanExecuteNoTree(this)) return;
-
-        NetworkingCall(MethodName.ForceSetExclusiveToPlayerId, value);
-    }
-
-    [CustomRpc]
-    public void ForceSetExclusiveToPlayerId(int value)
-    {
-        ExclusiveToPlayerId = value;
-        if (UserInterface != null) UserInterface.ExclusiveToPlayerId = ExclusiveToPlayerId;
-    }
-
     public void MakeParallelLaneOf(Screen modalParent)
     {
         if (UserInterface != null)
@@ -338,22 +330,22 @@ public partial class Screen : Control
         return OriginalOwner;
     }
 
-    public static Screen FindAncestorUI(Node source)
+    public static Screen FindAncestorScreen(Node source)
     {
         source = source?.GetParent();
         while (source != null)
-            if (source is Screen ui) return ui;
+            if (source is Screen screen) return screen;
             else source = source.GetParent();
 
         return null;
     }
 
-    public static int FindAncestorUIOrder(Node source, int fallback)
+    public static int FindAncestorScreenOrder(Node source, int fallback)
     {
-        return FindAncestorUI(source)?.GetEffectiveOrder() ?? fallback;
+        return FindAncestorScreen(source)?.GetEffectiveOrder() ?? fallback;
     }
 
-    public enum UIModeEnum
+    public enum ScreenModeEnum
     {
         Overlay,
         Modal,
