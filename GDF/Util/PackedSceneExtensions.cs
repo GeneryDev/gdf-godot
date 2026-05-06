@@ -1,4 +1,5 @@
-﻿using Godot;
+﻿using GDF.UI;
+using Godot;
 
 namespace GDF.Util;
 
@@ -10,7 +11,7 @@ public static class PackedSceneExtensions
     /// Instantiates the scene's node hierarchy.
     /// Triggers child scene instantiation(s).
     /// <br/>
-    /// Triggers a <see cref="Godot.Node.NotificationSceneInstantiated"/> notification on the root node, a custom <see cref="Util.PackedSceneExtensions.NotificationDeepSceneInstantiated"/> notification on all nodes in the instantiated scene, and fires a user signal to the root node (see <see cref="ConnectToSceneInstantiatedSignal"/>).
+    /// Triggers a <see cref="Godot.Node.NotificationSceneInstantiated"/> notification on the root node, a custom <see cref="GdfConstants.NotificationDeepSceneInstantiated"/> notification on all nodes in the instantiated scene, and fires a user signal to the root node (see <see cref="ConnectToSceneInstantiatedSignal"/>).
     /// </summary>
     public static Node GdfInstantiate(this PackedScene scene)
     {
@@ -23,7 +24,7 @@ public static class PackedSceneExtensions
     /// <summary>
     /// Instantiates the scene's node hierarchy, returning null on failure. Triggers child scene instantiation(s).
     /// <br/>
-    /// Triggers a <see cref="Godot.Node.NotificationSceneInstantiated"/> notification on the root node, a custom <see cref="Util.PackedSceneExtensions.NotificationDeepSceneInstantiated"/> notification on all nodes in the instantiated scene, and fires a user signal to the root node (see <see cref="ConnectToSceneInstantiatedSignal"/>).
+    /// Triggers a <see cref="Godot.Node.NotificationSceneInstantiated"/> notification on the root node, a custom <see cref="GdfConstants.NotificationDeepSceneInstantiated"/> notification on all nodes in the instantiated scene, and fires a user signal to the root node (see <see cref="ConnectToSceneInstantiatedSignal"/>).
     /// <br/>
     /// Additionally, if the instantiated node is of an incorrect type, it is freed from memory. 
     /// </summary>
@@ -37,7 +38,7 @@ public static class PackedSceneExtensions
     /// <summary>
     /// Instantiates the scene's node hierarchy, returning null on failure. Triggers child scene instantiation(s).
     /// <br/>
-    /// Triggers a <see cref="Godot.Node.NotificationSceneInstantiated"/> notification on the root node, a custom <see cref="Util.PackedSceneExtensions.NotificationDeepSceneInstantiated"/> notification on all nodes in the instantiated scene, and fires a user signal to the root node (see <see cref="ConnectToSceneInstantiatedSignal"/>).
+    /// Triggers a <see cref="Godot.Node.NotificationSceneInstantiated"/> notification on the root node, a custom <see cref="GdfConstants.NotificationDeepSceneInstantiated"/> notification on all nodes in the instantiated scene, and fires a user signal to the root node (see <see cref="ConnectToSceneInstantiatedSignal"/>).
     /// <br/>
     /// Additionally, if the instantiated node is of an incorrect type, it is freed from memory, and an error is printed. 
     /// </summary>
@@ -53,7 +54,7 @@ public static class PackedSceneExtensions
     /// <summary>
     /// Connects a callable to a signal on this node that fires whenever <see cref="Node.NotificationParented"/> finishes instantiating the scene with this node as its root.
     /// <br/>
-    /// Designed to be called during early notifications such as <see cref="Node"/> and the custom <see cref="Node.Owner"/>, accessing this node via <see cref="Node"/>.
+    /// Designed to be called during early notifications such as <see cref="Node.NotificationParented"/> and the custom <see cref="GdfConstants.NotificationDeepSceneInstantiated"/>, accessing this node via <see cref="Node.Owner"/>.
     /// </summary>
     public static Error ConnectToSceneInstantiatedSignal(this Node node, Callable callable, GodotObject.ConnectFlags flags = 0)
     {

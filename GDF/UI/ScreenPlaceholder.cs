@@ -18,8 +18,6 @@ public partial class ScreenPlaceholder : Node
         }
     }
 
-    public bool DeriveNameFromPath = false;
-
     // This node is NOT inside the tree unless Show is called
     private Screen _screen;
 
@@ -76,9 +74,9 @@ public partial class ScreenPlaceholder : Node
         }
 
         _screen.OriginalNodePath = GetPath();
-        if (DeriveNameFromPath)
-            _screen.Name = $"{Name} [{_screen.OriginalNodePath.GetHashCode()}]";
+        _screen.Name = $"{Name} [{_screen.OriginalNodePath.GetHashCode()}]";
         _screen.Owner = null;
+        _screen.SetMultiplayerAuthority(GetMultiplayerAuthority());
         return true;
     }
 
@@ -96,11 +94,20 @@ public partial class ScreenPlaceholder : Node
 
     public override void _Notification(int what)
     {
-        if (what == NotificationExitTree)
+        if (what == NotificationEnterTree)
+        {
             if (IsInstanceValid(_screen))
-                _screen.CallDeferred(Screen.MethodName.ForceHideScreen);
-        if (what == NotificationPredelete)
+                _screen.CallDeferred(Screen.MethodName.ForceRefreshShownState);
+        }
+        else if (what == NotificationExitTree)
+        {
+            if (IsInstanceValid(_screen))
+                _screen.CallDeferred(Screen.MethodName.ForceRefreshShownState);
+        }
+        else if (what == NotificationPredelete)
+        {
             if (IsInstanceValid(_screen))
                 _screen.QueueFree();
+        }
     }
 }

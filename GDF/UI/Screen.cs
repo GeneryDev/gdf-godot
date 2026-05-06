@@ -34,8 +34,6 @@ public partial class Screen : Control
     [Export] public UserInterface UserInterface;
 
     [ExportGroup("Layering")]
-    [Export] public bool InheritParentControlRect = true;
-
     [Export] public bool OrderAsRelative = false;
     
     [ExportGroup("Shadowing")]
@@ -71,6 +69,7 @@ public partial class Screen : Control
     private ScreenPlaceholder _placeholder;
     private bool _customInstantiated = false;
     public bool Showing = false;
+    public bool ShowingInTree { get; private set; } = false;
     public bool FadingOut { get; private set; } = false;
     public Node SpawnedByNode = null;
     public Node OriginalOwner;
@@ -80,14 +79,22 @@ public partial class Screen : Control
     public override void _Ready()
     {
         OriginalOwner ??= Owner;
-        if (AutomaticLayering) TopLevel = true;
+        if (AutomaticLayering)
+        {
+            TopLevel = true;
+        }
         else if (Visible)
         {
             ShowScreen();
         }
         if (!_customInstantiated && AutomaticLayering)
             GD.PushWarning(
-                $"User interface {Name} was added to the scene tree without being properly instantiated via GdfInstantiate()! This is currently not supported for Screens with automatic layering.\nIf you intended this Screen to not use automatic layering, set the property to false.");
+                $"Screen {Name} was added to the scene tree without being properly instantiated via GdfInstantiate()! This is currently not supported for Screens with automatic layering.\nIf you intended this Screen to not use automatic layering, set the property to false.");
+        else if (AutomaticLayering && _customInstantiated && _placeholder == null)
+        {
+            GD.PushWarning(
+                $"Screen {Name} was added to the scene tree without ToPlaceholder being called or properly handled. When using GdfInstantiate to instantiate a Screen, please call ToPlaceholder and add the returned node to the tree instead of the Screen directly.");
+        }
     }
 
     public void ShowScreen()
@@ -98,9 +105,16 @@ public partial class Screen : Control
     }
 
     [CustomRpc]
+    public void ForceRefreshShownState()
+    {
+        if(Showing) ForceShowScreen();
+        else ForceHideScreen();
+    }
+
+    [CustomRpc]
     public void ForceShowScreen()
     {
-        if (!Showing && (_placeholder?.PrepareScreenToEnterTree() ?? true))
+        if (!ShowingInTree && (_placeholder?.PrepareScreenToEnterTree() ?? true))
         {
             // Prepare controls
             var affectedStack = Mode switch
@@ -145,10 +159,15 @@ public partial class Screen : Control
 
             Visible = true;
             Showing = true;
+            ShowingInTree = true;
             FadingOut = false;
             if (AutomaticLayering && !IsInsideTree())
                 ScreenStack.Instance.Push(this);
             EmitSignalScreenShown();
+        }
+        else
+        {
+            Showing = true;
         }
     }
 
@@ -171,7 +190,7 @@ public partial class Screen : Control
     [CustomRpc]
     public void ForceHideScreen()
     {
-        if (IsInsideTree() && (Showing || Visible || FadingOut))
+        if (IsInsideTree() && (ShowingInTree || Visible || FadingOut))
         {
             if (ControlFrame != null && UserInterface?.RequireFrameControl == ControlFrame && UserInterface != null)
                 UserInterface.RequireFrameControl = null;
@@ -180,9 +199,14 @@ public partial class Screen : Control
             if (AutomaticLayering)
                 ScreenStack.Instance.RemoveChild(this);
             Visible = false;
+            ShowingInTree = false;
             Showing = false;
             FadingOut = false;
             EmitSignalScreenHidden();
+        }
+        else
+        {
+            Showing = false;
         }
     }
 
@@ -196,7 +220,7 @@ public partial class Screen : Control
     [CustomRpc]
     public void ForceFadeOutScreen()
     {
-        if (IsInsideTree() && Showing)
+        if (IsInsideTree() && ShowingInTree)
         {
             if (ControlFrame != null && Mode is ScreenModeEnum.Modal or ScreenModeEnum.NonModal)
             {
@@ -204,10 +228,15 @@ public partial class Screen : Control
                     ControlFrame.Set(id, InputGroupMode.Disable);
             }
 
+            ShowingInTree = false;
             Showing = false;
             FadingOut = true;
             EmitSignalScreenFadingOut();
             ScreenStack.Instance.UpdateLayeredVisibility();
+        }
+        else
+        {
+            Showing = false;
         }
     }
 
@@ -273,32 +302,33 @@ public partial class Screen : Control
 
     private void SceneReady()
     {
-        var prevParent = GetParent();
-        if (prevParent != null)
-            ToPlaceholder(prevParent, true);
+        Showing = Visible;
+        ToPlaceholder(true);
     }
 
-    public Node ToPlaceholder(Node parent, bool deriveNameFromPath)
+    public Node ToPlaceholder()
+    {
+        return ToPlaceholder(false);
+    }
+
+    private Node ToPlaceholder(bool replaceInParent)
     {
         if (!AutomaticLayering) return this;
-        if (parent == null) return this;
-        if (_placeholder != null)
-        {
-            GD.PrintErr($"This {nameof(Screen)} (named '{Name}') already has a placeholder!");
-            return _placeholder;
-        }
+        if (_placeholder != null) return _placeholder;
 
+        var parent = GetParent();
+        if (parent == null) replaceInParent = false;
+        
         int index = GetIndex();
         var prevName = Name;
         var prevOwner = Owner;
-        bool replaceInParent = GetParent() == parent;
         // Remove this Screen from the scene
         if (replaceInParent)
             parent.RemoveChild(this);
 
         // Replace it with a new UserInterfacePlaceholder which has a reference to this
         var placeholder = new ScreenPlaceholder(this)
-            { Name = prevName, DeriveNameFromPath = deriveNameFromPath };
+            { Name = prevName };
         _placeholder = placeholder;
         if (replaceInParent)
         {
@@ -309,13 +339,6 @@ public partial class Screen : Control
         placeholder.Owner = prevOwner;
         placeholder.SetMultiplayerAuthority(GetMultiplayerAuthority());
 
-        // Inherit parent control position if spawned inside a control
-        if (parent is Control parentControl && InheritParentControlRect)
-        {
-            var parentRect = parentControl.GetGlobalRect();
-            Position = parentRect.Position;
-            Size = parentRect.Size;
-        }
         return placeholder;
     }
 

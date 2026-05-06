@@ -18,6 +18,7 @@ public partial class PropertyRegistry : Resource
         {
             foreach (var def in Definitions)
             {
+                if (def == null) continue;
                 string id = def.PropertyId;
                 properties[id] = def.CreateProperty();
             }
@@ -27,7 +28,7 @@ public partial class PropertyRegistry : Resource
         {
             foreach (var registry in OtherRegistries)
             {
-                registry.PopulatePropertiesDictionary(properties);
+                registry?.PopulatePropertiesDictionary(properties);
             }
         }
     }

@@ -585,15 +585,15 @@ public static class DataContext
         if (node == null) return;
         if (node is IDataContextInjectable rootInjectableNode)
         {
-            if (rootInjectableNode.CanInject(injectingSlotId))
-                rootInjectableNode.SetContexts(itemContext);
+            if (rootInjectableNode.CanInjectContext(injectingSlotId))
+                rootInjectableNode.InjectContext(injectingSlotId, itemContext);
         }
         else
         {
             foreach (var injectableNode in node.IterateChildrenOfType<IDataContextInjectable>())
-                if (injectableNode.CanInject(injectingSlotId))
+                if (injectableNode.CanInjectContext(injectingSlotId))
                 {
-                    injectableNode.SetContexts(itemContext);
+                    injectableNode.InjectContext(injectingSlotId, itemContext);
                     break;
                 }
         }
@@ -601,9 +601,7 @@ public static class DataContext
     
     public static bool CanInject(this IDataContextInjectable injectable, StringName injectingSlotId)
     {
-        var injectableSlot = injectable.GetInjectableSlotId();
-        if (injectableSlot.IsNullOrEmpty() && injectingSlotId.IsNullOrEmpty()) return true;
-        return injectingSlotId == injectableSlot;
+        return injectable.CanInjectContext(injectingSlotId);
     }
 }
 

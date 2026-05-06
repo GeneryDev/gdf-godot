@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using GDF.Util;
 using Godot;
 using Godot.Collections;
 
@@ -63,7 +64,14 @@ public partial class InjectedDataContext : Node, IDataContext, IDataContextInjec
         return InjectableSlotId;
     }
 
-    public void SetContexts(IDataContext itemContext)
+    public bool CanInjectContext(StringName injectingSlotId)
+    {
+        var injectableSlot = InjectableSlotId;
+        if (injectableSlot.IsNullOrEmpty() && injectingSlotId.IsNullOrEmpty()) return true;
+        return injectingSlotId == injectableSlot;
+    }
+
+    public void InjectContext(StringName slotId, IDataContext itemContext)
     {
         _suppressUpdate = true;
         ItemContext = itemContext;

@@ -4,6 +4,6 @@ namespace GDF.Data;
 
 public interface IDataContextInjectable
 {
-    public StringName GetInjectableSlotId();
-    public void SetContexts(IDataContext itemContext);
+    public bool CanInjectContext(StringName injectingSlotId);
+    public void InjectContext(StringName slotId, IDataContext itemContext);
 }

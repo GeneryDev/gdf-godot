@@ -352,7 +352,7 @@ public partial class NodeFactory : Node, IDataContext, IDataQueryOptions
             remainingInstantiations--;
 
             if (ConnectSignalStation != null)
-                SignalUtils.ConnectSignalStation(ConnectSignalStation, newTask.Instance);
+                newTask.Instance.ConnectSignalStation(ConnectSignalStation);
         }
         
         if (ItemSortMode != ItemSortModeEnum.Disabled) SortItems();
