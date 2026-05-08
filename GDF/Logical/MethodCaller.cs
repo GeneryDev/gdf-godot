@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using GDF.Editor;
 using GDF.Logical.Values;
+using GDF.Util;
 using Godot;
 using Godot.Collections;
 using Array = Godot.Collections.Array;
@@ -80,7 +81,7 @@ public partial class MethodCaller : TriggerableLogicNode
         if (!AuthorityMode.CanExecute(this)) return;
 
         var args = new Array();
-        PopulateArgumentArray(args);
+        if (!PopulateArgumentArray(args)) return;
 
         if (ReplicateToPeers)
         {
@@ -116,14 +117,14 @@ public partial class MethodCaller : TriggerableLogicNode
         TransferChannel = GdfConstants.DefaultRpcTransferChannel)]
     private void TriggerWithArgsRpc(Array args)
     {
-        PopulateArgumentArray(args, skipReplicated: true);
+        if (!PopulateArgumentArray(args, skipReplicated: true)) return;
         ExecuteWithArgs(args);
     }
 
     protected override Empty Execute()
     {
         var args = new Array();
-        PopulateArgumentArray(args);
+        if (!PopulateArgumentArray(args)) return default;
         return ExecuteWithArgs(args);
     }
     
@@ -134,9 +135,13 @@ public partial class MethodCaller : TriggerableLogicNode
         return base.Execute();
     }
 
-    private void PopulateArgumentArray(in Array args, bool skipReplicated = false)
+    private bool PopulateArgumentArray(in Array args, bool skipReplicated = false)
     {
-        EnsureArgumentsReady();
+        if (!EnsureArgumentsReady())
+        {
+            GD.PrintErr($"Failed to invoke {nameof(MethodCaller)} with method {Method}: too soon!\nat {this.GetSceneAndPathString()}");
+            return false;
+        }
         args.Resize(_argPropertyList.Count);
 
         for (var i = 0; i < _argPropertyList.Count; i++)
@@ -149,6 +154,8 @@ public partial class MethodCaller : TriggerableLogicNode
             
             args[i] = arg;
         }
+
+        return true;
     }
     
     private void DiscardCache()
@@ -158,9 +165,9 @@ public partial class MethodCaller : TriggerableLogicNode
         _argReplicatePropertyList = null;
     }
 
-    private void EnsureArgumentsReady()
+    private bool EnsureArgumentsReady()
     {
-        EnsurePropertyListReady();
+        if (!EnsurePropertyListReady()) return false;
 
         if (Args.Count != _argPropertyList.Count)
         {
@@ -196,13 +203,17 @@ public partial class MethodCaller : TriggerableLogicNode
                 ArgReplicate.Add(false);
             }
         }
+
+        return true;
     }
 
-    private void EnsurePropertyListReady()
+    private bool EnsurePropertyListReady()
     {
-        if (_argPropertyList != null && _argInputTypePropertyList != null && _argReplicatePropertyList != null) return;
+        if (Target == null) return false;
+        if (_argPropertyList != null && _argInputTypePropertyList != null && _argReplicatePropertyList != null) return true;
         
         UpdatePropertyList();
+        return true;
     }
 
     private Dictionary GetTargetMethodInfo()
@@ -247,10 +258,25 @@ public partial class MethodCaller : TriggerableLogicNode
             var hintString = "";
             var usage = PropertyUsageFlags.Editor;
 
-            if (inputType == ArgumentInputType.ValueSource)
+            switch (inputType)
             {
-                type = Variant.Type.Object;
-                className = nameof(ValueSource);
+                case ArgumentInputType.Constant:
+                {
+                    if (type == Variant.Type.Object && !string.IsNullOrEmpty(className))
+                    {
+                        if (ClassDB.IsParentClass(className, nameof(Resource)))
+                        {
+                            hint = PropertyHint.ResourceType;
+                            hintString = className;
+                        }
+                    }
+
+                    break;
+                }
+                case ArgumentInputType.ValueSource:
+                    type = Variant.Type.Object;
+                    className = nameof(ValueSource);
+                    break;
             }
             
             _argPropertyList.Add(new Dictionary()
@@ -291,73 +317,78 @@ public partial class MethodCaller : TriggerableLogicNode
 
     public override bool _Set(StringName property, Variant value)
     {
-        EnsureArgumentsReady();
-        var argIndex = 0;
-        foreach (var propertyInfo in _argPropertyList)
+        if (EnsureArgumentsReady())
         {
-            if (propertyInfo["name"].AsStringName() == property)
+            var argIndex = 0;
+            foreach (var propertyInfo in _argPropertyList)
             {
-                Args[argIndex] = value;
-            }
+                if (propertyInfo["name"].AsStringName() == property)
+                {
+                    Args[argIndex] = value;
+                }
 
-            argIndex++;
-        }
-        argIndex = 0;
-        foreach (var propertyInfo in _argInputTypePropertyList)
-        {
-            if (propertyInfo["name"].AsStringName() == property)
+                argIndex++;
+            }
+            argIndex = 0;
+            foreach (var propertyInfo in _argInputTypePropertyList)
             {
-                ArgInputTypes[argIndex] = value.As<ArgumentInputType>();
-                NotifyPropertyListChanged();
-            }
+                if (propertyInfo["name"].AsStringName() == property)
+                {
+                    ArgInputTypes[argIndex] = value.As<ArgumentInputType>();
+                    NotifyPropertyListChanged();
+                }
 
-            argIndex++;
-        }
-        argIndex = 0;
-        foreach (var propertyInfo in _argReplicatePropertyList)
-        {
-            if (propertyInfo["name"].AsStringName() == property)
+                argIndex++;
+            }
+            argIndex = 0;
+            foreach (var propertyInfo in _argReplicatePropertyList)
             {
-                ArgReplicate[argIndex] = value.AsBool();
-            }
+                if (propertyInfo["name"].AsStringName() == property)
+                {
+                    ArgReplicate[argIndex] = value.AsBool();
+                }
 
-            argIndex++;
+                argIndex++;
+            }
         }
         return base._Set(property, value);
     }
 
     public override Variant _Get(StringName property)
     {
-        EnsureArgumentsReady();
-        var argIndex = 0;
-        foreach (var propertyInfo in _argPropertyList)
+        if (EnsureArgumentsReady())
         {
-            if (propertyInfo["name"].AsStringName() == property)
+            
+            var argIndex = 0;
+            foreach (var propertyInfo in _argPropertyList)
             {
-                return Args[argIndex];
-            }
+                if (propertyInfo["name"].AsStringName() == property)
+                {
+                    return Args[argIndex];
+                }
 
-            argIndex++;
-        }
-        argIndex = 0;
-        foreach (var propertyInfo in _argInputTypePropertyList)
-        {
-            if (propertyInfo["name"].AsStringName() == property)
+                argIndex++;
+            }
+            argIndex = 0;
+            foreach (var propertyInfo in _argInputTypePropertyList)
             {
-                return Variant.From(ArgInputTypes[argIndex]);
-            }
+                if (propertyInfo["name"].AsStringName() == property)
+                {
+                    return Variant.From(ArgInputTypes[argIndex]);
+                }
 
-            argIndex++;
-        }
-        argIndex = 0;
-        foreach (var propertyInfo in _argReplicatePropertyList)
-        {
-            if (propertyInfo["name"].AsStringName() == property)
+                argIndex++;
+            }
+            argIndex = 0;
+            foreach (var propertyInfo in _argReplicatePropertyList)
             {
-                return ArgReplicate[argIndex];
-            }
+                if (propertyInfo["name"].AsStringName() == property)
+                {
+                    return ArgReplicate[argIndex];
+                }
 
-            argIndex++;
+                argIndex++;
+            }
         }
         return base._Get(property);
     }

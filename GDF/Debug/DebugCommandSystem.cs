@@ -20,7 +20,23 @@ public partial class DebugCommandSystem : SingletonNode<DebugCommandSystem>
     private static readonly System.Collections.Generic.Dictionary<string, DebugCommandDefinition> Definitions = new();
 
     private static HashSet<string> _toggledCommands = new();
-    private static System.Collections.Generic.Dictionary<string, Node> _shownScreens = new(); 
+    private static System.Collections.Generic.Dictionary<string, Node> _shownScreens = new();
+
+    private DebugLogger _debugLogger;
+    public static DebugLogger DebugLogger => Instance._debugLogger;
+
+    public override void _EnterTree()
+    {
+        base._EnterTree();
+        _debugLogger ??= new();
+        OS.AddLogger(_debugLogger);
+    }
+
+    public override void _ExitTree()
+    {
+        base._ExitTree();
+        OS.RemoveLogger(_debugLogger);
+    }
 
     public static bool IsCommandToggled(string id)
     {

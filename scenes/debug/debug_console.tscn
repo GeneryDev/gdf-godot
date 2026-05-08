@@ -1,7 +1,12 @@
-[gd_scene load_steps=6 format=3 uid="uid://kpb1thijbnn0"]
+[gd_scene load_steps=13 format=3 uid="uid://kpb1thijbnn0"]
 
 [ext_resource type="Script" uid="uid://jl4mwghq44pu" path="res://addons/gdf-godot/GDF/UI/Screen.cs" id="1_57f21"]
 [ext_resource type="Script" uid="uid://lluapp1yahuy" path="res://addons/gdf-godot/GDF/Debug/DebugCommandLineEdit.cs" id="2_bmctx"]
+[ext_resource type="Script" uid="uid://dibp752vhyxl" path="res://addons/gdf-godot/GDF/Debug/DebugLoggerInterface.cs" id="2_csu5r"]
+[ext_resource type="Script" uid="uid://c14yvt8al8vd0" path="res://addons/gdf-godot/GDF/Data/InjectedDataContext.cs" id="3_xgco5"]
+[ext_resource type="Script" uid="uid://dq2lqcbnowc7j" path="res://addons/gdf-godot/GDF/Data/DataBinding.cs" id="4_csu5r"]
+[ext_resource type="Script" uid="uid://rbl3yky4viqg" path="res://addons/gdf-godot/GDF/Logical/MethodCaller.cs" id="5_qc5u5"]
+[ext_resource type="Script" uid="uid://gh35tdiyc667" path="res://addons/gdf-godot/GDF/Logical/Values/ValueFromNodePath.cs" id="6_43boc"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7i6b5"]
 content_margin_left = 0.0
@@ -14,6 +19,13 @@ corner_radius_top_right = 3
 corner_radius_bottom_right = 3
 corner_radius_bottom_left = 3
 corner_detail = 5
+
+[sub_resource type="Resource" id="Resource_43boc"]
+script = ExtResource("6_43boc")
+NodePath = NodePath("../../ScrollContainer")
+metadata/_custom_type_script = "uid://gh35tdiyc667"
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_xgco5"]
 
 [sub_resource type="InputEventKey" id="InputEventKey_57f21"]
 device = -1
@@ -71,9 +83,41 @@ autowrap_mode = 0
 layout_mode = 2
 size_flags_vertical = 3
 
+[node name="Debug Logger Interface" type="Node" parent="PanelContainer/MarginContainer/VBoxContainer/PanelContainer"]
+script = ExtResource("2_csu5r")
+
+[node name="Debug Logger Context" type="Node" parent="PanelContainer/MarginContainer/VBoxContainer/PanelContainer/Debug Logger Interface"]
+script = ExtResource("3_xgco5")
+DefaultVariableValues = {}
+DefaultCollections = {}
+EditorPreviewVariables = {}
+metadata/_custom_type_script = "uid://c14yvt8al8vd0"
+
+[node name="Context Binding" type="Node" parent="PanelContainer/MarginContainer/VBoxContainer/PanelContainer/Debug Logger Interface/Debug Logger Context" node_paths=PackedStringArray("DataContext", "TargetNode")]
+script = ExtResource("4_csu5r")
+DataContext = NodePath("../..")
+Query = "{debug_logger}"
+QueryType = 2
+TargetNode = NodePath("..")
+metadata/_custom_type_script = "uid://dq2lqcbnowc7j"
+
+[node name="Scroll to bottom" type="Node" parent="PanelContainer/MarginContainer/VBoxContainer/PanelContainer/Debug Logger Interface" node_paths=PackedStringArray("Target")]
+script = ExtResource("5_qc5u5")
+Target = NodePath("..")
+Method = &"ScrollToBottom"
+Args = [SubResource("Resource_43boc")]
+ArgInputTypes = Array[int]([1])
+ArgReplicate = Array[bool]([false])
+metadata/_custom_type_script = "uid://rbl3yky4viqg"
+
+[node name="Update Delay" type="Timer" parent="PanelContainer/MarginContainer/VBoxContainer/PanelContainer/Debug Logger Interface/Scroll to bottom"]
+wait_time = 0.1
+one_shot = true
+
 [node name="ScrollContainer" type="ScrollContainer" parent="PanelContainer/MarginContainer/VBoxContainer/PanelContainer"]
 layout_mode = 2
 size_flags_vertical = 3
+follow_focus = true
 
 [node name="MarginContainer" type="MarginContainer" parent="PanelContainer/MarginContainer/VBoxContainer/PanelContainer/ScrollContainer"]
 layout_mode = 2
@@ -90,9 +134,26 @@ layout_mode = 2
 [node name="RichTextLabel" type="RichTextLabel" parent="PanelContainer/MarginContainer/VBoxContainer/PanelContainer/ScrollContainer/MarginContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
-mouse_filter = 2
+focus_mode = 2
+theme_override_styles/focus = SubResource("StyleBoxEmpty_xgco5")
 text = "Logs coming soon here"
+fit_content = true
+scroll_active = false
 vertical_alignment = 2
+selection_enabled = true
+
+[node name="Text Binding" type="Node" parent="PanelContainer/MarginContainer/VBoxContainer/PanelContainer/ScrollContainer/MarginContainer/VBoxContainer/RichTextLabel" node_paths=PackedStringArray("DataContext", "TargetNode")]
+script = ExtResource("4_csu5r")
+DataContext = NodePath("../../../../../Debug Logger Interface/Debug Logger Context")
+Query = "{log_text}"
+TargetNode = NodePath("..")
+TargetPropertyName = "text"
+UpdateOutsideTree = false
+metadata/_custom_type_script = "uid://dq2lqcbnowc7j"
+
+[node name="Bottom" type="Control" parent="PanelContainer/MarginContainer/VBoxContainer/PanelContainer/ScrollContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+mouse_filter = 2
 
 [node name="HBoxContainer2" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxContainer"]
 layout_mode = 2
@@ -113,5 +174,7 @@ mouse_filter = 2
 shortcut = SubResource("Shortcut_bmctx")
 
 [connection signal="ScreenShown" from="." to="PanelContainer/MarginContainer/VBoxContainer/HBoxContainer2/LineEdit" method="grab_focus" flags=3]
+[connection signal="timeout" from="PanelContainer/MarginContainer/VBoxContainer/PanelContainer/Debug Logger Interface/Scroll to bottom/Update Delay" to="PanelContainer/MarginContainer/VBoxContainer/PanelContainer/Debug Logger Interface/Scroll to bottom" method="Trigger" flags=3]
+[connection signal="Updated" from="PanelContainer/MarginContainer/VBoxContainer/PanelContainer/ScrollContainer/MarginContainer/VBoxContainer/RichTextLabel/Text Binding" to="PanelContainer/MarginContainer/VBoxContainer/PanelContainer/Debug Logger Interface/Scroll to bottom/Update Delay" method="start"]
 [connection signal="CloseRequested" from="PanelContainer/MarginContainer/VBoxContainer/HBoxContainer2/LineEdit" to="." method="HideAndFreeScreen" flags=3]
 [connection signal="pressed" from="Button" to="." method="HideAndFreeScreen" flags=3]
