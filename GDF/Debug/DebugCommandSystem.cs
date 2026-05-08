@@ -17,10 +17,14 @@ public partial class DebugCommandSystem : SingletonNode<DebugCommandSystem>
     [Export] public Array<DebugCommandMacro> Macros = new();
     
 #if DEBUG
+    private const int MaxHistory = 50;
+    
     private static readonly System.Collections.Generic.Dictionary<string, DebugCommandDefinition> Definitions = new();
 
-    private static HashSet<string> _toggledCommands = new();
-    private static System.Collections.Generic.Dictionary<string, Node> _shownScreens = new();
+    private static readonly HashSet<string> ToggledCommands = new();
+    private static readonly System.Collections.Generic.Dictionary<string, Node> ShownScreens = new();
+
+    private static readonly List<string> History = new();
 
     private DebugLogger _debugLogger;
     public static DebugLogger DebugLogger => Instance._debugLogger;
@@ -40,14 +44,14 @@ public partial class DebugCommandSystem : SingletonNode<DebugCommandSystem>
 
     public static bool IsCommandToggled(string id)
     {
-        return _toggledCommands.Contains(id);
+        return ToggledCommands.Contains(id);
     }
 
     public static bool ToggleCommand(string id)
     {
-        if (!_toggledCommands.Add(id))
+        if (!ToggledCommands.Add(id))
         {
-            _toggledCommands.Remove(id);
+            ToggledCommands.Remove(id);
             return false;
         }
         else
@@ -56,18 +60,44 @@ public partial class DebugCommandSystem : SingletonNode<DebugCommandSystem>
         }
     }
 
-    public static void SubmitCommand(string id)
+    public static void SubmitCommand(string command, bool appendToHistory = false)
     {
-        if (!Definitions.TryGetValue(id, out var def))
+        command = command.Trim();
+        if (string.IsNullOrEmpty(command)) return;
+        
+        if (appendToHistory)
+            AppendToHistory(command);
+        
+        if (!Definitions.TryGetValue(command, out var def))
         {
-            GD.Print($"No such command '{id}'");
+            GD.Print($"No such command '{command}'");
             return;
         }
 
-        def.TriggerAction();
-        GD.Print($"Executed debug command '{id}'");
+        try
+        {
+            def.TriggerAction();
+        }
+        catch (Exception ex)
+        {
+            GD.Print($"Exception while running debug command '{command}':\n{ex}");
+        }
+        GD.Print($"Executed debug command '{command}'");
     }
-    
+
+    private static void AppendToHistory(string command)
+    {
+        if (History.Count > 0 && History[^1] == command) return;
+        History.Add(command);
+        while (History.Count > MaxHistory)
+            History.RemoveAt(0);
+    }
+
+    public static List<string> GetCommandHistory()
+    {
+        return History;
+    }
+
     public override void _Ready()
     {
         PopulateDefinitions();
@@ -235,12 +265,12 @@ public partial class DebugCommandSystem : SingletonNode<DebugCommandSystem>
 
     public static bool IsScreenShowing(string scenePath)
     {
-        return _shownScreens.TryGetValue(scenePath, out var node) && IsInstanceValid(node);
+        return ShownScreens.TryGetValue(scenePath, out var node) && IsInstanceValid(node);
     }
 
     public static void ShowScreen(string scenePath)
     {
-        if (_shownScreens.TryGetValue(scenePath, out var existing))
+        if (ShownScreens.TryGetValue(scenePath, out var existing))
         {
             if (IsInstanceValid(existing))
             {
@@ -254,17 +284,33 @@ public partial class DebugCommandSystem : SingletonNode<DebugCommandSystem>
         var instantiated = scene.GdfInstantiate();
         if (instantiated is Screen screen)
             instantiated = screen.ToPlaceholder();
-        _shownScreens[scenePath] = instantiated;
+        ShownScreens[scenePath] = instantiated;
         treeRoot.AddChild(instantiated);
     }
 
     public static void CloseScreen(string scenePath)
     {
-        if (!_shownScreens.TryGetValue(scenePath, out var existing)) return;
+        if (!ShownScreens.TryGetValue(scenePath, out var existing)) return;
         if (!IsInstanceValid(existing)) return;
         
         existing.QueueFree();
-        _shownScreens.Remove(scenePath);
+        ShownScreens.Remove(scenePath);
+    }
+
+    public static bool AutocompleteCommand(string command, out string suggested)
+    {
+        suggested = null;
+        if (command.Length == 0) return false;
+        foreach ((var id, var def) in Definitions)
+        {
+            if (id.Length > command.Length && id.StartsWith(command))
+            {
+                suggested = id;
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private struct DebugCommandDefinition

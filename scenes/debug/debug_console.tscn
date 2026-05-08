@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://kpb1thijbnn0"]
+[gd_scene load_steps=14 format=3 uid="uid://kpb1thijbnn0"]
 
 [ext_resource type="Script" uid="uid://jl4mwghq44pu" path="res://addons/gdf-godot/GDF/UI/Screen.cs" id="1_57f21"]
 [ext_resource type="Script" uid="uid://lluapp1yahuy" path="res://addons/gdf-godot/GDF/Debug/DebugCommandLineEdit.cs" id="2_bmctx"]
@@ -24,6 +24,9 @@ corner_detail = 5
 script = ExtResource("6_43boc")
 NodePath = NodePath("../../ScrollContainer")
 metadata/_custom_type_script = "uid://gh35tdiyc667"
+
+[sub_resource type="SystemFont" id="SystemFont_43boc"]
+font_names = PackedStringArray("Consolas", "Monospace")
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_xgco5"]
 
@@ -133,7 +136,7 @@ TargetMethodInfo = {
 metadata/_custom_type_script = "uid://rbl3yky4viqg"
 
 [node name="Update Delay" type="Timer" parent="PanelContainer/MarginContainer/VBoxContainer/PanelContainer/Debug Logger Interface/Scroll to bottom"]
-wait_time = 0.1
+wait_time = 0.009999999999999998
 one_shot = true
 
 [node name="ScrollContainer" type="ScrollContainer" parent="PanelContainer/MarginContainer/VBoxContainer/PanelContainer"]
@@ -157,6 +160,7 @@ layout_mode = 2
 layout_mode = 2
 size_flags_vertical = 3
 focus_mode = 2
+theme_override_fonts/normal_font = SubResource("SystemFont_43boc")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_xgco5")
 text = "Logs coming soon here"
 fit_content = true
@@ -181,8 +185,10 @@ mouse_filter = 2
 layout_mode = 2
 
 [node name="LineEdit" type="LineEdit" parent="PanelContainer/MarginContainer/VBoxContainer/HBoxContainer2"]
+custom_minimum_size = Vector2(0, 31)
 layout_mode = 2
 size_flags_horizontal = 3
+theme_override_fonts/font = SubResource("SystemFont_43boc")
 placeholder_text = "Type in command..."
 keep_editing_on_text_submit = true
 script = ExtResource("2_bmctx")

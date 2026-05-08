@@ -11,7 +11,7 @@ public partial class DebugLogger : Logger, IDataContext
     [Signal]
     public delegate void UpdatedEventHandler();
     
-    public const int Capacity = 100;
+    public const int Capacity = 256;
     private readonly List<string> _loggedLines = new();
 
     private StringBuilder _sb = new();
@@ -21,6 +21,17 @@ public partial class DebugLogger : Logger, IDataContext
         Array<ScriptBacktrace> scriptBacktraces)
     {
         base._LogError(function, file, line, code, rationale, editorNotify, errorType, scriptBacktraces);
+        _sb.Clear();
+        _sb.Append(code).Append(' ').Append(rationale).Append('\n');
+        _sb.Append("\tat: ").Append(function).Append(" (").Append(file).Append(':').Append(line).Append(')').Append('\n');
+        foreach (var backtrace in scriptBacktraces)
+        {
+            _sb.Append(backtrace.Format()).Append('\n');
+        }
+
+        var text = _sb.ToString();
+        _sb.Clear();
+        AddLogLine(text);
     }
 
     public override void _LogMessage(string message, bool error)
