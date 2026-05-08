@@ -69,6 +69,8 @@ public partial class MethodCaller : TriggerableLogicNode
 
     [Export]
     public Array<bool> ArgReplicate = new();
+
+    [Export] public Dictionary TargetMethodInfo = new();
     
     private Array<Dictionary> _argPropertyList = null;
     private Array<Dictionary> _argInputTypePropertyList = null;
@@ -218,6 +220,8 @@ public partial class MethodCaller : TriggerableLogicNode
 
     private Dictionary GetTargetMethodInfo()
     {
+        if (!Engine.IsEditorHint() && TargetMethodInfo is { Count: > 0 }) return TargetMethodInfo;
+        
         if (Target == null) return null;
         foreach (var methodInfo in Target.GetMethodList())
         {
@@ -466,6 +470,7 @@ public partial class MethodCaller : TriggerableLogicNode
         _argReplicatePropertyList ??= new();
         _argReplicatePropertyList.Clear();
         var targetMethodInfo = GetTargetMethodInfo();
+        TargetMethodInfo = targetMethodInfo;
         if (targetMethodInfo != null)
         {
             // GD.Print(EditorUtils.GetMethodSignatureText(targetMethodInfo));
@@ -487,7 +492,7 @@ public partial class MethodCaller : TriggerableLogicNode
     {
         var propertyName = property["name"].AsStringName();
         var usage = property["usage"].As<PropertyUsageFlags>();
-        if (propertyName == PropertyName.Args || propertyName == PropertyName.ArgInputTypes || propertyName == PropertyName.ArgReplicate)
+        if (propertyName == PropertyName.Args || propertyName == PropertyName.ArgInputTypes || propertyName == PropertyName.ArgReplicate || propertyName == PropertyName.TargetMethodInfo)
         {
             usage &= ~(PropertyUsageFlags.Editor);
         }

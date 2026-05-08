@@ -108,6 +108,28 @@ Method = &"ScrollToBottom"
 Args = [SubResource("Resource_43boc")]
 ArgInputTypes = Array[int]([1])
 ArgReplicate = Array[bool]([false])
+TargetMethodInfo = {
+"args": Array[Dictionary]([{
+"class_name": &"ScrollContainer",
+"hint": 0,
+"hint_string": "",
+"name": "container",
+"type": 24,
+"usage": 6
+}]),
+"default_args": [],
+"flags": 1,
+"id": 0,
+"name": "ScrollToBottom",
+"return": {
+"class_name": &"",
+"hint": 0,
+"hint_string": "",
+"name": "",
+"type": 0,
+"usage": 6
+}
+}
 metadata/_custom_type_script = "uid://rbl3yky4viqg"
 
 [node name="Update Delay" type="Timer" parent="PanelContainer/MarginContainer/VBoxContainer/PanelContainer/Debug Logger Interface/Scroll to bottom"]
