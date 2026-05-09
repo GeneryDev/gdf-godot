@@ -19,8 +19,12 @@ public partial class SceneSummary : Resource
     }
     public static string ScenePathFromSummaryPath(string summaryPath)
     {
-        if (!summaryPath.StartsWith(SummaryPathSuffix)) return null;
+        if (!IsSummaryPath(SummaryPathSuffix)) return null;
         return summaryPath[..^SummaryPathSuffix.Length];
+    }
+    public static bool IsSummaryPath(string path)
+    {
+        return path.StartsWith(SummaryPathSuffix);
     }
 
     public void Clear()

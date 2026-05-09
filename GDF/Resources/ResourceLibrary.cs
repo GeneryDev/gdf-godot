@@ -28,9 +28,9 @@ public abstract partial class ResourceLibrary<TRes, TSub> : Node, IResourceLibra
     }
     protected virtual void OnResourceRegistered(StringName id, string path) {}
 
-    protected virtual bool AcceptsFilename(string filename)
+    protected virtual bool AcceptsFilePath(string filePath)
     {
-        return filename.EndsWith(".tres");
+        return filePath.EndsWith(".tres");
     }
 
     public ResourceLibrary()
@@ -118,11 +118,11 @@ public abstract partial class ResourceLibrary<TRes, TSub> : Node, IResourceLibra
                 string filename = rawFilename;
                 // Workaround for https://github.com/godotengine/godot/issues/66014
                 if (filename.EndsWith(".remap")) filename = filename[..^".remap".Length];
+                string filePath = dirPath + '/' + filename;
 
-                if (!_instance.AcceptsFilename(filename)) continue;
+                if (!_instance.AcceptsFilePath(filePath)) continue;
                 string filenameNoExtension = filename[..filename.LastIndexOf('.')];
 
-                string filePath = dirPath + '/' + filename;
                 string subName = (namePrefix ?? "") + filenameNoExtension;
                 RegisterResourceById(subName, filePath);
             }

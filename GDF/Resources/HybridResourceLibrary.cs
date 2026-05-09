@@ -4,7 +4,7 @@ using Godot;
 
 namespace GDF.Resources;
 
-public abstract partial class SceneResourceLibrary<T> : ResourceLibrary<PackedScene, T>
+public abstract partial class HybridResourceLibrary<T> : ResourceLibrary<Resource, T>
 {
     private static readonly Dictionary<StringName, T> IdsToReferences = new();
 
@@ -15,22 +15,22 @@ public abstract partial class SceneResourceLibrary<T> : ResourceLibrary<PackedSc
 
     protected override bool AcceptsFilePath(string filePath)
     {
-        return filePath.EndsWith(".tscn");
+        return (filePath.EndsWith(".tscn") || filePath.EndsWith(".tres")) && !SceneSummary.IsSummaryPath(filePath);
     }
 
     public new static Descriptor FromId(StringName id)
     {
-        return ResourceLibrary<PackedScene, T>.FromId(id);
+        return ResourceLibrary<Resource, T>.FromId(id);
     }
 
     public new static Descriptor FromPath(string path)
     {
-        return ResourceLibrary<PackedScene, T>.FromPath(path);
+        return ResourceLibrary<Resource, T>.FromPath(path);
     }
 
-    public new static Descriptor From(PackedScene scene)
+    public new static Descriptor From(Resource resource)
     {
-        return ResourceLibrary<PackedScene, T>.From(scene);
+        return ResourceLibrary<Resource, T>.From(resource);
     }
 
     public static Descriptor From(T instance)
@@ -52,7 +52,7 @@ public abstract partial class SceneResourceLibrary<T> : ResourceLibrary<PackedSc
 
     public new static Descriptor FromIdOrPath(Variant variant)
     {
-        return ResourceLibrary<PackedScene, T>.FromIdOrPath(variant);
+        return ResourceLibrary<Resource, T>.FromIdOrPath(variant);
     }
 
     private static void FreeReferences()
@@ -76,19 +76,20 @@ public abstract partial class SceneResourceLibrary<T> : ResourceLibrary<PackedSc
 
     public new readonly struct Descriptor
     {
-        private readonly ResourceLibrary<PackedScene, T>.Descriptor _innerDescriptor;
+        private readonly ResourceLibrary<Resource, T>.Descriptor _innerDescriptor;
 
         public StringName Id => _innerDescriptor.Id;
 
         public bool IsEmpty => _innerDescriptor.IsEmpty;
 
-        public PackedScene Scene => _innerDescriptor.Resource;
+        public Resource Resource => _innerDescriptor.Resource;
 
         public SceneSummary Summary
         {
             get
             {
                 if (IsEmpty) return default;
+                if (!IsScene) return default;
                 return SceneSummary.From(Path);
             }
         }
@@ -104,36 +105,42 @@ public abstract partial class SceneResourceLibrary<T> : ResourceLibrary<PackedSc
         }
 
         public string Path => GetPathForId(Id);
+        public bool IsScene => Path is {} path && path.EndsWith(".tscn");
 
-        public Descriptor(ResourceLibrary<PackedScene, T>.Descriptor innerDescriptor)
+        public Descriptor(ResourceLibrary<Resource, T>.Descriptor innerDescriptor)
         {
             _innerDescriptor = innerDescriptor;
-        }
-
-        public T New()
-        {
-            if (IsEmpty) return default;
-            return Scene.GdfInstantiate<T>() ?? default;
         }
 
         // Factory methods
 
         private T CreateReference()
         {
-            if (Summary == null)
+            if (IsScene)
             {
-                GD.PrintErr($"Failed to create reference instance for '{Id}': No summary exists.");
+                if (Summary == null)
+                {
+                    GD.PrintErr($"Failed to create reference instance for '{Id}': No summary exists.");
+                    return default;
+                }
+                var constructed = Summary.ConstructRootInstance();
+                if (constructed == null)
+                {
+                    GD.PrintErr($"Failed to create reference instance for '{Id}': Instantiation failed.");
+                    return default;
+                }
+                if (constructed is T t) return t;
+                GD.PrintErr($"Failed to create reference instance for '{Id}': Scene's root node is not of type {typeof(T).Namespace}.");
                 return default;
             }
-            var constructed = Summary.ConstructRootInstance();
-            if (constructed == null)
+            else
             {
-                GD.PrintErr($"Failed to create reference instance for '{Id}': Instantiation failed.");
-                return default;
+                return _innerDescriptor.Resource switch
+                {
+                    T t => t,
+                    _ => default
+                };
             }
-            if (constructed is T t) return t;
-            GD.PrintErr($"Failed to create reference instance for '{Id}': Scene's root node is not of type {typeof(T).Namespace}.");
-            return default;
         }
 
         // Operators
@@ -163,7 +170,7 @@ public abstract partial class SceneResourceLibrary<T> : ResourceLibrary<PackedSc
             return !left.Equals(right);
         }
 
-        public static implicit operator Descriptor(ResourceLibrary<PackedScene, T>.Descriptor descriptor)
+        public static implicit operator Descriptor(ResourceLibrary<Resource, T>.Descriptor descriptor)
         {
             return new Descriptor(descriptor);
         }
@@ -173,9 +180,9 @@ public abstract partial class SceneResourceLibrary<T> : ResourceLibrary<PackedSc
             return From(instance);
         }
 
-        public static implicit operator Descriptor(PackedScene scene)
+        public static implicit operator Descriptor(Resource resource)
         {
-            return From(scene);
+            return From(resource);
         }
     }
 }
