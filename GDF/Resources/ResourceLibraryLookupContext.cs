@@ -43,6 +43,8 @@ public partial class ResourceLibraryLookupContext : Node, IDataContext
 
     private bool _connectedToResourceLibrarySystem = false;
 
+    private readonly List<StringName> _tempOutput = new();
+
     private void Update()
     {
         if (!_connectedToResourceLibrarySystem && !Engine.IsEditorHint())
@@ -111,22 +113,26 @@ public partial class ResourceLibraryLookupContext : Node, IDataContext
             {
                 var library = ResourceLibrarySystem.GetLibraryByTypeString(LibraryTypeString);
                 if (library == null) return false;
-                foreach (var id in library.GetAllIds())
+                _tempOutput.Clear();
+                foreach (var id in library.CollectAllIds(_tempOutput))
                 {
                     var obj = library.GetObject(id);
                     if(obj is IDataContext ctx) output.Add(ctx);
                 }
+                _tempOutput.Clear();
                 return true;
             }
             case "all_in_library":
             {
                 var library = ResourceLibrarySystem.GetLibraryByTypeString(input);
                 if (library == null) return false;
-                foreach (var id in library.GetAllIds())
+                _tempOutput.Clear();
+                foreach (var id in library.CollectAllIds(_tempOutput))
                 {
                     var obj = library.GetObject(id);
                     if(obj is IDataContext ctx) output.Add(ctx);
                 }
+                _tempOutput.Clear();
                 return true;
             }
         }

@@ -55,6 +55,17 @@ public abstract partial class HybridResourceLibrary<T> : ResourceLibrary<Resourc
         return ResourceLibrary<Resource, T>.FromIdOrPath(variant);
     }
 
+    public static List<Descriptor> CollectAll(List<Descriptor> output)
+    {
+        output ??= new();
+        foreach (var (id, _) in GetResourcePathsById())
+        {
+            output.Add(FromId(id));
+        }
+
+        return output;
+    }
+
     private static void FreeReferences()
     {
         if (Engine.IsEditorHint()) return;
@@ -120,17 +131,17 @@ public abstract partial class HybridResourceLibrary<T> : ResourceLibrary<Resourc
             {
                 if (Summary == null)
                 {
-                    GD.PrintErr($"Failed to create reference instance for '{Id}': No summary exists.");
+                    PrintErr($"Failed to create reference instance for '{Id}': No summary exists.");
                     return default;
                 }
                 var constructed = Summary.ConstructRootInstance();
                 if (constructed == null)
                 {
-                    GD.PrintErr($"Failed to create reference instance for '{Id}': Instantiation failed.");
+                    PrintErr($"Failed to create reference instance for '{Id}': Instantiation failed.");
                     return default;
                 }
                 if (constructed is T t) return t;
-                GD.PrintErr($"Failed to create reference instance for '{Id}': Scene's root node is not of type {typeof(T).Namespace}.");
+                PrintErr($"Failed to create reference instance for '{Id}': Scene's root node is not of type {typeof(T).Namespace}.");
                 return default;
             }
             else

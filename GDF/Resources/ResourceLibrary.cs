@@ -171,6 +171,8 @@ public abstract partial class ResourceLibrary<TRes, TSub> : Node, IResourceLibra
 
     int IResourceLibrary.ResourceCount => ResourcePathsById.Count;
 
+    protected static Dictionary<StringName, string> GetResourcePathsById() => ResourcePathsById;
+
     public static bool IsIdValid(StringName id)
     {
         if (Engine.IsEditorHint()) ScanRoots();
@@ -257,33 +259,36 @@ public abstract partial class ResourceLibrary<TRes, TSub> : Node, IResourceLibra
         return loaded;
     }
 
-    public static Dictionary<StringName, string>.KeyCollection GetAllIds()
+    public static List<StringName> CollectAllIds(List<StringName> output)
     {
-        if (Engine.IsEditorHint()) ScanRoots();
-        return ResourcePathsById.Keys;
+        output ??= new();
+        foreach (var (id, _) in ResourcePathsById)
+        {
+            output.Add(id);
+        }
+
+        return output;
     }
 
-    IEnumerable<StringName> IResourceLibrary.GetAllIds()
+    public static List<Descriptor> CollectAll(List<Descriptor> output)
     {
-        return GetAllIds();
+        output ??= new();
+        foreach (var (id, _) in ResourcePathsById)
+        {
+            output.Add(FromId(id));
+        }
+
+        return output;
+    }
+
+    List<StringName> IResourceLibrary.CollectAllIds(List<StringName> output)
+    {
+        return CollectAllIds(output);
     }
 
     public virtual GodotObject GetObject(StringName id)
     {
         return GetCachedResource(id, GetPathForId(id));
-    }
-
-    public static void CollectWithTag<T, TTag>(TTag tag, IList<T> output) where T : TRes, ITagged<TTag>
-    {
-        foreach (var packId in GetAllIds())
-        {
-            var descriptor = FromId(packId);
-            var res = descriptor.Resource;
-            var typedRes = (T)res;
-            if (!typedRes.HasTag(tag)) continue;
-
-            output.Add(typedRes);
-        }
     }
     
     public static Descriptor FromId(StringName id)
@@ -418,7 +423,7 @@ public interface IResourceLibrary
     string GetPathForId(StringName id);
     StringName GetIdForPath(string path);
 
-    IEnumerable<StringName> GetAllIds();
+    List<StringName> CollectAllIds(List<StringName> output);
     string GetLibraryTypeString();
     public void ScanRoots();
 
@@ -427,15 +432,19 @@ public interface IResourceLibrary
 
 public static class ResourceLibraryExtensions
 {
+    private static readonly List<StringName> TempIds = new();
+    
     public static string GetAllIdsCommaSeparated(this IResourceLibrary library)
     {
         var sb = new StringBuilder();
-        foreach (var id in library.GetAllIds())
+        TempIds.Clear();
+        foreach (var id in library.CollectAllIds(TempIds))
         {
             if(sb.Length > 0)
                 sb.Append(',');
             sb.Append(id);
         }
+        TempIds.Clear();
 
         return sb.ToString();
     }
