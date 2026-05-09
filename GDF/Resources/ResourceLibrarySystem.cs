@@ -10,8 +10,7 @@ using Array = System.Array;
 
 namespace GDF.Resources;
 
-[GlobalClass]
-public partial class ResourceLibrarySystem : SingletonNode<ResourceLibrarySystem>
+public static class ResourceLibrarySystem
 {
     public static CallableEvent LibrariesUpdated = new();
     
