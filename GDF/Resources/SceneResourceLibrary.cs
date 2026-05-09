@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using GDF.Util;
 using Godot;
 
 namespace GDF.Resources;
@@ -107,6 +108,12 @@ public abstract partial class SceneResourceLibrary<T> : ResourceLibrary<PackedSc
         public Descriptor(ResourceLibrary<PackedScene, T>.Descriptor innerDescriptor)
         {
             _innerDescriptor = innerDescriptor;
+        }
+
+        public T New()
+        {
+            if (IsEmpty) return default;
+            return Scene.GdfInstantiate<T>() ?? default;
         }
 
         // Factory methods
