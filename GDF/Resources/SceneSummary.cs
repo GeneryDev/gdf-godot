@@ -30,7 +30,7 @@ public partial class SceneSummary : Resource
         RootNodeProperties.Clear();
     }
 
-    public Node ReconstructRoot()
+    public Node ConstructRootInstance()
     {
         var instance = ((CSharpScript)RootNodeScript).New().As<SummarizableScene>();
         if (instance != null)
