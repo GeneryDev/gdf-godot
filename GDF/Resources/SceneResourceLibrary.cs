@@ -54,6 +54,25 @@ public abstract partial class SceneResourceLibrary<T> : ResourceLibrary<PackedSc
         return ResourceLibrary<PackedScene, T>.FromIdOrPath(variant);
     }
 
+    private static void FreeReferences()
+    {
+        if (Engine.IsEditorHint()) return;
+        foreach (var (_, reference) in IdsToReferences)
+        {
+            (reference as Node)?.Free();
+        }
+        IdsToReferences.Clear();
+    }
+
+    public override void _Notification(int what)
+    {
+        base._Notification(what);
+        if (what == NotificationPredelete)
+        {
+            FreeReferences();
+        }
+    }
+
     public new readonly struct Descriptor
     {
         private readonly ResourceLibrary<PackedScene, T>.Descriptor _innerDescriptor;

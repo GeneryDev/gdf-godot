@@ -45,7 +45,7 @@ public partial class ResourceLibraryLookupContext : Node, IDataContext
 
     private void Update()
     {
-        if (!_connectedToResourceLibrarySystem)
+        if (!_connectedToResourceLibrarySystem && !Engine.IsEditorHint())
         {
             ResourceLibrarySystem.LibrariesUpdated.Connect(new Callable(this, MethodName.Update));
             _connectedToResourceLibrarySystem = true;
