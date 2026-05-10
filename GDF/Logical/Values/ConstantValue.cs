@@ -27,6 +27,7 @@ public partial class ConstantValue : ValueSource
     [Export(PropertyHint.Expression)] public string ExpressionOutput = "";
 
     private string _lastTypedExpr = "";
+    private Array _emptyInputArray = new();
 
     private void SetValueAsExpression(string rawExpr)
     {
@@ -38,7 +39,7 @@ public partial class ConstantValue : ValueSource
         var err = expr.Parse(rawExpr);
         if (err == Error.Ok)
         {
-            var result = expr.Execute(showError: false);
+            var result = expr.Execute(_emptyInputArray, showError: false);
             if (!expr.HasExecuteFailed())
             {
                 var undoRedo = EditorInterface.Singleton.GetEditorUndoRedo();
