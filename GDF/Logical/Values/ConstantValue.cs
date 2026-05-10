@@ -71,6 +71,7 @@ public partial class ConstantValue : ValueSource
 
     public override void _ValidateProperty(Dictionary property)
     {
+        base._ValidateProperty(property);
         var propName = property["name"].AsStringName();
         var usage = property["usage"].As<PropertyUsageFlags>();
 

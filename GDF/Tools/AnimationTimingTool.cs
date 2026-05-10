@@ -499,6 +499,7 @@ public partial class AnimationTimingTool : Node
 
     public override void _ValidateProperty(Dictionary property)
     {
+        base._ValidateProperty(property);
         var propertyName = property["name"].AsStringName();
         var usage = property["usage"].As<PropertyUsageFlags>();
         if (propertyName == PropertyName.OriginalControlPoints ||

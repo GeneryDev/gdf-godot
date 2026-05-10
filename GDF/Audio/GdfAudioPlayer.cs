@@ -611,6 +611,7 @@ public partial class GdfAudioPlayer : Node
 
     public override void _ValidateProperty(Dictionary property)
     {
+        base._ValidateProperty(property);
         if (!Engine.IsEditorHint()) return;
         
         var propName = property["name"].AsStringName();

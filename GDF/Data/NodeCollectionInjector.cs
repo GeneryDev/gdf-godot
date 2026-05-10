@@ -189,6 +189,7 @@ public partial class NodeCollectionInjector : Node, IDataContext, IDataContextCo
 #if TOOLS
     public override void _ValidateProperty(Godot.Collections.Dictionary property)
     {
+        base._ValidateProperty(property);
         var propName = property["name"].AsStringName();
         var usage = property["usage"].As<PropertyUsageFlags>();
 
