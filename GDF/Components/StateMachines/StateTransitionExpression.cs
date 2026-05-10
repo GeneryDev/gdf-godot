@@ -28,6 +28,8 @@ public partial class StateTransitionExpression : StateTransition
     
     private Expression _expression;
     private bool _expressionNeedsRecompiling = false;
+
+    private static readonly Godot.Collections.Array EmptyInputsArray = new();
     
     public override bool ProcessTransitions(StateMachine stateMachine)
     {
@@ -36,7 +38,7 @@ public partial class StateTransitionExpression : StateTransition
         EnsureExpressionCompiled();
         if (_expression != null)
         {
-            result = _expression.Execute(null, ExpressionBaseNode).AsBool();
+            result = _expression.Execute(EmptyInputsArray, ExpressionBaseNode).AsBool();
             if (_expression.HasExecuteFailed())
             {
                 GD.PushWarning(
