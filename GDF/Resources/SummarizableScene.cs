@@ -63,13 +63,13 @@ public abstract partial class SummarizableScene : Node
         return false;
     }
 
-    private IncludeInSummaryAttribute GetIncludeInSummaryAttributeForProperty(string name)
+    private StoreInSummaryAttribute GetIncludeInSummaryAttributeForProperty(string name)
     {
         var bindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic |
                            BindingFlags.FlattenHierarchy;
         var type = GetType();
         var memberInfo = (MemberInfo)type.GetField(name, bindingFlags) ?? type.GetProperty(name, bindingFlags);
-        return memberInfo?.GetCustomAttribute<IncludeInSummaryAttribute>();
+        return memberInfo?.GetCustomAttribute<StoreInSummaryAttribute>();
     }
 
     private void FinishGeneratingSummary()
@@ -140,7 +140,7 @@ public abstract partial class SummarizableScene : Node
         if (_generatingSummary && Engine.IsEditorHint() && EditorInterface.Singleton.GetEditedSceneRoot() == this &&
             !string.IsNullOrEmpty(this.SceneFilePath) && Summary != null)
         {
-            if (Summary.RootNodeProperties.ContainsKey(propName) && (GetIncludeInSummaryAttributeForProperty(propName)?.DisableStorage ?? false))
+            if (Summary.RootNodeProperties.ContainsKey(propName) && GetIncludeInSummaryAttributeForProperty(propName) is { AlsoStoreInScene: false })
             {
                 usage &= ~(PropertyUsageFlags.Storage);
             }

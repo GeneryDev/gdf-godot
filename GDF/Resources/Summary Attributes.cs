@@ -3,7 +3,7 @@
 namespace GDF.Resources;
 
 [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
-public class IncludeInSummaryAttribute : Attribute
+public class StoreInSummaryAttribute : Attribute
 {
-    public bool DisableStorage = true;
+    public bool AlsoStoreInScene = false;
 }
