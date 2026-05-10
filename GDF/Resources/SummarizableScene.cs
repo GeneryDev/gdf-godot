@@ -95,6 +95,22 @@ public abstract partial class SummarizableScene : Node
                 if(_generatingSummary) FinishGeneratingSummary();
                 break;
             }
+            case NotificationSceneInstantiated:
+            {
+                if (_summary != null && Engine.IsEditorHint())
+                {
+                    string expectedSummaryPath = SceneSummary.SummaryPathFromScenePath(SceneFilePath);
+                    if (expectedSummaryPath != _summary.ResourcePath)
+                    {
+                        GD.Print("This summarizable scene was moved! Making a copy of the SceneSummary file.");
+                        _summary = (SceneSummary)_summary.Duplicate();
+                        _summary.RootNodeProperties = _summary.RootNodeProperties.Duplicate();
+                        _summary.ResourcePath = SceneSummary.SummaryPathFromScenePath(this.SceneFilePath);
+                    }
+                }
+
+                break;
+            }
         }
     }
 
