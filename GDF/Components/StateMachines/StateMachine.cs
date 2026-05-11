@@ -70,6 +70,7 @@ public partial class StateMachine : Node
     {
         _states.Add(state);
         state.Initialize(this);
+        state.ProcessMode = ProcessModeEnum.Disabled;
         foreach (var subState in state.IterateChildrenOfType<State>())
             InitializeState(subState);
     }
@@ -114,7 +115,6 @@ public partial class StateMachine : Node
         info.ParentNode.RemoveChild(routine);
 
         _routineLocations[routine] = info;
-        routine.ProcessMode = ProcessModeEnum.Disabled;
     }
 
     public override void _PhysicsProcess(double delta)
@@ -266,6 +266,7 @@ public partial class StateMachine : Node
             return;
         }
         location.ParentNode.AddChild(routine);
+        routine.Owner = location.ParentNode.Owner;
     }
 
     [CustomRpc(GdfConstants.DefaultRpcChannelPresetName, CallLocal = false, Mode = MultiplayerApi.RpcMode.Authority)]

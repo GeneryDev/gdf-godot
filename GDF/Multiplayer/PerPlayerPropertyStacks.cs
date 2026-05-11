@@ -108,6 +108,7 @@ public partial class PerPlayerPropertyStacks : SingletonNode<PerPlayerPropertySt
 
     public static bool HasBaseControl(int playerId, string propertyId)
     {
+        GetForPlayer(playerId);
         return InstanceExists && Instance._perPlayerBaseControlFrames.TryGetValue(playerId, out var playerFrame) &&
                playerFrame.HasControl(propertyId);
     }

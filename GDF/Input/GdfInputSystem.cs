@@ -177,6 +177,7 @@ public partial class GdfInputSystem : SingletonNode<GdfInputSystem>
     private readonly List<(string ContextTag, NodePath NodePath, GdfInputLocation Location)> _tempMappings = new();
     private void ApplyMappings()
     {
+        if (_inputMap == null) return;
         _tempMappings.Clear();
         _inputMap.DumpMappings(_tempMappings);
         foreach (var instance in _contextInstances.Values)
@@ -191,6 +192,7 @@ public partial class GdfInputSystem : SingletonNode<GdfInputSystem>
     }
     private void ApplyMappings(GdfInputContext instance)
     {
+        if (_inputMap == null) return;
         _tempMappings.Clear();
         _inputMap.DumpMappings(_tempMappings);
         foreach (var mapping in _tempMappings)
@@ -203,6 +205,7 @@ public partial class GdfInputSystem : SingletonNode<GdfInputSystem>
 
     private void ApplyMappingOrdered(GdfInputContext instance, NodePath nodePath)
     {
+        if (_inputMap == null) return;
         // Apply all mappings for all tags (including no tag first), not just the tag that changed,
         // in the order they appear on the context to ensure consistency
         if (_inputMap.TryGetMapping(null, nodePath, out var noTagLocation))
