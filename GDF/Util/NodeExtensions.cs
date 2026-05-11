@@ -113,4 +113,18 @@ public static class NodeExtensions
         var owner = node?.Owner;
         return $"{owner?.SceneFilePath}:{owner?.GetPathTo(node) ?? (node.IsInsideTree() ? node.GetPath().ToString() : node.Name.ToString())}";
     }
+
+    public static Node GetFirstAncestorOwner(this Node node)
+    {
+        if (node == null) return null;
+        if (node.Owner is { } immediateOwner) return immediateOwner;
+        var nextAncestor = node.GetParent();
+        while (nextAncestor != null)
+        {
+            if (nextAncestor.Owner is { } ancestorOwner) return ancestorOwner;
+            nextAncestor = nextAncestor.GetParent();
+        }
+
+        return null;
+    }
 }

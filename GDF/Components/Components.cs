@@ -16,7 +16,7 @@ public static class Components
         else
         {
             if (node.GetChildOfType<T>() is { } directChild) return directChild;
-            if (node.Owner?.GetChildOfType<ComponentOwner>() is { } ownerComponents)
+            if (node.GetFirstAncestorOwner()?.GetChildOfType<ComponentOwner>() is { } ownerComponents)
             {
                 return ownerComponents.GetComponent<T>();
             }
@@ -43,7 +43,7 @@ public static class Components
             {
                 output.Add(child);
             }
-            if (node.Owner?.GetChildOfType<ComponentOwner>() is { } ownerComponents)
+            if (node.GetFirstAncestorOwner()?.GetChildOfType<ComponentOwner>() is { } ownerComponents)
             {
                 ownerComponents.GetComponents<T>(output);
             }
