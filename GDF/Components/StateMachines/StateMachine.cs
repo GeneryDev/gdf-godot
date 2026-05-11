@@ -28,6 +28,7 @@ public partial class StateMachine : Node
 
     public double StateTimeSec = 0;
     public ulong StateTimeMs => (ulong)(StateTimeSec * 1000);
+    public long TotalTicks { get; private set; } = 0;
 
     private readonly List<State> _states = new();
     private readonly List<Node> _allRoutines = new();
@@ -121,6 +122,7 @@ public partial class StateMachine : Node
     {
         base._PhysicsProcess(delta);
         StateTimeSec += delta;
+        TotalTicks++;
 
         if (IsMultiplayerAuthority())
             CurrentState?.TickTransitions(delta);
