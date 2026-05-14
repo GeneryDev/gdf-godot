@@ -114,7 +114,8 @@ public partial class StateMachine : Node
     private void InitializeRoutine(Node routine)
     {
         var info = RoutineLocationInfo.From(routine);
-        info.ParentNode.RemoveChild(routine);
+        if ((routine as IStateRoutine)?.RemoveFromTreeOnDisabled ?? true)
+            info.ParentNode.RemoveChild(routine);
 
         _routineLocations[routine] = info;
     }
@@ -210,7 +211,7 @@ public partial class StateMachine : Node
             // Disable exiting routines
             foreach (var routine in _tempRoutineListExiting)
             {
-                if(routine is IStateRoutineListener listener) listener.OnDisabledByTransition(info);
+                if(routine is IStateRoutine listener) listener.OnDisabledByTransition(info);
                 DisableRoutine(routine);
             }
 
@@ -220,7 +221,7 @@ public partial class StateMachine : Node
             foreach (var routine in _tempRoutineListEntering)
             {
                 EnableRoutine(routine);
-                if(routine is IStateRoutineListener listener) listener.OnEnabledByTransition(info);
+                if(routine is IStateRoutine listener) listener.OnEnabledByTransition(info);
             }
 
             // Emit state exiting signals
@@ -260,7 +261,9 @@ public partial class StateMachine : Node
             GD.PrintErr($"Failed to disable routine {routine.Name}, not in its parent");
             return;
         }
-        location.ParentNode.RemoveChild(routine);
+
+        if ((routine as IStateRoutine)?.RemoveFromTreeOnDisabled ?? true)
+            location.ParentNode.RemoveChild(routine);
     }
 
     private void EnableRoutine(Node routine)
@@ -271,7 +274,9 @@ public partial class StateMachine : Node
             GD.PrintErr($"Failed to enable routine {routine.Name}, already has a parent");
             return;
         }
-        location.ParentNode.AddChild(routine);
+
+        if ((routine as IStateRoutine)?.RemoveFromTreeOnDisabled ?? true)
+            location.ParentNode.AddChild(routine);
         routine.Owner = location.ParentNode.Owner;
     }
 
