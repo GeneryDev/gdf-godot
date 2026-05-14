@@ -74,6 +74,7 @@ public partial class State : Node, ITagged<StringName>
             ParentState?.CollectSubRoutines(routines, inherited: true);
 
         routines.AddRange(_allOwnSubRoutines);
+        routines.RemoveDuplicates();
     }
 
     private void ReadyOwnTransitions()

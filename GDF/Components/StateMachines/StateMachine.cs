@@ -35,7 +35,8 @@ public partial class StateMachine : Node
     private readonly Dictionary<Node, RoutineLocationInfo> _routineLocations = new();
     
     private List<Node> _activeRoutines = new();
-    private List<Node> _tempRoutineList = new();
+    private List<Node> _tempRoutineListExiting = new();
+    private List<Node> _tempRoutineListEntering = new();
     private List<State> _tempStateListExiting = new();
     private List<State> _tempStateListEntering = new();
     private bool _transitionInProgress = false;
@@ -179,18 +180,25 @@ public partial class StateMachine : Node
         {
             _transitionInProgress = true;
             // Collect routines to disable and enable
-            _tempRoutineList.Clear();
-            _tempRoutineList.AddRange(_activeRoutines);
+            _tempRoutineListExiting.Clear();
+            _tempRoutineListEntering.Clear();
+            _tempRoutineListExiting.AddRange(_activeRoutines);
             _activeRoutines.Clear();
             to?.CollectSubRoutines(_activeRoutines, inherited: true);
-            // tempRoutineList now contains routines that used to be enabled
-            // activeRoutines now contains routines that are now be enabled
+            _tempRoutineListEntering.AddRange(_activeRoutines);
+            RemoveDuplicates(_tempRoutineListExiting, _tempRoutineListEntering);
+            // tempRoutineListExiting now contains routines to disable
+            // tempRoutineListEntering now contains routines to enable
+            // activeRoutines now contains active routines (whether they were already active or not)
             // Collect states entering and exiting
+            
             _tempStateListExiting.Clear();
             _tempStateListEntering.Clear();
             CollectStateHierarchy(from, _tempStateListExiting, reverse: true);
             CollectStateHierarchy(to, _tempStateListEntering, reverse: false);
             RemoveDuplicates(_tempStateListEntering, _tempStateListExiting);
+
+            var info = new StateTransitionInfo(this, from, to, _tempRoutineListExiting, _tempRoutineListEntering);
 
             // Emit state exiting signals
             foreach (var stateExiting in _tempStateListExiting)
@@ -200,23 +208,19 @@ public partial class StateMachine : Node
             }
 
             // Disable exiting routines
-            foreach (var routine in _tempRoutineList)
+            foreach (var routine in _tempRoutineListExiting)
             {
-                if (!_activeRoutines.Contains(routine))
-                {
-                    DisableRoutine(routine);
-                }
+                if(routine is IStateRoutineListener listener) listener.OnDisabledByTransition(info);
+                DisableRoutine(routine);
             }
 
             StateTimeSec = 0;
 
             // Enable entering routines
-            foreach (var routine in _activeRoutines)
+            foreach (var routine in _tempRoutineListEntering)
             {
-                if (!_tempRoutineList.Contains(routine))
-                {
-                    EnableRoutine(routine);
-                }
+                EnableRoutine(routine);
+                if(routine is IStateRoutineListener listener) listener.OnEnabledByTransition(info);
             }
 
             // Emit state exiting signals
@@ -264,7 +268,7 @@ public partial class StateMachine : Node
         var location = _routineLocations[routine];
         if (routine.GetParent() != null)
         {
-            GD.PrintErr($"Failed to disable routine {routine.Name}, already has a parent");
+            GD.PrintErr($"Failed to enable routine {routine.Name}, already has a parent");
             return;
         }
         location.ParentNode.AddChild(routine);
@@ -349,6 +353,24 @@ public partial class StateMachine : Node
                 ParentNode = parent,
                 Index = routine.GetIndex()
             };
+        }
+    }
+
+    public readonly ref struct StateTransitionInfo
+    {
+        public readonly StateMachine StateMachine;
+        public readonly State StateFrom;
+        public readonly State StateTo;
+        public readonly List<Node> ExitingRoutines;
+        public readonly List<Node> EnteringRoutines;
+
+        public StateTransitionInfo(StateMachine stateMachine, State stateFrom, State stateTo, List<Node> exitingRoutines, List<Node> enteringRoutines)
+        {
+            StateMachine = stateMachine;
+            StateFrom = stateFrom;
+            StateTo = stateTo;
+            ExitingRoutines = exitingRoutines;
+            EnteringRoutines = enteringRoutines;
         }
     }
 }
