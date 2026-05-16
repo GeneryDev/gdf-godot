@@ -59,6 +59,7 @@ public partial class StateTransitionExpression : StateTransition
 
         if (!result) return false;
 
+        EmitSignalTransitionTriggered();
         return stateMachine.TransitionToState(TargetState);
     }
 

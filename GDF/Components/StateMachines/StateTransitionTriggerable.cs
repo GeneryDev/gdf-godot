@@ -18,6 +18,7 @@ public partial class StateTransitionTriggerable : StateTransition
     {
         if (_triggeredTick > -1 && stateMachine.TotalTicks <= _triggeredTick + 1)
         {
+            EmitSignalTransitionTriggered();
             return stateMachine.TransitionToState(TargetState);
         }
         else
