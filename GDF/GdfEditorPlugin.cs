@@ -1,4 +1,5 @@
 ﻿#if TOOLS
+using GDF.Animations;
 using GDF.Editor;
 using Godot;
 
@@ -12,6 +13,7 @@ public partial class GdfEditorPlugin : EditorPlugin
     public AnimationPlayerEditor AnimationEditor;
 
     private ToolInspectorPlugin _toolInspectorPlugin;
+    private AnimationInspectorPlugin _animationInspectorPlugin;
     
     private AnimationMixer _editingAnimationMixer;
     private bool _editingMixerUnselectedButStillInTree = false;
@@ -25,6 +27,7 @@ public partial class GdfEditorPlugin : EditorPlugin
     {
         Instance = this;
         AddInspectorPlugin(_toolInspectorPlugin = new ToolInspectorPlugin());
+        AddInspectorPlugin(_animationInspectorPlugin = new AnimationInspectorPlugin());
         
         AnimationEditor ??= new AnimationPlayerEditor();
         
@@ -35,6 +38,7 @@ public partial class GdfEditorPlugin : EditorPlugin
     {
         if (Instance == this) Instance = null;
         RemoveInspectorPlugin(_toolInspectorPlugin);
+        RemoveInspectorPlugin(_animationInspectorPlugin);
     }
 
     public override void _Process(double delta)
