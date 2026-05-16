@@ -112,13 +112,11 @@ public partial class State : Node, ITagged<StringName>
 
     public void NotifyEntering()
     {
-        GD.Print($"Entering {Name}");
         EmitSignalEntered();
     }
 
     public void NotifyExiting()
     {
-        GD.Print($"Exiting {Name}");
         EmitSignalExited();
     }
 }

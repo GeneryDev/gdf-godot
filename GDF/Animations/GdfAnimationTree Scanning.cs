@@ -53,11 +53,11 @@ public partial class GdfAnimationTree
             string nodeName = path[(path.LastIndexOf('/') + 1)..];
             string parentPath = nodeName.Length == path.Length ? "" : path[..(path.Length - nodeName.Length - 1)];
             
-            if ((meta.TriggeringEvents?.Length ?? 0) > 0)
+            if (meta.TriggeringEvents is {Count: > 0})
             {
-                foreach (string evt in meta.TriggeringEvents)
+                foreach ((string evt, var mode) in meta.TriggeringEvents)
                 {
-                    var instance = new AnimationEventListener(meta, parentPath, nodeName);
+                    var instance = new AnimationEventListener(mode, parentPath, nodeName);
                     if (!_eventListeners.ContainsKey(evt)) _eventListeners[evt] = new List<AnimationEventListener>();
                     _eventListeners[evt].Add(instance);
                 }
@@ -80,7 +80,7 @@ public partial class GdfAnimationTree
                 {
                     foreach (string evt in meta.TriggeringEvents)
                     {
-                        var instance = new AnimationEventListener(meta, path, fromName, toName);
+                        var instance = new AnimationEventListener(GdfAnimationEventAction.StateTravel, path, fromName, toName);
                         if (!_eventListeners.ContainsKey(evt))
                             _eventListeners[evt] = new List<AnimationEventListener>();
                         _eventListeners[evt].Add(instance);

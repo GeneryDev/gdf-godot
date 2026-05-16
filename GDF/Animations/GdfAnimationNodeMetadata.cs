@@ -1,5 +1,7 @@
-﻿using GDF.Util;
+﻿using System.Text;
+using GDF.Util;
 using Godot;
+using Godot.Collections;
 
 namespace GDF.Animations;
 
@@ -7,16 +9,15 @@ namespace GDF.Animations;
 [GlobalClass]
 public partial class GdfAnimationNodeMetadata : Resource
 {
+    [Export] public string AnimationNodeClassName = "";
     [ExportGroup("Auto-Set via Expression")]
     [Export(PropertyHint.Expression)]
-    public string Expression;
+    public string Expression = "";
     [Export]
     public float BlendSpeed = -1;
     [ExportGroup("Trigger via Events")]
     [Export]
-    public string[] TriggeringEvents;
-
-    [Export] public EventTriggerMode TriggerMode;
+    public Dictionary<string, GdfAnimationEventAction> TriggeringEvents = new();
     
     private Expression _cachedExpression;
 
@@ -70,11 +71,25 @@ public partial class GdfAnimationNodeMetadata : Resource
         };
     }
 
-    public enum EventTriggerMode
+
+    public override void _ValidateProperty(Dictionary property)
     {
-        Start = 0,
-        Travel = 1,
-        TravelOrRestart = 3,
-        RequestFire = 2
+        var propName = property["name"].AsStringName();
+        var usage = property["usage"].As<PropertyUsageFlags>();
+
+        if (propName == PropertyName.AnimationNodeClassName)
+        {
+            usage &= ~PropertyUsageFlags.Editor;
+        }
+
+#if TOOLS
+        if (propName == PropertyName.TriggeringEvents)
+        {
+            GD.Print(property);
+            property["hint_string"] = $"4/0:;2/2:{GdfAnimationEventActions.GetAnimationEventActionOptionsString(AnimationNodeClassName)}";
+        }
+#endif
+
+        property["usage"] = Variant.From(usage);
     }
 }

@@ -86,6 +86,10 @@ public partial class AnimationInspectorPlugin : EditorInspectorPlugin
         var undoRedo = EditorInterface.Singleton.GetEditorUndoRedo();
         undoRedo.CreateAction("Attach GDF Metadata to AnimationNode", customContext: obj);
         var newMeta = new T();
+        if (newMeta is GdfAnimationNodeMetadata meta)
+        {
+            meta.AnimationNodeClassName = obj.GetClass();
+        }
         undoRedo.AddDoMethod(obj, GodotObject.MethodName.SetMeta, GdfAnimationTree.MetaNameMetadata, newMeta);
         undoRedo.AddUndoMethod(obj, GodotObject.MethodName.RemoveMeta, GdfAnimationTree.MetaNameMetadata);
         undoRedo.AddDoReference(newMeta);
