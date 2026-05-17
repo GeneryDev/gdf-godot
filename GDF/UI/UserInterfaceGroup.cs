@@ -43,15 +43,15 @@ public partial class UserInterfaceGroup : Node
         FindInterfaceAndParentGroup(out _focusInterface, out _parentGroup);
         if (_focusInterface != null)
         {
-            _focusInterface.AddFocusableGroup(this);
+            _focusInterface.AddGroup(this);
             _focusInterface.PlayerFocusChanged += OnPlayerFocusChanged;
-            _focusInterface.FocusableGroupChanged += OnInterfaceFocusableGroupChanged;
+            _focusInterface.InterfaceGroupFocusChanged += OnInterfaceGroupFocusChanged;
             _focusInside = HasFocus();
             _focusInsideExclusive = HasExclusiveFocus();
         }
         else
         {
-            GD.PrintErr("No focusable interface for focusable group at: " + GetPath());
+            GD.PrintErr("No user interface for user interface group at: " + GetPath());
         }
 
         AddToGroup(GroupName);
@@ -61,14 +61,14 @@ public partial class UserInterfaceGroup : Node
     {
         if (_focusInterface != null)
         {
-            _focusInterface.RemoveFocusableGroup(this);
+            _focusInterface.RemoveGroup(this);
             _focusInterface.PlayerFocusChanged -= OnPlayerFocusChanged;
-            _focusInterface.FocusableGroupChanged -= OnInterfaceFocusableGroupChanged;
+            _focusInterface.InterfaceGroupFocusChanged -= OnInterfaceGroupFocusChanged;
         }
         _focusInterface = null;
     }
 
-    private void OnInterfaceFocusableGroupChanged(UserInterfaceGroup from, UserInterfaceGroup to)
+    private void OnInterfaceGroupFocusChanged(UserInterfaceGroup from, UserInterfaceGroup to)
     {
         bool focusWasInside = _focusInside;
         bool focusNowInside = HasFocus();
@@ -98,21 +98,21 @@ public partial class UserInterfaceGroup : Node
         return _focusInterface;
     }
 
-    public bool FindInterfaceAndParentGroup(out UserInterface focusInterface,
-        out UserInterfaceGroup focusableGroup)
+    public bool FindInterfaceAndParentGroup(out UserInterface ui,
+        out UserInterfaceGroup uiGroup)
     {
-        focusInterface = null;
-        focusableGroup = OverrideParentGroup;
+        ui = null;
+        uiGroup = OverrideParentGroup;
         if (!IsInsideTree()) return false;
 
         var parent = GetParent();
         while (parent != null)
         {
-            if (parent.GetChildOfType<UserInterfaceGroup>() is { } group && group != this && focusableGroup == null)
-                focusableGroup = group;
+            if (parent.GetChildOfType<UserInterfaceGroup>() is { } group && group != this && uiGroup == null)
+                uiGroup = group;
             if (parent.GetChildOfType<UserInterface>() is { } @interface)
             {
-                focusInterface = @interface;
+                ui = @interface;
                 return true;
             }
 
@@ -129,13 +129,13 @@ public partial class UserInterfaceGroup : Node
 
     public void FocusFirstForAllPlayers()
     {
-        var focusable = _focusInterface?.GetFirstValidFocusableInGroup(this);
-        if (focusable != null) _focusInterface.FocusForAllPlayers(focusable);
+        var component = _focusInterface?.GetFirstFocusableComponentInGroup(this);
+        if (component != null) _focusInterface.FocusForAllPlayers(component);
     }
 
     public bool HasFocus()
     {
-        return _focusInterface?.FocusedGroup == null || _focusInterface.FocusedGroup.IsInsideFocusableGroup(this);
+        return _focusInterface?.FocusedGroup == null || _focusInterface.FocusedGroup.IsInsideGroup(this);
     }
 
     public bool HasExclusiveFocus()
@@ -143,7 +143,7 @@ public partial class UserInterfaceGroup : Node
         return _focusInterface?.FocusedGroup == this;
     }
 
-    public bool IsInsideFocusableGroup(UserInterfaceGroup group)
+    public bool IsInsideGroup(UserInterfaceGroup group)
     {
         var thisOrAncestor = this;
         while (thisOrAncestor != null)
@@ -161,7 +161,7 @@ public partial class UserInterfaceGroup : Node
         if (!_focusInside) return;
         _rememberedFocusStates ??= new Dictionary<int, UserInterfaceComponent>();
 
-        if (to?.GetFocusableGroup()?.IsInsideFocusableGroup(this) ?? false)
+        if (to?.GetUserInterfaceGroup()?.IsInsideGroup(this) ?? false)
         {
             _rememberedFocusStates[playerId] = to;
             // GD.Print($"In Group {GetPath()}, focus for {playerId} is now {to?.GetPath()}");
@@ -176,9 +176,9 @@ public partial class UserInterfaceGroup : Node
     public void RestoreFocusStates()
     {
         if (_rememberedFocusStates == null) return;
-        foreach ((int playerId, var focusable) in _rememberedFocusStates)
-            if (IsInstanceValid(focusable) && (focusable.FocusableControl?.IsVisibleInTree() ?? false))
-                _focusInterface?.Focus(playerId, focusable);
+        foreach ((int playerId, var component) in _rememberedFocusStates)
+            if (IsInstanceValid(component) && (component.FocusableControl?.IsVisibleInTree() ?? false))
+                _focusInterface?.Focus(playerId, component);
     }
 
     public UserInterfaceGroup GetParentGroup()

@@ -12,7 +12,7 @@ namespace GDF.UI;
 [Icon($"{GdfConstants.IconRoot}/user_interface_component.png")]
 public sealed partial class UserInterfaceComponent : Node
 {
-    public static readonly StringName GroupName = "player_focusable";
+    public static readonly StringName GroupName = "ui_component";
 
     [Signal]
     public delegate void FocusEnteredEventHandler();
@@ -93,8 +93,8 @@ public sealed partial class UserInterfaceComponent : Node
     private bool _navigableTo = true;
     private bool _groupHasFocus = true;
     private bool _groupHasExclusiveFocus = true;
-    private UserInterface _focusInterface;
-    private UserInterfaceGroup _focusableGroup;
+    private UserInterface _ui;
+    private UserInterfaceGroup _uiGroup;
     private bool _wasFocusedBeforePress = false;
     private List<int> _playersEnabledShortcut;
     private List<int> _focusedPlayers;
@@ -123,40 +123,40 @@ public sealed partial class UserInterfaceComponent : Node
 
     public override void _EnterTree()
     {
-        FindInterfaceAndGroup(out _focusInterface, out _focusableGroup);
+        FindInterfaceAndGroup(out _ui, out _uiGroup);
         EmitSignalDataContextUpdated();
-        _focusInterface?.AddFocusable(this);
-        if (_focusableGroup != null)
+        _ui?.AddComponent(this);
+        if (_uiGroup != null)
         {
-            _focusableGroup.GroupFocusEntered += OnGroupFocusEntered;
-            _focusableGroup.GroupFocusExited += OnGroupFocusExited;
-            _focusableGroup.ExclusiveGroupFocusEntered += OnGroupExclusiveFocusEntered;
-            _focusableGroup.ExclusiveGroupFocusExited += OnGroupExclusiveFocusExited;
-            if (_focusableGroup.HasFocus()) OnGroupFocusEntered();
+            _uiGroup.GroupFocusEntered += OnGroupFocusEntered;
+            _uiGroup.GroupFocusExited += OnGroupFocusExited;
+            _uiGroup.ExclusiveGroupFocusEntered += OnGroupExclusiveFocusEntered;
+            _uiGroup.ExclusiveGroupFocusExited += OnGroupExclusiveFocusExited;
+            if (_uiGroup.HasFocus()) OnGroupFocusEntered();
             else OnGroupFocusExited();
-            if (_focusableGroup.HasExclusiveFocus()) OnGroupExclusiveFocusEntered();
+            if (_uiGroup.HasExclusiveFocus()) OnGroupExclusiveFocusEntered();
             else OnGroupExclusiveFocusExited();
         }
 
-        if (_focusInterface == null) GD.PrintErr("No focusable interface for focusable at: " + GetPath());
+        if (_ui == null) GD.PrintErr("No user interface for component at: " + GetPath());
         AddToGroup(GroupName);
     }
 
     public override void _ExitTree()
     {
-        if (_focusableGroup != null)
+        if (_uiGroup != null)
         {
-            _focusableGroup.GroupFocusEntered -= OnGroupFocusEntered;
-            _focusableGroup.GroupFocusExited -= OnGroupFocusExited;
-            _focusableGroup.ExclusiveGroupFocusEntered -= OnGroupExclusiveFocusEntered;
-            _focusableGroup.ExclusiveGroupFocusExited -= OnGroupExclusiveFocusExited;
+            _uiGroup.GroupFocusEntered -= OnGroupFocusEntered;
+            _uiGroup.GroupFocusExited -= OnGroupFocusExited;
+            _uiGroup.ExclusiveGroupFocusEntered -= OnGroupExclusiveFocusEntered;
+            _uiGroup.ExclusiveGroupFocusExited -= OnGroupExclusiveFocusExited;
         }
 
-        _focusableGroup = null;
+        _uiGroup = null;
 
-        _focusInterface?.RemoveFocusable(this);
-        _focusInterface?.FocusableLoseFocus(this);
-        _focusInterface = null;
+        _ui?.RemoveComponent(this);
+        _ui?.ComponentLoseFocus(this);
+        _ui = null;
     }
 
     private void OnGroupFocusEntered()
@@ -189,7 +189,7 @@ public sealed partial class UserInterfaceComponent : Node
 
     private void OnGuiInput(InputEvent evt)
     {
-        if (!Clickable || !(_focusInterface?.HasControl() ?? false)) return;
+        if (!Clickable || !(_ui?.HasControl() ?? false)) return;
         if (evt is InputEventMouseButton { ButtonIndex: MouseButton.Left } mEvt)
         {
             if (evt.IsPressed())
@@ -224,7 +224,7 @@ public sealed partial class UserInterfaceComponent : Node
 
     private void PressedDirectly(bool isRelease, UserInterface.NavigationInputType type)
     {
-        var focusInterface = GetInterface();
+        var focusInterface = GetUserInterface();
         if (focusInterface is { ClickToFocus: true })
         {
             int playerId = -1;
@@ -252,7 +252,7 @@ public sealed partial class UserInterfaceComponent : Node
 
             if (playerId != -1 || focusInterface.Operability is UserInterface.OperabilityEnum.Playerless or UserInterface.OperabilityEnum.PlayerlessAuthority)
             {
-                _focusInterface?.UpdateInputType(type);
+                _ui?.UpdateInputType(type);
                 if (ClickMode != ClickModeEnum.SubmitOnly) focusInterface.Focus(playerId, this);
                 if (isRelease && (ClickMode is ClickModeEnum.OnceFocusAndSubmit or ClickModeEnum.SubmitOnly ||
                                   (ClickMode is ClickModeEnum.OnceFocusTwiceSubmit && _wasFocusedBeforePress)))
@@ -338,17 +338,17 @@ public sealed partial class UserInterfaceComponent : Node
 
     public void FocusGroup()
     {
-        _focusInterface?.FocusGroup(_focusableGroup);
+        _ui?.FocusGroup(_uiGroup);
     }
 
     public void Focus(int playerId)
     {
-        _focusInterface?.Focus(playerId, this);
+        _ui?.Focus(playerId, this);
     }
 
     public void FocusForAllPlayers()
     {
-        _focusInterface?.FocusForAllPlayers(this);
+        _ui?.FocusForAllPlayers(this);
     }
 
     public void Submit(int playerId)
@@ -373,7 +373,7 @@ public sealed partial class UserInterfaceComponent : Node
     private void OnControlVisibilityChanged()
     {
         if (FocusableControl != null && !FocusableControl.IsVisibleInTree())
-            GetInterface()?.CallDeferred(UserInterface.MethodName.FocusableLoseFocus, this);
+            GetUserInterface()?.CallDeferred(UserInterface.MethodName.ComponentLoseFocus, this);
     }
 
     private void UpdateFocusable()
@@ -394,14 +394,14 @@ public sealed partial class UserInterfaceComponent : Node
         return FocusableControl?.FocusMode == Control.FocusModeEnum.All;
     }
 
-    public UserInterface GetInterface()
+    public UserInterface GetUserInterface()
     {
-        return _focusInterface;
+        return _ui;
     }
 
-    public UserInterfaceGroup GetFocusableGroup()
+    public UserInterfaceGroup GetUserInterfaceGroup()
     {
-        return _focusableGroup;
+        return _uiGroup;
     }
 
     public bool IsGroupFocused()
@@ -414,20 +414,20 @@ public sealed partial class UserInterfaceComponent : Node
         return _groupHasExclusiveFocus;
     }
 
-    public bool FindInterfaceAndGroup(out UserInterface focusInterface, out UserInterfaceGroup focusableGroup)
+    public bool FindInterfaceAndGroup(out UserInterface ui, out UserInterfaceGroup uiGroup)
     {
-        focusInterface = null;
-        focusableGroup = OverrideParentGroup;
+        ui = null;
+        uiGroup = OverrideParentGroup;
         if (!IsInsideTree()) return false;
 
         var parent = GetParent();
         while (parent != null)
         {
-            if (parent.GetChildOfType<UserInterfaceGroup>() is { } group && focusableGroup == null)
-                focusableGroup = group;
+            if (parent.GetChildOfType<UserInterfaceGroup>() is { } group && uiGroup == null)
+                uiGroup = group;
             if (parent.GetChildOfType<UserInterface>() is { } @interface)
             {
-                focusInterface = @interface;
+                ui = @interface;
                 return true;
             }
 
@@ -456,7 +456,7 @@ public sealed partial class UserInterfaceComponent : Node
         foreach (var (action, callable) in SubActions)
             if (input.ConsumeActionEvent(action))
             {
-                _focusInterface?.UpdateInputType(UserInterface.NavigationInputType.ButtonsAndSticks);
+                _ui?.UpdateInputType(UserInterface.NavigationInputType.ButtonsAndSticks);
                 SubmitSubAction(playerId, action);
             }
     }
@@ -467,9 +467,9 @@ public sealed partial class UserInterfaceComponent : Node
         switch (ShortcutCondition)
         {
             case ShortcutConditionEnum.WhenGroupHasFocus:
-                return GetFocusableGroup() is not { } group1 || group1.HasFocus();
+                return GetUserInterfaceGroup() is not { } group1 || group1.HasFocus();
             case ShortcutConditionEnum.WhenGroupHasExclusiveFocus:
-                return GetFocusableGroup() is not { } group2 || group2.HasExclusiveFocus();
+                return GetUserInterfaceGroup() is not { } group2 || group2.HasExclusiveFocus();
             case ShortcutConditionEnum.PerPlayerCondition:
                 return _playersEnabledShortcut is { } enabledList && enabledList.Contains(playerId);
             case ShortcutConditionEnum.Always:
@@ -496,12 +496,12 @@ public sealed partial class UserInterfaceComponent : Node
 
     public bool AnyPlayerHasFocus()
     {
-        return _focusInterface?.AnyPlayerHasFocus(this) ?? false;
+        return _ui?.AnyPlayerHasFocus(this) ?? false;
     }
 
     public void UpdateInputType(UserInterface.NavigationInputType type)
     {
-        _focusInterface?.UpdateInputType(type);
+        _ui?.UpdateInputType(type);
     }
 
     public enum ShortcutModeEnum

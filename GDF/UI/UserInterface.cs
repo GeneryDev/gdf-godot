@@ -26,7 +26,7 @@ public partial class UserInterface : Node, IResynchronizable
     public delegate void PlayerFocusChangedEventHandler(int playerId, UserInterfaceComponent from, UserInterfaceComponent to);
 
     [Signal]
-    public delegate void FocusableGroupChangedEventHandler(UserInterfaceGroup from, UserInterfaceGroup to);
+    public delegate void InterfaceGroupFocusChangedEventHandler(UserInterfaceGroup from, UserInterfaceGroup to);
 
     [Signal]
     public delegate void InputTypeUpdatedEventHandler();
@@ -63,7 +63,7 @@ public partial class UserInterface : Node, IResynchronizable
 
     private Dictionary<int, PlayerFocusState> _playerFocusStates = new();
     private Dictionary<int, PlayerInputState> _playerInputStates = new();
-    private List<UserInterfaceComponent> _focusables = new();
+    private List<UserInterfaceComponent> _components = new();
     public UserInterfaceGroup FocusedGroup { get; private set; }
     private UserInterfaceGroup _lastRequestedFocusedGroup = null;
     public static NavigationInputType GlobalLastUsedInputType { get; private set; } = 0;
@@ -141,39 +141,39 @@ public partial class UserInterface : Node, IResynchronizable
         if (FocusedGroup == group) return;
         var prevGroup = FocusedGroup;
         FocusedGroup = group;
-        EmitSignalFocusableGroupChanged(prevGroup, group);
+        EmitSignalInterfaceGroupFocusChanged(prevGroup, group);
     }
 
     public void FocusFirst(int playerId)
     {
         if (!IsInsideTree()) return;
 
-        var firstFocusable = GetFirstValidFocusable();
-        Focus(playerId, firstFocusable);
+        var firstComponent = GetFirstFocusableComponent();
+        Focus(playerId, firstComponent);
     }
 
     public void FocusFirstForAllPlayers()
     {
-        var firstFocusable = GetFirstValidFocusable();
+        var firstComponent = GetFirstFocusableComponent();
 
         switch (Operability)
         {
             case OperabilityEnum.AllPlayers:
             {
-                foreach (var playerInfo in Room.Instance.GetAllPlayerInfo()) Focus(playerInfo.PlayerId, firstFocusable);
+                foreach (var playerInfo in Room.Instance.GetAllPlayerInfo()) Focus(playerInfo.PlayerId, firstComponent);
 
                 break;
             }
             case OperabilityEnum.SpecificPlayer:
             {
                 if (ExclusiveToPlayerId != -1)
-                    Focus(ExclusiveToPlayerId, firstFocusable);
+                    Focus(ExclusiveToPlayerId, firstComponent);
                 break;
             }
             case OperabilityEnum.Playerless:
             case OperabilityEnum.PlayerlessAuthority:
             {
-                Focus(PlayerlessId, firstFocusable);
+                Focus(PlayerlessId, firstComponent);
                 break;
             }
             default:
@@ -181,50 +181,50 @@ public partial class UserInterface : Node, IResynchronizable
         }
     }
 
-    public UserInterfaceComponent GetFirstValidFocusable()
+    public UserInterfaceComponent GetFirstFocusableComponent()
     {
         if (!IsInsideTree()) return null;
         UserInterfaceComponent chosen = null;
-        foreach (var focusable in _focusables)
-            if (focusable.FocusableControl.IsVisibleInTree() && focusable.NavigableTo && focusable.NavigabilityConditionMet())
-                if (chosen == null || focusable.AutoFocusPriority > chosen.AutoFocusPriority)
-                    chosen = focusable;
+        foreach (var component in _components)
+            if (component.FocusableControl.IsVisibleInTree() && component.NavigableTo && component.NavigabilityConditionMet())
+                if (chosen == null || component.AutoFocusPriority > chosen.AutoFocusPriority)
+                    chosen = component;
 
         return chosen;
     }
 
-    public UserInterfaceComponent GetFirstValidFocusableInGroup(UserInterfaceGroup group)
+    public UserInterfaceComponent GetFirstFocusableComponentInGroup(UserInterfaceGroup group)
     {
         if (!IsInsideTree()) return null;
         UserInterfaceComponent chosen = null;
-        foreach (var focusable in _focusables)
-            if (focusable.NavigableTo && focusable.GetFocusableGroup() is { } focusableGroup &&
-                focusableGroup.IsInsideFocusableGroup(group) && focusable.FocusableControl.IsVisibleInTree())
-                if (chosen == null || focusable.AutoFocusPriority > chosen.AutoFocusPriority)
-                    chosen = focusable;
+        foreach (var component in _components)
+            if (component.NavigableTo && component.GetUserInterfaceGroup() is { } uiGroup &&
+                uiGroup.IsInsideGroup(group) && component.FocusableControl.IsVisibleInTree())
+                if (chosen == null || component.AutoFocusPriority > chosen.AutoFocusPriority)
+                    chosen = component;
         
         return chosen;
     }
 
     public void FocusForAllPlayers(Control control)
     {
-        var focusable = control?.GetChildOfType<UserInterfaceComponent>();
-        if (focusable?.FocusableControl == control) FocusForAllPlayers(focusable);
+        var component = control?.GetChildOfType<UserInterfaceComponent>();
+        if (component?.FocusableControl == control) FocusForAllPlayers(component);
     }
 
-    public void FocusForAllPlayers(UserInterfaceComponent focusable)
+    public void FocusForAllPlayers(UserInterfaceComponent component)
     {
         if (Operability is OperabilityEnum.Playerless or OperabilityEnum.PlayerlessAuthority)
-            Focus(PlayerlessId, focusable);
+            Focus(PlayerlessId, component);
         else
             foreach (var playerInfo in Room.Instance.GetAllPlayerInfo())
-                Focus(playerInfo.PlayerId, focusable);
+                Focus(playerInfo.PlayerId, component);
     }
 
     public void Focus(int playerId, Control control)
     {
-        var focusable = control?.GetChildOfType<UserInterfaceComponent>();
-        if (focusable?.FocusableControl == control) Focus(playerId, focusable);
+        var component = control?.GetChildOfType<UserInterfaceComponent>();
+        if (component?.FocusableControl == control) Focus(playerId, component);
     }
 
     public void UnfocusAll()
@@ -309,15 +309,15 @@ public partial class UserInterface : Node, IResynchronizable
         }
         var state = _playerFocusStates[playerId];
 
-        var prevFocusable = state.FocusedNode;
+        var prevFocused = state.FocusedComponent;
 
         state.FocusedNodePath = path;
-        state.FocusedNode = node;
+        state.FocusedComponent = node;
         SetPlayerFocusState(playerId, state);
-        UpdateAllVisualsAround(prevFocusable);
+        UpdateAllVisualsAround(prevFocused);
         UpdateAllVisualsAround(node);
         if (node == null) state.UpdateVisualAround(null, 0, 1);
-        FirePlayerFocusChanged(playerId, prevFocusable, node);
+        FirePlayerFocusChanged(playerId, prevFocused, node);
     }
 
     private void FirePlayerFocusChanged(int playerId, UserInterfaceComponent from, UserInterfaceComponent to)
@@ -331,15 +331,15 @@ public partial class UserInterface : Node, IResynchronizable
 
     public UserInterfaceComponent GetPlayerFocus(int playerId)
     {
-        if (_playerFocusStates.TryGetValue(playerId, out var state)) return state.FocusedNode;
+        if (_playerFocusStates.TryGetValue(playerId, out var state)) return state.FocusedComponent;
 
         return null;
     }
 
-    public bool AnyPlayerHasFocus(UserInterfaceComponent focusable)
+    public bool AnyPlayerHasFocus(UserInterfaceComponent component)
     {
         foreach ((int id, var state) in _playerFocusStates)
-            if (state.FocusedNode == focusable)
+            if (state.FocusedComponent == component)
                 return true;
 
         return false;
@@ -365,7 +365,7 @@ public partial class UserInterface : Node, IResynchronizable
         var occurrenceCount = 0;
         foreach ((int playerId, var state) in _playerFocusStates)
         {
-            if (state.FocusedNode != node) continue;
+            if (state.FocusedComponent != node) continue;
             if (state.FocusVisual == null) continue;
             occurrenceCount++;
         }
@@ -377,7 +377,7 @@ public partial class UserInterface : Node, IResynchronizable
         var anyVisualsFailed = false;
         foreach ((int playerId, var state) in _playerFocusStates)
         {
-            if (state.FocusedNode != node) continue;
+            if (state.FocusedComponent != node) continue;
             if (state.FocusVisual == null) continue;
             bool success = state.UpdateVisualAround(node.OutlinedControl, occurrenceIndex, occurrenceCount);
             if (!success) anyVisualsFailed = true;
@@ -397,7 +397,7 @@ public partial class UserInterface : Node, IResynchronizable
             {
                 state.FocusVisual = CreateFocusVisual(Room.Instance.GetPlayerInfo(playerId) ?? default);
                 _playerFocusStates[playerId] = state;
-                if (updateAroundElement) UpdateAllVisualsAround(state.FocusedNode);
+                if (updateAroundElement) UpdateAllVisualsAround(state.FocusedComponent);
             }
         }
     }
@@ -412,13 +412,13 @@ public partial class UserInterface : Node, IResynchronizable
             HandlePlayerInput(playerId, state, delta);
         }
 
-        foreach (var focusable in _focusables)
+        foreach (var component in _components)
         {
-            if (!focusable.HasShortcut) continue;
+            if (!component.HasShortcut) continue;
             foreach ((int playerId, var state) in _playerFocusStates)
             {
                 if (state.Input == null) continue;
-                HandlePlayerShortcuts(playerId, state, focusable);
+                HandlePlayerShortcuts(playerId, state, component);
             }
         }
     }
@@ -452,7 +452,7 @@ public partial class UserInterface : Node, IResynchronizable
             if (inputState.InputCooldown.X <= 0 && navigateVec.X != 0)
             {
                 var side = navigateVec.X > 0 ? Side.Right : Side.Left;
-                if (!(state.FocusedNode?.ConsumeNavigation(playerId, side) ?? false))
+                if (!(state.FocusedComponent?.ConsumeNavigation(playerId, side) ?? false))
                     AttemptNavigation(playerId, ref state, navigateVec with { Y = 0 });
 
                 inputState.InputCooldown.X = inputState.Echoing ? 0.1f : 0.5f;
@@ -461,7 +461,7 @@ public partial class UserInterface : Node, IResynchronizable
             if (inputState.InputCooldown.Y <= 0 && navigateVec.Y != 0)
             {
                 var side = navigateVec.Y > 0 ? Side.Bottom : Side.Top;
-                if (!(state.FocusedNode?.ConsumeNavigation(playerId, side) ?? false))
+                if (!(state.FocusedComponent?.ConsumeNavigation(playerId, side) ?? false))
                     AttemptNavigation(playerId, ref state, navigateVec with { X = 0 });
 
                 inputState.InputCooldown.Y = inputState.Echoing ? 0.1f : 0.5f;
@@ -475,13 +475,13 @@ public partial class UserInterface : Node, IResynchronizable
         if (navigateVec == Vector2I.Zero)
             inputState.Echoing = false;
 
-        if ((state.FocusedNode?.Submittable ?? false) && state.Input.ConsumeActionEvent(SubmitAction))
+        if ((state.FocusedComponent?.Submittable ?? false) && state.Input.ConsumeActionEvent(SubmitAction))
         {
             UpdateInputType(NavigationInputType.ButtonsAndSticks);
-            state.FocusedNode?.Submit(playerId);
+            state.FocusedComponent?.Submit(playerId);
         }
 
-        state.FocusedNode?.HandleSubActions(playerId, state.Input);
+        state.FocusedComponent?.HandleSubActions(playerId, state.Input);
 
         _playerInputStates[playerId] = inputState;
     }
@@ -490,7 +490,7 @@ public partial class UserInterface : Node, IResynchronizable
     {
         if (navigateVec == Vector2I.Zero) return false;
 
-        var currentControl = state.FocusedNode?.FocusableControl;
+        var currentControl = state.FocusedComponent?.FocusableControl;
         var nextControl = currentControl;
         if (currentControl != null)
         {
@@ -501,32 +501,32 @@ public partial class UserInterface : Node, IResynchronizable
         }
         else
         {
-            nextControl = GetFirstValidFocusable()?.FocusableControl;
+            nextControl = GetFirstFocusableComponent()?.FocusableControl;
         }
 
-        var focusable = nextControl?.GetChildOfType<UserInterfaceComponent>();
-        if (focusable != null && focusable.GetInterface() == this)
+        var component = nextControl?.GetChildOfType<UserInterfaceComponent>();
+        if (component != null && component.GetUserInterface() == this)
         {
-            Focus(playerId, focusable);
+            Focus(playerId, component);
             return true;
         }
 
-        if (focusable != null)
-            GD.PrintErr($"Attempted to navigate to a focusable of a different interface: {focusable.GetPath()}");
+        if (component != null)
+            GD.PrintErr($"Attempted to navigate to a component of a different interface: {component.GetPath()}");
 
         return false;
     }
 
-    private void HandlePlayerShortcuts(int playerId, PlayerFocusState state, UserInterfaceComponent focusable)
+    private void HandlePlayerShortcuts(int playerId, PlayerFocusState state, UserInterfaceComponent component)
     {
-        bool shortcutEnabled = focusable.IsShortcutEnabled(playerId);
-        if (shortcutEnabled && state.Input.ConsumeActionEvent(focusable.ShortcutAction))
+        bool shortcutEnabled = component.IsShortcutEnabled(playerId);
+        if (shortcutEnabled && state.Input.ConsumeActionEvent(component.ShortcutAction))
         {
             UpdateInputType(NavigationInputType.ButtonsAndSticks);
-            bool alreadyFocused = state.FocusedNode == focusable;
+            bool alreadyFocused = state.FocusedComponent == component;
             var shouldFocus = false;
             var shouldSubmit = false;
-            switch (focusable.ShortcutMode)
+            switch (component.ShortcutMode)
             {
                 case UserInterfaceComponent.ShortcutModeEnum.FocusOnly:
                     shouldFocus = true;
@@ -544,8 +544,8 @@ public partial class UserInterface : Node, IResynchronizable
                     break;
             }
 
-            if (shouldFocus) Focus(playerId, focusable);
-            if (shouldSubmit) focusable.Submit(playerId);
+            if (shouldFocus) Focus(playerId, component);
+            if (shouldSubmit) component.Submit(playerId);
         }
     }
 
@@ -568,19 +568,19 @@ public partial class UserInterface : Node, IResynchronizable
         EmitSignalInputTypeUpdated();
     }
 
-    public void FocusableLoseFocus(UserInterfaceComponent userInterfaceComponent)
+    public void ComponentLoseFocus(UserInterfaceComponent userInterfaceComponent)
     {
         if (!IsInsideTree()) return;
         if (!this.GetParentOrNull<Control>().IsVisibleInTree()) return;
-        UserInterfaceComponent nextFocusable = null;
+        UserInterfaceComponent nextComponent = null;
         foreach ((int playerId, var state) in _playerFocusStates)
         {
             if (state.Input == null) continue; // no need to lose focus for non-local players
-            if (state.FocusedNode != userInterfaceComponent) continue;
+            if (state.FocusedComponent != userInterfaceComponent) continue;
 
-            nextFocusable ??= GetFallbackFocusableNode(userInterfaceComponent.FocusableControl);
+            nextComponent ??= GetFallbackFocusableComponent(userInterfaceComponent.FocusableControl);
 
-            CallDeferred(MethodName.PlayerLoseFocus, playerId, nextFocusable, nextFocusable?.GetFocusableGroup());
+            CallDeferred(MethodName.PlayerLoseFocus, playerId, nextComponent, nextComponent?.GetUserInterfaceGroup());
         }
     }
 
@@ -593,11 +593,11 @@ public partial class UserInterface : Node, IResynchronizable
         if (suggestedNextFocus != null && !suggestedNextFocus.IsInsideTree())
             suggestedNextFocus = null;
 
-        suggestedNextFocus ??= GetFirstValidFocusableInGroup(suggestedGroup);
+        suggestedNextFocus ??= GetFirstFocusableComponentInGroup(suggestedGroup);
         Focus(playerId, suggestedNextFocus);
     }
 
-    private UserInterfaceComponent GetFallbackFocusableNode(Control from)
+    private UserInterfaceComponent GetFallbackFocusableComponent(Control from)
     {
         Control nextControl = null;
 
@@ -607,29 +607,29 @@ public partial class UserInterface : Node, IResynchronizable
             nextControl ??= from.FindNextValidFocus();
         }
 
-        var focusable = nextControl?.GetChildOfType<UserInterfaceComponent>();
-        if (focusable != null && focusable.GetInterface() == this)
-            return focusable;
+        var component = nextControl?.GetChildOfType<UserInterfaceComponent>();
+        if (component != null && component.GetUserInterface() == this)
+            return component;
 
-        return GetFirstValidFocusable();
+        return GetFirstFocusableComponent();
     }
 
-    public void AddFocusable(UserInterfaceComponent focusable)
+    public void AddComponent(UserInterfaceComponent component)
     {
-        if (!_focusables.Contains(focusable)) TreeOrderUtil.InsertInTreeOrder(_focusables, focusable);
+        if (!_components.Contains(component)) TreeOrderUtil.InsertInTreeOrder(_components, component);
     }
 
-    public void RemoveFocusable(UserInterfaceComponent focusable)
+    public void RemoveComponent(UserInterfaceComponent component)
     {
-        _focusables.Remove(focusable);
+        _components.Remove(component);
     }
 
-    public void AddFocusableGroup(UserInterfaceGroup group)
+    public void AddGroup(UserInterfaceGroup group)
     {
         // no need for this yet
     }
 
-    public void RemoveFocusableGroup(UserInterfaceGroup group)
+    public void RemoveGroup(UserInterfaceGroup group)
     {
         // no need for this yet
     }
@@ -721,14 +721,14 @@ public partial class UserInterface : Node, IResynchronizable
     //         }
     //     }
     //
-    //     foreach (var focusable in _focusables)
+    //     foreach (var component in _components)
     //     {
-    //         if (!focusable.HasShortcut || !focusable.ShowShortcutContextAction) continue;
+    //         if (!component.HasShortcut || !component.ShowShortcutContextAction) continue;
     //         foreach ((int playerId, var state) in _playerFocusStates)
     //         {
     //             if (state.Input == null) continue;
-    //             if (!focusable.IsShortcutEnabled(playerId)) continue;
-    //             output.Add(new ContextAction(focusable.ShortcutAction, playerId, focusable.OverrideShortcutText));
+    //             if (!component.IsShortcutEnabled(playerId)) continue;
+    //             output.Add(new ContextAction(component.ShortcutAction, playerId, component.OverrideShortcutText));
     //         }
     //     }
     // }
@@ -744,7 +744,7 @@ public partial class UserInterface : Node, IResynchronizable
         public NodePath FocusedNodePath;
 
         // Local
-        public UserInterfaceComponent FocusedNode;
+        public UserInterfaceComponent FocusedComponent;
         public PlayerFocusVisual FocusVisual;
         public GdfPlayerInput Input;
         public int PlayerIndex;
@@ -791,12 +791,12 @@ public partial class UserInterface : Node, IResynchronizable
             if (FocusedNodePath.IsNullOrEmpty())
             {
                 FocusedNodePath = null;
-                FocusedNode = null;
+                FocusedComponent = null;
             }
             else
             {
                 FocusedNodePath = newPath;
-                FocusedNode = owner.GetNodeOrNull<UserInterfaceComponent>(newPath);
+                FocusedComponent = owner.GetNodeOrNull<UserInterfaceComponent>(newPath);
             }
         }
     }
