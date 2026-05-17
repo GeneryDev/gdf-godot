@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="PropertyRegistryInputGroups" load_steps=2 format=3 uid="uid://d161k2ge6g0g4"]
+[gd_resource type="Resource" script_class="PropertyRegistryInputGroups" format=3 uid="uid://d161k2ge6g0g4"]
 
 [ext_resource type="Script" uid="uid://crpo5vcnhocaw" path="res://addons/gdf-godot/GDF/PropertyStacks/PropertyRegistryInputGroups.cs" id="1_3t8vu"]
 

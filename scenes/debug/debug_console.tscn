@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3 uid="uid://kpb1thijbnn0"]
+[gd_scene format=3 uid="uid://kpb1thijbnn0"]
 
 [ext_resource type="Script" uid="uid://jl4mwghq44pu" path="res://addons/gdf-godot/GDF/UI/Screen.cs" id="1_57f21"]
 [ext_resource type="Script" uid="uid://lluapp1yahuy" path="res://addons/gdf-godot/GDF/Debug/DebugCommandLineEdit.cs" id="2_bmctx"]
@@ -37,7 +37,7 @@ keycode = 4194305
 [sub_resource type="Shortcut" id="Shortcut_bmctx"]
 events = [SubResource("InputEventKey_57f21")]
 
-[node name="Debug Console" type="Control"]
+[node name="Debug Console" type="Control" unique_id=547275472]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -49,7 +49,7 @@ script = ExtResource("1_57f21")
 Mode = 1
 metadata/_custom_type_script = "uid://jl4mwghq44pu"
 
-[node name="PanelContainer" type="PanelContainer" parent="."]
+[node name="PanelContainer" type="PanelContainer" parent="." unique_id=1655616269]
 layout_mode = 1
 anchors_preset = -1
 anchor_right = 1.0
@@ -62,41 +62,41 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_7i6b5")
 
-[node name="MarginContainer" type="MarginContainer" parent="PanelContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="PanelContainer" unique_id=717699965]
 layout_mode = 2
 theme_override_constants/margin_left = 32
 theme_override_constants/margin_top = 16
 theme_override_constants/margin_right = 32
 theme_override_constants/margin_bottom = 32
 
-[node name="VBoxContainer" type="VBoxContainer" parent="PanelContainer/MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="PanelContainer/MarginContainer" unique_id=1329246307]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="HBoxContainer" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=713601928]
 layout_mode = 2
 
-[node name="RichTextLabel" type="RichTextLabel" parent="PanelContainer/MarginContainer/VBoxContainer/HBoxContainer"]
+[node name="RichTextLabel" type="RichTextLabel" parent="PanelContainer/MarginContainer/VBoxContainer/HBoxContainer" unique_id=873612355]
 layout_mode = 2
 text = "GDF Debug Console"
 fit_content = true
 autowrap_mode = 0
 
-[node name="PanelContainer" type="PanelContainer" parent="PanelContainer/MarginContainer/VBoxContainer"]
+[node name="PanelContainer" type="PanelContainer" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=1902022827]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="Debug Logger Interface" type="Node" parent="PanelContainer/MarginContainer/VBoxContainer/PanelContainer"]
+[node name="Debug Logger Interface" type="Node" parent="PanelContainer/MarginContainer/VBoxContainer/PanelContainer" unique_id=1922349928]
 script = ExtResource("2_csu5r")
 
-[node name="Debug Logger Context" type="Node" parent="PanelContainer/MarginContainer/VBoxContainer/PanelContainer/Debug Logger Interface"]
+[node name="Debug Logger Context" type="Node" parent="PanelContainer/MarginContainer/VBoxContainer/PanelContainer/Debug Logger Interface" unique_id=101716691]
 script = ExtResource("3_xgco5")
 DefaultVariableValues = {}
 DefaultCollections = {}
 EditorPreviewVariables = {}
 metadata/_custom_type_script = "uid://c14yvt8al8vd0"
 
-[node name="Context Binding" type="Node" parent="PanelContainer/MarginContainer/VBoxContainer/PanelContainer/Debug Logger Interface/Debug Logger Context" node_paths=PackedStringArray("DataContext", "TargetNode")]
+[node name="Context Binding" type="Node" parent="PanelContainer/MarginContainer/VBoxContainer/PanelContainer/Debug Logger Interface/Debug Logger Context" unique_id=1148045967 node_paths=PackedStringArray("DataContext", "TargetNode")]
 script = ExtResource("4_csu5r")
 DataContext = NodePath("../..")
 Query = "{debug_logger}"
@@ -104,7 +104,7 @@ QueryType = 2
 TargetNode = NodePath("..")
 metadata/_custom_type_script = "uid://dq2lqcbnowc7j"
 
-[node name="Scroll to bottom" type="Node" parent="PanelContainer/MarginContainer/VBoxContainer/PanelContainer/Debug Logger Interface" node_paths=PackedStringArray("Target")]
+[node name="Scroll to bottom" type="Node" parent="PanelContainer/MarginContainer/VBoxContainer/PanelContainer/Debug Logger Interface" unique_id=1488923097 node_paths=PackedStringArray("Target")]
 script = ExtResource("5_qc5u5")
 Target = NodePath("..")
 Method = &"ScrollToBottom"
@@ -135,16 +135,16 @@ TargetMethodInfo = {
 }
 metadata/_custom_type_script = "uid://rbl3yky4viqg"
 
-[node name="Update Delay" type="Timer" parent="PanelContainer/MarginContainer/VBoxContainer/PanelContainer/Debug Logger Interface/Scroll to bottom"]
-wait_time = 0.009999999999999998
+[node name="Update Delay" type="Timer" parent="PanelContainer/MarginContainer/VBoxContainer/PanelContainer/Debug Logger Interface/Scroll to bottom" unique_id=2033723316]
+wait_time = 0.00999999999999999
 one_shot = true
 
-[node name="ScrollContainer" type="ScrollContainer" parent="PanelContainer/MarginContainer/VBoxContainer/PanelContainer"]
+[node name="ScrollContainer" type="ScrollContainer" parent="PanelContainer/MarginContainer/VBoxContainer/PanelContainer" unique_id=1765324626]
 layout_mode = 2
 size_flags_vertical = 3
 follow_focus = true
 
-[node name="MarginContainer" type="MarginContainer" parent="PanelContainer/MarginContainer/VBoxContainer/PanelContainer/ScrollContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="PanelContainer/MarginContainer/VBoxContainer/PanelContainer/ScrollContainer" unique_id=113210975]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -153,10 +153,10 @@ theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 8
 theme_override_constants/margin_bottom = 8
 
-[node name="VBoxContainer" type="VBoxContainer" parent="PanelContainer/MarginContainer/VBoxContainer/PanelContainer/ScrollContainer/MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="PanelContainer/MarginContainer/VBoxContainer/PanelContainer/ScrollContainer/MarginContainer" unique_id=405399976]
 layout_mode = 2
 
-[node name="RichTextLabel" type="RichTextLabel" parent="PanelContainer/MarginContainer/VBoxContainer/PanelContainer/ScrollContainer/MarginContainer/VBoxContainer"]
+[node name="RichTextLabel" type="RichTextLabel" parent="PanelContainer/MarginContainer/VBoxContainer/PanelContainer/ScrollContainer/MarginContainer/VBoxContainer" unique_id=921224546]
 layout_mode = 2
 size_flags_vertical = 3
 focus_mode = 2
@@ -168,7 +168,7 @@ scroll_active = false
 vertical_alignment = 2
 selection_enabled = true
 
-[node name="Text Binding" type="Node" parent="PanelContainer/MarginContainer/VBoxContainer/PanelContainer/ScrollContainer/MarginContainer/VBoxContainer/RichTextLabel" node_paths=PackedStringArray("DataContext", "TargetNode")]
+[node name="Text Binding" type="Node" parent="PanelContainer/MarginContainer/VBoxContainer/PanelContainer/ScrollContainer/MarginContainer/VBoxContainer/RichTextLabel" unique_id=682918601 node_paths=PackedStringArray("DataContext", "TargetNode")]
 script = ExtResource("4_csu5r")
 DataContext = NodePath("../../../../../Debug Logger Interface/Debug Logger Context")
 Query = "{log_text}"
@@ -177,14 +177,14 @@ TargetPropertyName = "text"
 UpdateOutsideTree = false
 metadata/_custom_type_script = "uid://dq2lqcbnowc7j"
 
-[node name="Bottom" type="Control" parent="PanelContainer/MarginContainer/VBoxContainer/PanelContainer/ScrollContainer/MarginContainer/VBoxContainer"]
+[node name="Bottom" type="Control" parent="PanelContainer/MarginContainer/VBoxContainer/PanelContainer/ScrollContainer/MarginContainer/VBoxContainer" unique_id=689629673]
 layout_mode = 2
 mouse_filter = 2
 
-[node name="HBoxContainer2" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxContainer"]
+[node name="HBoxContainer2" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=97658912]
 layout_mode = 2
 
-[node name="LineEdit" type="LineEdit" parent="PanelContainer/MarginContainer/VBoxContainer/HBoxContainer2"]
+[node name="LineEdit" type="LineEdit" parent="PanelContainer/MarginContainer/VBoxContainer/HBoxContainer2" unique_id=1618816743]
 custom_minimum_size = Vector2(0, 31)
 layout_mode = 2
 size_flags_horizontal = 3
@@ -193,7 +193,7 @@ placeholder_text = "Type in command..."
 keep_editing_on_text_submit = true
 script = ExtResource("2_bmctx")
 
-[node name="Button" type="Button" parent="."]
+[node name="Button" type="Button" parent="." unique_id=1730352922]
 self_modulate = Color(1, 1, 1, 0)
 layout_mode = 0
 offset_right = 8.0
