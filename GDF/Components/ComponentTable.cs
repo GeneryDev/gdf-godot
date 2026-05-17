@@ -5,7 +5,7 @@ using Godot;
 namespace GDF.Components;
 
 [GlobalClass]
-public partial class ComponentOwner : Node
+public partial class ComponentTable : Node
 {
     [Export]
     public Node[] OtherComponentContainers;
