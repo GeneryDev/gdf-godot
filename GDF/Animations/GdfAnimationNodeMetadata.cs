@@ -85,7 +85,6 @@ public partial class GdfAnimationNodeMetadata : Resource
 #if TOOLS
         if (propName == PropertyName.TriggeringEvents)
         {
-            GD.Print(property);
             property["hint_string"] = $"4/0:;2/2:{GdfAnimationEventActions.GetAnimationEventActionOptionsString(AnimationNodeClassName)}";
         }
 #endif
