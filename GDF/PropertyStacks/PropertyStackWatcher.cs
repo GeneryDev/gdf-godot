@@ -170,15 +170,15 @@ public partial class PropertyStackWatcher : Node
             }
         }
 
-        // // TODO move out from plugin
+        // // TODO Re-add network syncing of stack properties
         // if (NetworkSyncedProperties != null && NetworkSyncedProperties.Contains(propertyId) && Stack.IsMultiplayerAuthority())
         // {
-        //     CustomRpc.ForChannel(NetworkChannel).SendOthers(this, Util.PropertyStacks.PropertyStackWatcher.MethodName.SyncProperty, propertyId, newValue);
+        //     GdfRpc.ForChannel(NetworkChannel).SendOthers(this, Util.PropertyStacks.PropertyStackWatcher.MethodName.SyncProperty, propertyId, newValue);
         // }
     }
 
-    // // TODO move out from plugin
-    // [CustomRpc]
+    // // TODO Re-add network syncing of stack properties
+    // [GdfRpc]
     // private void SyncProperty(string propertyId, Variant newValue)
     // {
     //     CheckNetworkChanged();
@@ -205,11 +205,11 @@ public partial class PropertyStackWatcher : Node
         _prevObservedStates.Remove(propertyId);
     }
     //
-    // [CustomRpc]
+    // [GdfRpc]
     // public void Resync(int peerId)
     // {
     //     if (NetworkSyncedProperties is not { Count: > 0 }) return;
-    //     var rpc = CustomRpc.ForChannel(NetworkChannel);
+    //     var rpc = GdfRpc.ForChannel(NetworkChannel);
     //     foreach (string propertyId in NetworkSyncedProperties)
     //     {
     //         rpc.SendOthers(this, Util.PropertyStacks.PropertyStackWatcher.MethodName.SyncProperty, propertyId, Stack.GetEffectiveValue(propertyId));

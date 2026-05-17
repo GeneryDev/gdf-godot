@@ -268,12 +268,12 @@ public partial class UserInterface : Node, IResynchronizable
         if (Operability is OperabilityEnum.PlayerlessAuthority && !IsMultiplayerAuthority()) return;
 
         if (ReplicateToPeers)
-            this.CustomRpc(MethodName.FocusRpc, playerId, node);
+            this.GdfRpc(MethodName.FocusRpc, playerId, node);
         else
             FocusRpc(playerId, node);
     }
 
-    [CustomRpc]
+    [GdfRpc]
     private void FocusRpc(int playerId, UserInterfaceComponent node)
     {
         Room.PlayerInfo playerInfo;
@@ -733,7 +733,7 @@ public partial class UserInterface : Node, IResynchronizable
     //     }
     // }
 
-    [CustomRpc]
+    [GdfRpc]
     public void Resync(int peerId)
     {
     }

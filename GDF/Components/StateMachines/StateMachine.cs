@@ -148,7 +148,7 @@ public partial class StateMachine : Node
         }
 
         if (ReplicateToPeers && IsMultiplayerAuthority())
-            this.CustomRpc(MethodName.TransitionToStateRpc, GetPathTo(state));
+            this.GdfRpc(MethodName.TransitionToStateRpc, GetPathTo(state));
 
         var fromState = CurrentState;
         return HandleTransition(fromState, state);
@@ -275,7 +275,7 @@ public partial class StateMachine : Node
         routine.Owner = location.ParentNode.Owner;
     }
 
-    [CustomRpc(GdfConstants.DefaultRpcChannelPresetName, CallLocal = false, Mode = MultiplayerApi.RpcMode.Authority)]
+    [GdfRpc(GdfConstants.DefaultRpcChannelPresetName, CallLocal = false, Mode = MultiplayerApi.RpcMode.Authority)]
     private void TransitionToStateRpc(NodePath statePath)
     {
         var state = GetNode<State>(statePath);

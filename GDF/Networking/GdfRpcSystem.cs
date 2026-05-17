@@ -6,9 +6,9 @@ using Godot.Collections;
 namespace GDF.Networking;
 
 [GlobalClass]
-public partial class CustomRpcSystem : SingletonNode<CustomRpcSystem>
+public partial class GdfRpcSystem : SingletonNode<GdfRpcSystem>
 {
-    private System.Collections.Generic.Dictionary<string, CustomRpcChannelInstance> _instancesByPresetName;
+    private System.Collections.Generic.Dictionary<string, GdfRpcChannelInstance> _instancesByPresetName;
     
     private void SetupPresets()
     {
@@ -24,7 +24,7 @@ public partial class CustomRpcSystem : SingletonNode<CustomRpcSystem>
             var value = (RpcChannelPreset) field.GetValue(null);
             if (value == null) continue;
 
-            var instance = new CustomRpcChannelInstance()
+            var instance = new GdfRpcChannelInstance()
             {
                 Channel = value.Channel,
                 TransferMode = value.TransferMode,
@@ -44,12 +44,12 @@ public partial class CustomRpcSystem : SingletonNode<CustomRpcSystem>
         
         int ownId = Multiplayer.GetUniqueId();
 
-        if (CustomRpcAttribute.GetAttribute(node, methodName) is not {} attr)
+        if (GdfRpcAttribute.GetAttribute(node, methodName) is not {} attr)
         {
             GD.PushError(
-                $"Attempted to send an illegal CustomRpc call on node type '{node.GetType()}', method '{methodName}'."
+                $"Attempted to send an illegal GdfRpc call on node type '{node.GetType()}', method '{methodName}'."
 #if TOOLS
-                + "\nTo enable this method for CustomRpc, add the [CustomRpc] attribute to the method."
+                + "\nTo enable this method for GdfRpc, add the [GdfRpc] attribute to the method."
 #endif
             );
             return;
@@ -58,9 +58,9 @@ public partial class CustomRpcSystem : SingletonNode<CustomRpcSystem>
         if (!_instancesByPresetName.TryGetValue(attr.ChannelPresetName, out var channelInstance))
         {
             GD.PushError(
-                $"Failed to send CustomRpc call on node type '{node.GetType()}', method '{methodName}'. No such channel preset '{attr.ChannelPresetName}'"
+                $"Failed to send GdfRpc call on node type '{node.GetType()}', method '{methodName}'. No such channel preset '{attr.ChannelPresetName}'"
 #if TOOLS
-                + "\nTo fix, ensure the name in the [CustomRpc] attribute matches a field defined in the RpcChannels class (in GdfConstants.cs)."
+                + "\nTo fix, ensure the name in the [GdfRpc] attribute matches a field defined in the RpcChannels class (in GdfConstants.cs)."
 #endif
             );
             return;
@@ -70,7 +70,7 @@ public partial class CustomRpcSystem : SingletonNode<CustomRpcSystem>
         if (attr.Mode == MultiplayerApi.RpcMode.Authority && !node.IsMultiplayerAuthority())
         {
             GD.PushError(
-                $"Failed to send CustomRpc call on node type '{node.GetType()}', method '{methodName}'. Node is not the authority (expected {node.GetMultiplayerAuthority()}, is {ownId})"
+                $"Failed to send GdfRpc call on node type '{node.GetType()}', method '{methodName}'. Node is not the authority (expected {node.GetMultiplayerAuthority()}, is {ownId})"
             );
             return;
         }
@@ -86,7 +86,7 @@ public partial class CustomRpcSystem : SingletonNode<CustomRpcSystem>
         }
 
         if (SerializeArgs(out var serializedArgs, out uint argFlags, args))
-            channelInstance.RpcId(peerId, CustomRpcChannelInstance.MethodName.Receive, node.GetPath(), methodName, serializedArgs, argFlags);
+            channelInstance.RpcId(peerId, GdfRpcChannelInstance.MethodName.Receive, node.GetPath(), methodName, serializedArgs, argFlags);
     }
 
     public void Receive(Node node, StringName methodName, Array args, uint argFlags)
@@ -100,12 +100,12 @@ public partial class CustomRpcSystem : SingletonNode<CustomRpcSystem>
         int senderId = Multiplayer.GetRemoteSenderId();
         int ownId = Multiplayer.GetUniqueId();
 
-        if (CustomRpcAttribute.GetAttribute(node, methodName) is not {} attr)
+        if (GdfRpcAttribute.GetAttribute(node, methodName) is not {} attr)
         {
             GD.PushError(
-                $"Received an illegal CustomRpc call on node type '{node.GetType()}', method '{methodName}'."
+                $"Received an illegal GdfRpc call on node type '{node.GetType()}', method '{methodName}'."
 #if TOOLS
-                + "\nTo enable this method for CustomRpc, add the [CustomRpc] attribute to the method."
+                + "\nTo enable this method for GdfRpc, add the [GdfRpc] attribute to the method."
 #endif
             );
             return;
@@ -121,7 +121,7 @@ public partial class CustomRpcSystem : SingletonNode<CustomRpcSystem>
         if (attr.Mode == MultiplayerApi.RpcMode.Authority && node.GetMultiplayerAuthority() != senderId)
         {
             GD.PushError(
-                $"Received an illegal CustomRpc call on node type '{node.GetType()}', method '{methodName}'. Remote sender is not the authority of the local node (expected {node.GetMultiplayerAuthority()}, is {senderId})"
+                $"Received an illegal GdfRpc call on node type '{node.GetType()}', method '{methodName}'. Remote sender is not the authority of the local node (expected {node.GetMultiplayerAuthority()}, is {senderId})"
             );
             return;
         }
@@ -137,14 +137,14 @@ public partial class CustomRpcSystem : SingletonNode<CustomRpcSystem>
     }
 }
 
-public static class CustomRpcNodeExtensions
+public static class GdfRpcNodeExtensions
 {
-    public static void CustomRpc(this Node node, StringName method, params Variant[] args)
+    public static void GdfRpc(this Node node, StringName method, params Variant[] args)
     {
-        CustomRpcSystem.Instance?.Send(node, 0, method, args);
+        GdfRpcSystem.Instance?.Send(node, 0, method, args);
     }
-    public static void CustomRpcId(this Node node, int peerId, StringName method, params Variant[] args)
+    public static void GdfRpcId(this Node node, int peerId, StringName method, params Variant[] args)
     {
-        CustomRpcSystem.Instance?.Send(node, peerId, method, args);
+        GdfRpcSystem.Instance?.Send(node, peerId, method, args);
     }
 }

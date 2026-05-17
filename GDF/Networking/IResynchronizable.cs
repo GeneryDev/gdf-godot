@@ -8,7 +8,7 @@ public interface IResynchronizable
     public static StringName MethodNameResync = nameof(Resync);
 
     // Attribute *must* be copied to all implementations of this method!!!
-    [CustomRpc(GdfConstants.DefaultRpcChannelPresetName, CallLocal = false, Mode = MultiplayerApi.RpcMode.AnyPeer)]
+    [GdfRpc(GdfConstants.DefaultRpcChannelPresetName, CallLocal = false, Mode = MultiplayerApi.RpcMode.AnyPeer)]
     public void Resync(int peerId);
 }
 
@@ -23,10 +23,10 @@ public static class ResynchronizableExt
 
         // Not multiplayer authority.
         // Send an RPC to the authority, asking for all info needed to resync.
-        // Use custom RPC for error suppression.
+        // Use GdfRpc for error suppression.
 
         int authority = node.GetMultiplayerAuthority();
         if (Room.Instance.HasPeer(authority))
-            node.CustomRpcId(authority, IResynchronizable.MethodNameResync, node.Multiplayer.GetUniqueId());
+            node.GdfRpcId(authority, IResynchronizable.MethodNameResync, node.Multiplayer.GetUniqueId());
     }
 }

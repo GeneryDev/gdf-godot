@@ -80,13 +80,13 @@ public partial class ScreenPlaceholder : Node
         return true;
     }
 
-    [CustomRpc]
+    [GdfRpc]
     public void CallScreenMethod(StringName methodName)
     {
         _screen.Call(methodName);
     }
 
-    [CustomRpc]
+    [GdfRpc]
     public void CallScreenMethod(StringName methodName, Array args)
     {
         _screen.Callv(methodName, args);

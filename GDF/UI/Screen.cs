@@ -104,14 +104,14 @@ public partial class Screen : Control
         NetworkingCall(MethodName.ForceShowScreen);
     }
 
-    [CustomRpc]
+    [GdfRpc]
     public void ForceRefreshShownState()
     {
         if(Showing) ForceShowScreen();
         else ForceHideScreen();
     }
 
-    [CustomRpc]
+    [GdfRpc]
     public void ForceShowScreen()
     {
         if (!ShowingInTree && (_placeholder?.PrepareScreenToEnterTree() ?? true))
@@ -187,7 +187,7 @@ public partial class Screen : Control
         NetworkingCall(MethodName.ForceHideScreen);
     }
 
-    [CustomRpc]
+    [GdfRpc]
     public void ForceHideScreen()
     {
         if (IsInsideTree() && (ShowingInTree || Visible || FadingOut))
@@ -217,7 +217,7 @@ public partial class Screen : Control
         NetworkingCall(MethodName.ForceFadeOutScreen);
     }
 
-    [CustomRpc]
+    [GdfRpc]
     public void ForceFadeOutScreen()
     {
         if (IsInsideTree() && ShowingInTree)
@@ -247,7 +247,7 @@ public partial class Screen : Control
         NetworkingCall(MethodName.ForceHideAndFreeScreen);
     }
 
-    [CustomRpc]
+    [GdfRpc]
     public void ForceHideAndFreeScreen()
     {
         ForceHideScreen();
@@ -263,14 +263,14 @@ public partial class Screen : Control
             {
                 // call it on the placeholder
                 if (_placeholder.IsInsideTree())
-                    _placeholder.CustomRpc(ScreenPlaceholder.MethodName.CallScreenMethod, methodName, new Godot.Collections.Array(args));
+                    _placeholder.GdfRpc(ScreenPlaceholder.MethodName.CallScreenMethod, methodName, new Godot.Collections.Array(args));
                 else
                     GD.PrintErr(
                         $"Tried to call method {methodName} on Screen {Name}, but the placeholder is not inside the tree");
             }
             else if (IsInsideTree())
             {
-                this.CustomRpc(methodName, args);
+                this.GdfRpc(methodName, args);
             }
             else
             {

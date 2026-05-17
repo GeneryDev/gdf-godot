@@ -23,7 +23,7 @@ public static class GdfConstants
     public const int DefaultRpcTransferChannel = 1;
 
     /// <summary>
-    /// The name of the default RPC channel preset used for custom RPCs.
+    /// The name of the default RPC channel preset used for GDF RPCs.
     /// </summary>
     public const string DefaultRpcChannelPresetName = nameof(RpcChannels.Default);
 
@@ -40,7 +40,7 @@ public static class GdfConstants
 }
 
 /// <summary>
-/// Holds user-configurable, named, RPC presets. These are used for Custom RPCs.
+/// Holds user-configurable, named, RPC presets. These are used for GDF RPCs.
 /// These presets are found through Reflection.
 /// </summary>
 public static class RpcChannels

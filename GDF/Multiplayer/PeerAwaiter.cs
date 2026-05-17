@@ -330,7 +330,7 @@ public partial class PeerAwaiter : Node, IResynchronizable, IDataContext
         if (Autostart) Start();
     }
 
-    [CustomRpc]
+    [GdfRpc]
     public void Resync(int peerId)
     {
         if (Awaiting)

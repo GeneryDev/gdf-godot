@@ -3,12 +3,12 @@ using Godot.Collections;
 
 namespace GDF.Networking;
 
-public partial class CustomRpcChannelInstance : Node
+public partial class GdfRpcChannelInstance : Node
 {
     [Export] public int Channel;
     [Export] public MultiplayerPeer.TransferModeEnum TransferMode;
 
-    public CustomRpcSystem System;
+    public GdfRpcSystem System;
 
     public void ConfigureRpc()
     {
@@ -23,7 +23,7 @@ public partial class CustomRpcChannelInstance : Node
     // Config set via RpcConfig
     private void Receive(NodePath path, StringName methodName, Array args, uint argFlags)
     {
-        // GD.Print($"[{Multiplayer.GetUniqueId()}] Receive custom RPC {methodName} from {Multiplayer.GetRemoteSenderId()}");
+        // GD.Print($"[{Multiplayer.GetUniqueId()}] Receive GdfRpc {methodName} from {Multiplayer.GetRemoteSenderId()}");
         var node = GetTree().Root.GetNodeOrNull(path);
 
         System.Receive(node, methodName, args, argFlags);

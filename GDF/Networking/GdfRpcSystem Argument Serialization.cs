@@ -4,7 +4,7 @@ using Array = Godot.Collections.Array;
 
 namespace GDF.Networking;
 
-public partial class CustomRpcSystem
+public partial class GdfRpcSystem
 {
     private Array _tempArray = new();
     
@@ -12,7 +12,7 @@ public partial class CustomRpcSystem
     {
         if (args.Length > 8)
         {
-            GD.PushError($"CustomRpc does not support more than 8 arguments, got {args.Length}");
+            GD.PushError($"GdfRpc does not support more than 8 arguments, got {args.Length}");
             outArgs = null;
             outArgFlags = 0;
             return false;
@@ -34,7 +34,7 @@ public partial class CustomRpcSystem
                 !string.IsNullOrEmpty(argResource.ResourcePath))
             {
                 GD.PushError(
-                    "CustomRpc no longer supports passing resources via parameters due to security risks. Look into using ResourceLibrary Descriptors");
+                    "GdfRpc does not support passing resources via parameters due to security risks. Look into using ResourceLibrary Descriptors");
                 outArgs = default;
                 outArgFlags = default;
                 return false;

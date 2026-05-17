@@ -387,7 +387,7 @@ public partial class PlayerAwaiter : Node, IResynchronizable, IDataContext
         if (Autostart) Start();
     }
 
-    [CustomRpc]
+    [GdfRpc]
     public void Resync(int peerId)
     {
         if (!ReplicateToPeers) return;
