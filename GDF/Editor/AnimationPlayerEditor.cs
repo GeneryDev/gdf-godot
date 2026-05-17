@@ -27,7 +27,7 @@ public partial class AnimationPlayerEditor : GodotObject
     }
     public string CurrentAnimationName
     {
-        get => _animationPicker.Selected == -1 ? null : _animationPicker.GetItemText(_animationPicker.Selected);
+        get => _animationPicker == null || _animationPicker.Selected == -1 ? null : _animationPicker.GetItemText(_animationPicker.Selected);
         set
         {
             if (_animationPicker == null) return;
@@ -42,7 +42,7 @@ public partial class AnimationPlayerEditor : GodotObject
         }
     }
 
-    public bool IsOpen => _editorControl.IsVisible();
+    public bool IsOpen => _editorControl?.IsVisible() ?? false;
 
     private FrameInfo CurrentFrameInfo => !IsOpen ? default : new FrameInfo
     {
@@ -59,14 +59,6 @@ public partial class AnimationPlayerEditor : GodotObject
     {
         Instance = this;
         GD.Print("Re-created animation player editor");
-    }
-
-    public AnimationPlayerEditor(Control editorControl)
-    {
-        SetEditorControl(editorControl);
-        GD.Print("Created animation player editor!");
-        GD.Print(_editorControl.GetPropertyList());
-        Instance = this;
     }
 
     public void Validate()
@@ -101,8 +93,16 @@ public partial class AnimationPlayerEditor : GodotObject
 
     private void FindControls()
     {
+        if (_editorControl == null)
+        {
+            GD.Print("Failed to find animation player editor control");
+            return;
+        }
         _topBar = _editorControl.GetChild<Control>(0);
-        GD.Print($"topBar: {_topBar.Name}");
+#if GODOT4_6_0_OR_GREATER
+        _topBar = _topBar?.GetChild<Control>(0);
+#endif
+        if (_topBar == null) return;
 
         foreach (var child in _topBar.GetChildren())
         {

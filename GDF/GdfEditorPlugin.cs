@@ -53,8 +53,17 @@ public partial class GdfEditorPlugin : EditorPlugin
 
     public Control FindAnimationPlayerEditor()
     {
+#if GODOT4_6_0_OR_GREATER
+        var dummyControl = new EditorDock()
+        {
+            DefaultSlot = EditorDock.DockSlot.Bottom,
+            AvailableLayouts = EditorDock.DockLayout.Horizontal
+        };
+        AddDock(dummyControl);
+#else
         var dummyControl = new Control();
         AddControlToBottomPanel(dummyControl, "Find animation editor pls");
+#endif
         try
         {
             foreach (var sibling in dummyControl.GetParentControl().GetChildren())
@@ -65,13 +74,43 @@ public partial class GdfEditorPlugin : EditorPlugin
         }
         finally
         {
+#if GODOT4_6_0_OR_GREATER
+            RemoveDock(dummyControl);
+#else
             RemoveControlFromBottomPanel(dummyControl);
+#endif
             dummyControl.QueueFree();
         }
 	
         return null;
     }
-	
+
+    public override bool _Handles(GodotObject @object)
+    {
+        if (@object is AnimationMixer) return true;
+        return false;
+    }
+
+    public override void _Edit(GodotObject @object)
+    {
+        if (@object != null)
+        {
+            _editingAnimationMixer = (AnimationMixer)@object;
+            GD.Print($"Editing animation mixer: {_editingAnimationMixer}");
+            _editingMixerUnselectedButStillInTree = false;
+        } else if (_editingAnimationMixer.IsInsideTree())
+        {
+            // Keep last edited animation mixer, it's still valid
+            _editingMixerUnselectedButStillInTree = true;
+            GD.Print("Deselected mixer, but still in tree");
+        }
+        else
+        {
+            _editingAnimationMixer = null;
+            GD.Print("No animation mixer active");
+            _editingMixerUnselectedButStillInTree = false;
+        }
+    }
 
     private void SanitizeEditingMixer()
     {
