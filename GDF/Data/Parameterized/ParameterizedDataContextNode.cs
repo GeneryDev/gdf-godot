@@ -2,7 +2,6 @@
 using GDF.Editor;
 using Godot;
 using Godot.Collections;
-using Projects.Sample;
 
 namespace GDF.Data.Parameterized;
 
