@@ -10,6 +10,7 @@ using Array = System.Array;
 
 namespace GDF.Resources;
 
+[HasDebugCommands]
 public static class ResourceLibrarySystem
 {
     public static CallableEvent LibrariesUpdated = new();
@@ -94,6 +95,24 @@ public static class ResourceLibrarySystem
         property["hint"] = (int)PropertyHint.TypeString;
         property["hint_string"] =
             $"{Variant.Type.StringName:D}/{PropertyHint.EnumSuggestion:D}:{library.GetAllIdsCommaSeparated()}";
+    }
+
+    [DebugCommand("resource_libraries")]
+    public static void LogResourceLibraries()
+    {
+        GD.Print($"Resource Libraries:");
+        List<StringName> tempIds = new();
+        foreach (var library in Libraries)
+        {
+            tempIds.Clear();
+            library.CollectAllIds(tempIds);
+            GD.Print("* " + library.GetLibraryTypeString() + $" ({tempIds.Count})");
+            foreach (var id in tempIds)
+            {
+                GD.Print($"  * {id} ({library.GetPathForId(id)})");
+            }
+            tempIds.Clear();
+        }
     }
 }
 
