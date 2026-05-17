@@ -1,4 +1,5 @@
-﻿using Godot;
+﻿using GDF.Util;
+using Godot;
 
 #if TOOLS
 namespace GDF.Animations;
@@ -74,11 +75,19 @@ public partial class AnimationInspectorPlugin : EditorInspectorPlugin
         editor.UseFolding = true;
         editor.DrawBackground = false;
         AddPropertyEditor($"metadata/{GdfAnimationTree.MetaNameMetadata}", editor, false, "GDF Metadata");
+#if GODOT4_6_0_OR_GREATER
+        editor.GetChildOfType<EditorResourcePicker>()?.SetModulate(new Color(1,1,1,0));
+        if (editor.GetChildOfType<EditorResourcePicker>()?.GetChild(1) is Button button)
+        {
+            CallDeferred(MethodName.Unfold, button);
+        }
+#else
         (editor.GetChild(0) as Control)?.SetModulate(new Color(1,1,1,0));
         if (editor.GetChild(0)?.GetChild(0) is Button button)
         {
             CallDeferred(MethodName.Unfold, button);
         }
+#endif
     }
 
     private void AddMetadata<[MustBeVariant]T>(GodotObject obj) where T : GodotObject, new()
