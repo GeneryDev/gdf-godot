@@ -24,6 +24,7 @@ public partial class AnimationInspectorPlugin : EditorInspectorPlugin
 
     private void Unfold(Button button)
     {
+        if (button == null) return;
         if (!button.ButtonPressed) button.EmitSignal(BaseButton.SignalName.Pressed);
     }
 
