@@ -5,7 +5,8 @@ using Godot;
 namespace GDF.Components;
 
 [GlobalClass]
-public partial class ComponentTable : Node
+[Icon($"{GdfConstants.IconRoot}/component_index.png")]
+public partial class ComponentIndex : Node
 {
     [Export]
     public Node[] OtherComponentContainers;
