@@ -1,6 +1,6 @@
 ﻿using Godot;
 
-namespace GDF.Components.StateMachines;
+namespace GDF.Composition.StateMachines;
 
 [GlobalClass]
 public partial class StateTransitionTriggerable : StateTransition

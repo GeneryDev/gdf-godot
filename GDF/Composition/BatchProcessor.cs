@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using Godot;
 
-namespace GDF.Components;
+namespace GDF.Composition;
 
 [GlobalClass]
 public partial class BatchProcessor : Node

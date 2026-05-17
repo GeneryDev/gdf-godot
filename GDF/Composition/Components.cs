@@ -2,7 +2,7 @@
 using GDF.Util;
 using Godot;
 
-namespace GDF.Components;
+namespace GDF.Composition;
 
 public static class Components
 {

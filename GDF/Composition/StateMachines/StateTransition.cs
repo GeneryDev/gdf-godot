@@ -1,6 +1,6 @@
 ﻿using Godot;
 
-namespace GDF.Components.StateMachines;
+namespace GDF.Composition.StateMachines;
 
 [GlobalClass]
 [Icon($"{GdfConstants.IconRoot}/state_transition.png")]

@@ -1,7 +1,6 @@
-﻿using GDF.Util;
-using Godot;
+﻿using Godot;
 
-namespace GDF.Components;
+namespace GDF.Composition;
 
 public struct ComponentCache<T> where T : class
 {

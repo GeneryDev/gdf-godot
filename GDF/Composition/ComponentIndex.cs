@@ -3,7 +3,7 @@ using GDF.Util;
 using Godot;
 using Godot.Collections;
 
-namespace GDF.Components;
+namespace GDF.Composition;
 
 [Tool]
 [GlobalClass]

@@ -1,11 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using GDF.Networking;
 using GDF.Util;
 using Godot;
 
-namespace GDF.Components.StateMachines;
+namespace GDF.Composition.StateMachines;
 
 [GlobalClass]
 [Icon($"{GdfConstants.IconRoot}/state_machine.png")]

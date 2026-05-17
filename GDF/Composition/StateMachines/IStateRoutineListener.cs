@@ -1,4 +1,4 @@
-﻿namespace GDF.Components.StateMachines;
+﻿namespace GDF.Composition.StateMachines;
 
 public interface IStateRoutineListener
 {
