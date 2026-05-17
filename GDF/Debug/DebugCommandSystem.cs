@@ -101,8 +101,6 @@ public partial class DebugCommandSystem : SingletonNode<DebugCommandSystem>
     public override void _Ready()
     {
         PopulateDefinitions();
-        
-        SubmitCommand("help");
     }
 
     private static void PopulateDefinitions()
