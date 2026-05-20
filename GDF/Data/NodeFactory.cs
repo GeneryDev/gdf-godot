@@ -201,12 +201,12 @@ public partial class NodeFactory : Node, IDataContext, IDataQueryOptions
         {
             case DataQueryType.Collection:
             {
-                this.EvaluateCollection(CollectionQuery, newCollection, ref _queryCache, this);
+                (DataContext as IDataContext)?.EvaluateCollection(CollectionQuery, newCollection, ref _queryCache, this);
                 break;
             }
             case DataQueryType.SubContext:
             {
-                var subContext = !string.IsNullOrEmpty(SubContextQuery) ? this.EvaluateSubContext(SubContextQuery, ref _queryCache, this) : _contextNode as IDataContext;
+                var subContext = !string.IsNullOrEmpty(SubContextQuery) ? (DataContext as IDataContext)?.EvaluateSubContext(SubContextQuery, ref _queryCache, this) : _contextNode as IDataContext;
                 if (subContext != null)
                 {
                     newCollection.Add(subContext);
@@ -456,7 +456,6 @@ public partial class NodeFactory : Node, IDataContext, IDataQueryOptions
     }
 
     StringName IDataContext.UpdatedSignalName => SignalName.Updated;
-    IDataContext IDataContext.ParentContext => DataContext as IDataContext;
 
     public bool GetContextVariable(string key, string input, ref Variant output, IDataQueryOptions options)
     {
