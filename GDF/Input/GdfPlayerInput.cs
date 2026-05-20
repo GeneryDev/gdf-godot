@@ -57,6 +57,7 @@ public partial class GdfPlayerInput : Node
     {
         if (!Engine.IsEditorHint())
         {
+            UpdateWithAutoConfig();
             ResetActionStates();
             GdfInputSystem.Instance?.ConnectPlayer(this);
         }
