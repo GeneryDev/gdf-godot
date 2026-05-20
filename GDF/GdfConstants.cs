@@ -37,6 +37,12 @@ public static class GdfConstants
     /// The input group string that should be required for the player to navigate UserInterfaces.
     /// </summary>
     public const string UserInterfaceRequiredInputGroup = InputGroups.Default;
+
+    /// <summary>
+    /// The stack property ID corresponding to the window's mouse mode in the global property stack.
+    /// Used by various systems to change the mouse mode.
+    /// </summary>
+    public const string MouseModeGlobalPropertyId = "mouse_mode";
 }
 
 /// <summary>

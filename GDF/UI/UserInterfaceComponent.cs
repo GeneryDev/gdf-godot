@@ -63,7 +63,6 @@ public sealed partial class UserInterfaceComponent : Node
 
     [Export] public bool Submittable = true;
 
-    [Export] public bool DisableTrueFocus = true;
     [Export] public Control OverrideOutlinedControl;
     [Export] public UserInterfaceGroup OverrideParentGroup;
     [ExportGroup("Input")]
@@ -80,6 +79,7 @@ public sealed partial class UserInterfaceComponent : Node
     [ExportGroup("UX")]
     [Export] public int AutoFocusPriority = 0;
     [Export] public bool EmulateButtonHover = false;
+    [Export] public bool DisableTrueFocus = true;
     [Export] public bool ShowSubmitContextAction = true;
     [Export] public bool ShowSubActionContextAction = true;
     [Export] public bool ShowShortcutContextAction = true;

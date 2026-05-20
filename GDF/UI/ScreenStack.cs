@@ -84,9 +84,8 @@ public partial class ScreenStack : Control
 
     private void OnChildExitingTree(Node node)
     {
-        if (node is Screen screen)
+        if (node is Screen)
         {
-            screen.ControlFrame = screen.ControlFrame?.Remove();
             CallDeferred(MethodName.UpdateLayeredVisibility);
         }
     }

@@ -32,9 +32,10 @@ public partial class Screen : Control
     [Export] public ScreenModeEnum Mode = ScreenModeEnum.Overlay;
     [Export] public bool AutomaticLayering = true;
     [Export] public UserInterface UserInterface;
+    [Export(PropertyHint.Enum,"Don't Change:-1,Visible:0,Hidden:1,Captured:2,Confined:3,Confined Hidden:4")] public int MouseMode = (int)Godot.Input.MouseModeEnum.Visible;
 
     [ExportGroup("Layering")]
-    [Export] public bool OrderAsRelative = false;
+    [Export] public bool OrderRelativeToAncestor = false;
     
     [ExportGroup("Shadowing")]
     [Export] public bool ShadowLowerOrderInterfaces = false;
@@ -75,6 +76,7 @@ public partial class Screen : Control
     public Node OriginalOwner;
     public bool Shadowed = false;
     private int _exclusiveToPlayerId = -1;
+    private PropertyFrame _globalFrame;
 
     public override void _Ready()
     {
@@ -141,6 +143,15 @@ public partial class Screen : Control
             foreach (string id in InputGroups.GetAll())
                 ControlFrame?.Set(id, inputGroupMode);
 
+            if (MouseMode != -1)
+            {
+                var cursorFrame = affectedStack is GlobalPropertyStack
+                    ? ControlFrame
+                    : (_globalFrame = GlobalPropertyStack.Instance.NewFrame($"Screen Cursor: {Name}")
+                        .BindToNode(this));
+                cursorFrame?.Set(GdfConstants.MouseModeGlobalPropertyId, (Godot.Input.MouseModeEnum)MouseMode);
+            }
+
             if (UserInterface != null)
             {
                 UserInterface.ExclusiveToPlayerId = ExclusiveToPlayerId;
@@ -156,6 +167,8 @@ public partial class Screen : Control
 
                 UserInterface.RequireFrameControl ??= ControlFrame;
             }
+
+            _globalFrame = GlobalPropertyStack.Instance.NewFrame($"Screen: {Name} Cursor");
 
             Visible = true;
             Showing = true;
@@ -173,7 +186,7 @@ public partial class Screen : Control
 
     public int GetEffectiveOrder()
     {
-        if (OrderAsRelative)
+        if (OrderRelativeToAncestor)
         {
             return FindAncestorScreenOrder(this.GetParent(), 0) + Order;
         }
@@ -194,7 +207,7 @@ public partial class Screen : Control
         {
             if (ControlFrame != null && UserInterface?.RequireFrameControl == ControlFrame && UserInterface != null)
                 UserInterface.RequireFrameControl = null;
-            ControlFrame = ControlFrame?.Remove();
+            RemoveFrames();
 
             if (AutomaticLayering)
                 ScreenStack.Instance.RemoveChild(this);
@@ -208,6 +221,12 @@ public partial class Screen : Control
         {
             Showing = false;
         }
+    }
+
+    private void RemoveFrames()
+    {
+        ControlFrame = ControlFrame?.Remove();
+        _globalFrame = _globalFrame?.Remove();
     }
 
     public void FadeOutScreen()
@@ -293,8 +312,12 @@ public partial class Screen : Control
         }
 
         if (what == NotificationExitTree)
+        {
+            RemoveFrames();
+            
             if (!AutomaticLayering)
                 HideScreen();
+        }
         if (what == NotificationPredelete)
             if (IsInstanceValid(_placeholder))
                 _placeholder.QueueFree();
