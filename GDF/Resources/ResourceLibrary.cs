@@ -261,6 +261,7 @@ public abstract partial class ResourceLibrary<TRes, TSub> : Node, IResourceLibra
 
     public static List<StringName> CollectAllIds(List<StringName> output)
     {
+        if (Engine.IsEditorHint()) ScanRoots();
         output ??= new();
         foreach (var (id, _) in ResourcePathsById)
         {
@@ -272,6 +273,7 @@ public abstract partial class ResourceLibrary<TRes, TSub> : Node, IResourceLibra
 
     public static List<Descriptor> CollectAll(List<Descriptor> output)
     {
+        if (Engine.IsEditorHint()) ScanRoots();
         output ??= new();
         foreach (var (id, _) in ResourcePathsById)
         {
