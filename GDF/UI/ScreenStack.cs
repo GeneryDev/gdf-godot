@@ -42,20 +42,35 @@ public partial class ScreenStack : Control
 
     public void Push(Screen screen)
     {
+        if (screen == null) return;
         var children = GetChildren();
-        AddChild(screen);
+        var layer = screen.GetOrCreateLayer();
+        AddChild(layer);
 
         // Place after all other interfaces with order <= the incoming Screen order.
         for (var index = 0; index < children.Count; index++)
         {
             var otherChild = children[index];
-            if (otherChild is not Screen otherScreen) continue;
-            if (otherScreen.GetEffectiveOrder() <= screen.GetEffectiveOrder()) continue;
+            if (otherChild is not CanvasLayer otherScreenLayer) continue;
+            if (otherScreenLayer.Layer <= screen.GetEffectiveOrder()) continue;
             MoveChild(screen, index);
             break;
         }
 
         UpdateLayeredVisibility();
+    }
+
+    public void Remove(Screen screen)
+    {
+        if (screen == null) return;
+        if (screen.GetParent() == this)
+        {
+            this.RemoveChild(screen);
+        }
+        else if (screen.GetParent() is CanvasLayer screenLayer && screenLayer.GetParent() == this)
+        {
+            this.RemoveChild(screenLayer);
+        }
     }
 
     public void UpdateLayeredVisibility()
@@ -84,7 +99,7 @@ public partial class ScreenStack : Control
 
     private void OnChildExitingTree(Node node)
     {
-        if (node is Screen)
+        if (node is Screen or CanvasLayer)
         {
             CallDeferred(MethodName.UpdateLayeredVisibility);
         }

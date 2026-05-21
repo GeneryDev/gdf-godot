@@ -75,8 +75,10 @@ public partial class Screen : Control
     public Node SpawnedByNode = null;
     public Node OriginalOwner;
     public bool Shadowed = false;
+    
     private int _exclusiveToPlayerId = -1;
     private PropertyFrame _globalFrame;
+    private CanvasLayer _layer;
 
     public override void _Ready()
     {
@@ -210,7 +212,7 @@ public partial class Screen : Control
             RemoveFrames();
 
             if (AutomaticLayering)
-                ScreenStack.Instance.RemoveChild(this);
+                ScreenStack.Instance.Remove(this);
             Visible = false;
             ShowingInTree = false;
             Showing = false;
@@ -318,9 +320,14 @@ public partial class Screen : Control
             if (!AutomaticLayering)
                 HideScreen();
         }
+
         if (what == NotificationPredelete)
+        {
+            if(IsInstanceValid(_layer))
+                _layer.QueueFree();
             if (IsInstanceValid(_placeholder))
                 _placeholder.QueueFree();
+        }
     }
 
     private void SceneReady()
@@ -389,6 +396,18 @@ public partial class Screen : Control
     public static int FindAncestorScreenOrder(Node source, int fallback)
     {
         return FindAncestorScreen(source)?.GetEffectiveOrder() ?? fallback;
+    }
+
+    public CanvasLayer GetOrCreateLayer()
+    {
+        if (_layer == null)
+        {
+            _layer = new CanvasLayer();
+            _layer.AddChild(this);
+        }
+        _layer.Name = this.Name;
+        _layer.Layer = GetEffectiveOrder();
+        return _layer;
     }
 
     public enum ScreenModeEnum
