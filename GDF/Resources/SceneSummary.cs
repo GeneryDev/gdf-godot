@@ -39,6 +39,8 @@ public partial class SceneSummary : Resource
         var instance = ((CSharpScript)RootNodeScript).New().As<SummarizableScene>();
         if (instance != null)
         {
+            instance.SceneFilePath = ScenePathFromSummaryPath(this.ResourcePath);
+            instance.IsReconstructedFromSummary = true;
             instance.Name = RootNodeName;
             instance.Summary = this; // Setter copies properties
         }

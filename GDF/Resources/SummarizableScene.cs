@@ -18,6 +18,7 @@ public abstract partial class SummarizableScene : Node
             LoadFromSummary();
         }
     }
+    public bool IsReconstructedFromSummary = false;
 
     private bool _generatingSummary = false;
     private SceneSummary _summary;
