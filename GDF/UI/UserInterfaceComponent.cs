@@ -295,14 +295,8 @@ public sealed partial class UserInterfaceComponent : Node
         EmitSignal(SignalName.PlayerFocusExited, playerId);
     }
 
-    private bool ShouldTrackFocus()
-    {
-        return EmulateButtonHover;
-    }
-
     private void TrackFocusEnter(int playerId)
     {
-        if (!ShouldTrackFocus()) return;
         _focusedPlayers ??= new();
         if (!_focusedPlayers.Contains(playerId))
         {
@@ -313,7 +307,6 @@ public sealed partial class UserInterfaceComponent : Node
 
     private void TrackFocusExit(int playerId)
     {
-        if (!ShouldTrackFocus()) return;
         if (_focusedPlayers?.Remove(playerId) ?? false)
         {
             TrackedFocusChanged();
@@ -334,6 +327,16 @@ public sealed partial class UserInterfaceComponent : Node
                 btn.RemoveThemeStyleboxOverride(normalStyleboxName);
             }
         }
+    }
+
+    public bool IsAnyPlayerFocused()
+    {
+        return _focusedPlayers is {Count: > 0};
+    }
+
+    public bool IsPlayerFocused(int playerId)
+    {
+        return _focusedPlayers?.Contains(playerId) ?? false;
     }
 
     public void FocusGroup()
