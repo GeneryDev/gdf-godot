@@ -179,6 +179,15 @@ public partial class ControlStateContext : Node, IDataContext
             }
             Update();
         }
+        if (evt is InputEventMouseMotion mmEvt)
+        {
+            if ((mmEvt.ButtonMask & MouseButtonMask.Left) == 0) _pressedMouseButtons.Remove(MouseButton.Left);
+            if ((mmEvt.ButtonMask & MouseButtonMask.Middle) == 0) _pressedMouseButtons.Remove(MouseButton.Middle);
+            if ((mmEvt.ButtonMask & MouseButtonMask.Right) == 0) _pressedMouseButtons.Remove(MouseButton.Right);
+            if ((mmEvt.ButtonMask & MouseButtonMask.MbXbutton1) == 0) _pressedMouseButtons.Remove(MouseButton.Xbutton1);
+            if ((mmEvt.ButtonMask & MouseButtonMask.MbXbutton2) == 0) _pressedMouseButtons.Remove(MouseButton.Xbutton2);
+            Update();
+        }
     }
 
     private bool IsStateSignalConnected(TrackedStateEnum state)
