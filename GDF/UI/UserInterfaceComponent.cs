@@ -74,7 +74,7 @@ public sealed partial class UserInterfaceComponent : Node
     [ExportGroup("Shortcut")]
     [Export] public GdfInputAction ShortcutAction;
     [Export] public ShortcutConditionEnum ShortcutCondition = ShortcutConditionEnum.WhenGroupHasFocus;
-    [Export] public ShortcutModeEnum ShortcutMode = ShortcutModeEnum.OnceFocusTwiceSubmit;
+    [Export] public ShortcutModeEnum ShortcutMode = ShortcutModeEnum.SubmitOnly;
 
     [ExportGroup("UX")]
     [Export] public int AutoFocusPriority = 0;
