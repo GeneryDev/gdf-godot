@@ -89,7 +89,7 @@ public partial class UserInterface : Node, IResynchronizable
             FocusVisual = CreateFocusVisual(playerInfo)
         };
 
-        if (playerInfo.OwnedByThisClient)
+        if (playerInfo.IsLocal)
         {
             var input = state.Input = new GdfPlayerInput()
             {
@@ -260,7 +260,7 @@ public partial class UserInterface : Node, IResynchronizable
         if (Operability is not (OperabilityEnum.Playerless or OperabilityEnum.PlayerlessAuthority))
         {
             if (!Room.Instance.TryGetPlayerInfo(playerId, out var playerInfo)) return;
-            if (!playerInfo.OwnedByThisClient) return;
+            if (!playerInfo.IsLocal) return;
         }
 
         if (!IsInsideTree() || (node != null && !node.IsInsideTree())) return;
@@ -655,13 +655,13 @@ public partial class UserInterface : Node, IResynchronizable
             {
                 if (!bypassExclusiveCheck && ExclusiveToPlayerId != -1 && playerId != ExclusiveToPlayerId) return false;
                 if (!Room.Instance.TryGetPlayerInfo(playerId, out var playerInfo)) return false;
-                if (mustBeLocal && !playerInfo.OwnedByThisClient) return false;
+                if (mustBeLocal && !playerInfo.IsLocal) return false;
                 return true;
             }
             case OperabilityEnum.AllPlayers:
             {
                 if (!Room.Instance.TryGetPlayerInfo(playerId, out var playerInfo)) return false;
-                if (mustBeLocal && !playerInfo.OwnedByThisClient) return false;
+                if (mustBeLocal && !playerInfo.IsLocal) return false;
                 return true;
             }
         }

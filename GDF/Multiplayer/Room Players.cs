@@ -7,7 +7,7 @@ public partial class Room
 {
     public int TotalPlayerCount => GetAllPlayerInfo().Count;
     public int LocalPlayerCount => GetPlayerCountForPeer(PeerId);
-    public bool IsSpectating => LocalPlayerCount <= 0;
+    public bool IsSpectating => LocalPlayerCount == 0;
 
     public abstract List<PlayerInfo> GetAllPlayerInfo();
 
@@ -54,7 +54,7 @@ public partial class Room
     {
         foreach (var playerInfo in GetAllPlayerInfo())
         {
-            if (!playerInfo.OwnedByThisClient) continue;
+            if (!playerInfo.IsLocal) continue;
             return playerInfo.PlayerId;
         }
 
@@ -65,7 +65,7 @@ public partial class Room
     {
         foreach (var playerInfo in GetAllPlayerInfo())
         {
-            if (!playerInfo.OwnedByThisClient) continue;
+            if (!playerInfo.IsLocal) continue;
             return playerInfo.PlayerId;
         }
 
@@ -87,7 +87,7 @@ public partial class Room
         public int PlayerId;
         public int IndexInClient;
         public int PlayerIndex => Instance.GetPlayerIndex(PlayerId);
-        public bool OwnedByThisClient => PeerId == Instance.PeerId;
+        public bool IsLocal => PeerId == Instance.PeerId;
 
         public Variant Serialize()
         {

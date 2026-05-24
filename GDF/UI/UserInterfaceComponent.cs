@@ -238,7 +238,7 @@ public sealed partial class UserInterfaceComponent : Node
                     playerId = focusInterface.ExclusiveToPlayerId;
                     if (playerId == -1)
                         playerId = Room.Instance.GetOnlyLocalPlayerId();
-                    if (playerId != -1 && !(Room.Instance.GetPlayerInfo(playerId)?.OwnedByThisClient ?? false))
+                    if (playerId != -1 && !(Room.Instance.GetPlayerInfo(playerId)?.IsLocal ?? false))
                         playerId = -1;
                     break;
                 case UserInterface.OperabilityEnum.Playerless:

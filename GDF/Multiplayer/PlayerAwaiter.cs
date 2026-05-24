@@ -80,7 +80,7 @@ public partial class PlayerAwaiter : Node, IResynchronizable, IDataContext
 
         foreach (var playerInfo in Room.Instance.GetAllPlayerInfo())
         {
-            if (OnlyAwaitLocalPlayers && !playerInfo.OwnedByThisClient) continue;
+            if (OnlyAwaitLocalPlayers && !playerInfo.IsLocal) continue;
             ids.Add(playerInfo.PlayerId);
         }
 
@@ -119,7 +119,7 @@ public partial class PlayerAwaiter : Node, IResynchronizable, IDataContext
 
         if (RestrictConfirmationMethodsToOwnedPlayers &&
             !(Room.Instance.TryGetPlayerInfo(playerId, out var playerInfo) &&
-              playerInfo.OwnedByThisClient)) return;
+              playerInfo.IsLocal)) return;
 
         if (ReplicateToPeers)
             RpcId(GetMultiplayerAuthority(), MethodName.ManageConfirmPlayerRpc, playerId);
@@ -167,7 +167,7 @@ public partial class PlayerAwaiter : Node, IResynchronizable, IDataContext
 
         if (RestrictConfirmationMethodsToOwnedPlayers &&
             !(Room.Instance.TryGetPlayerInfo(playerId, out var playerInfo) &&
-              playerInfo.OwnedByThisClient)) return;
+              playerInfo.IsLocal)) return;
 
         if (!AllowRetractingConfirmation) return;
 
@@ -335,7 +335,7 @@ public partial class PlayerAwaiter : Node, IResynchronizable, IDataContext
     {
         if (!ManagingAuthorityMode.CanExecute(this)) return;
         if (OnlyAwaitLocalPlayers && Room.Instance.TryGetPlayerInfo(playerId, out var playerInfo) &&
-            !playerInfo.OwnedByThisClient) return;
+            !playerInfo.IsLocal) return;
 
         switch (PlayerJoinBehavior)
         {

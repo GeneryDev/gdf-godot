@@ -80,7 +80,7 @@ public partial class PerPlayerPropertyStacks : SingletonNode<PerPlayerPropertySt
     {
         if (Instance == null) return;
         var playerInfo = Room.Instance.GetPlayerInfo(playerId) ?? default;
-        if (!playerInfo.OwnedByThisClient) return;
+        if (!playerInfo.IsLocal) return;
 
         var playerStack = GetForPlayer(playerId);
 
