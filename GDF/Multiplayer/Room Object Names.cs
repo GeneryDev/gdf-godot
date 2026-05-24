@@ -4,8 +4,8 @@ public partial class Room
 {
     private int _nextObjectId = 0;
 
-    public string ClaimNewObjectName(string type = null)
+    public string GenerateUniqueObjectName(string label = null)
     {
-        return $"{type ?? "Object"} [{PeerId:X}_{_nextObjectId++}]";
+        return $"{label ?? "Object"} [{PeerId:X}_{_nextObjectId++}]";
     }
 }

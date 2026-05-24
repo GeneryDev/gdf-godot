@@ -1,4 +1,5 @@
-﻿using Godot;
+﻿using GDF.Logical;
+using Godot;
 
 namespace GDF.Networking;
 
