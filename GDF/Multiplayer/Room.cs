@@ -18,4 +18,5 @@ public abstract partial class Room : SingletonNode<Room>
     public abstract int PeerId { get; }
     
     public bool IsOnline => Multiplayer.MultiplayerPeer is not OfflineMultiplayerPeer;
+    public bool IsHost => Multiplayer.IsServer();
 }
