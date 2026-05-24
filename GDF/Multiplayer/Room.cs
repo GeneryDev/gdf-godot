@@ -16,5 +16,6 @@ public abstract partial class Room : SingletonNode<Room>
     public delegate void PeerDisconnectedEventHandler(int peerId);
     
     public abstract int PeerId { get; }
-    public abstract bool IsOnline { get; }
+    
+    public bool IsOnline => Multiplayer.MultiplayerPeer is not OfflineMultiplayerPeer;
 }
