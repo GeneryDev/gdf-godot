@@ -326,7 +326,7 @@ public partial class PeerAwaiter : Node, IResynchronizable, IDataContext
     public override void _Ready()
     {
         base._Ready();
-        this.Resync();
+        this.RequestResync();
         if (Autostart) Start();
     }
 

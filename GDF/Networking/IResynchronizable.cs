@@ -14,7 +14,7 @@ public interface IResynchronizable
 
 public static class ResynchronizableExt
 {
-    public static void Resync(this IResynchronizable resync)
+    public static void RequestResync(this IResynchronizable resync)
     {
         if (resync is not Node node) return;
         if (node.IsMultiplayerAuthority())

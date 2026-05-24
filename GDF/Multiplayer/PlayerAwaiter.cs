@@ -383,7 +383,7 @@ public partial class PlayerAwaiter : Node, IResynchronizable, IDataContext
     public override void _Ready()
     {
         base._Ready();
-        this.Resync();
+        this.RequestResync();
         if (Autostart) Start();
     }
 

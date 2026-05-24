@@ -686,7 +686,7 @@ public partial class UserInterface : Node, IResynchronizable
     public override void _EnterTree()
     {
         if (Engine.IsEditorHint()) return;
-        this.Resync();
+        this.RequestResync();
         RequestReady();
         AddToGroup(Group);
         
