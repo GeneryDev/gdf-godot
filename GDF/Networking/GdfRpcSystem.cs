@@ -85,11 +85,11 @@ public partial class GdfRpcSystem : SingletonNode<GdfRpcSystem>
             }
         }
 
-        if (SerializeArgs(out var serializedArgs, out uint argFlags, args))
+        if (SerializeArgs(out var serializedArgs, out ulong argFlags, args))
             channelInstance.RpcId(peerId, GdfRpcChannelInstance.MethodName.Receive, node.GetPath(), methodName, serializedArgs, argFlags);
     }
 
-    public void Receive(Node node, StringName methodName, Array args, uint argFlags)
+    public void Receive(Node node, StringName methodName, Array args, ulong argFlags)
     {
         if (node == null)
         {

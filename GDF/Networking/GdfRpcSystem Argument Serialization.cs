@@ -6,20 +6,22 @@ namespace GDF.Networking;
 
 public partial class GdfRpcSystem
 {
+    private const int MaxArgCount = 16; // cannot exceed sizeof(ulong)/ArgFlagBitCount
+    
     private Array _tempArray = new();
     
-    private bool SerializeArgs(out Array outArgs, out uint outArgFlags, params Variant[] args)
+    private bool SerializeArgs(out Array outArgs, out ulong outArgFlags, params Variant[] args)
     {
-        if (args.Length > 8)
+        if (args.Length > MaxArgCount)
         {
-            GD.PushError($"GdfRpc does not support more than 8 arguments, got {args.Length}");
+            GD.PushError($"GdfRpc does not support more than {MaxArgCount} arguments, got {args.Length}");
             outArgs = null;
             outArgFlags = 0;
             return false;
         }
 
         _tempArray.Clear();
-        uint argFlags = 0;
+        ulong argFlags = 0;
         for (var i = 0; i < args.Length; i++)
         {
             var arg = args[i];
@@ -40,7 +42,7 @@ public partial class GdfRpcSystem
                 return false;
             }
 
-            argFlags |= (uint)thisArgFlags << (i * ArgFlagBitCount);
+            argFlags |= (ulong)thisArgFlags << (i * ArgFlagBitCount);
             _tempArray.Add(arg);
         }
 
@@ -49,7 +51,7 @@ public partial class GdfRpcSystem
         return true;
     }
 
-    private void DeserializeArgs(Array args, uint argFlags)
+    private void DeserializeArgs(Array args, ulong argFlags)
     {
         for (var i = 0; i < args.Count; i++)
         {
@@ -67,5 +69,5 @@ public partial class GdfRpcSystem
         IsNode = 1 << 0
     }
 
-    private const int ArgFlagBitCount = 4;
+    private const int ArgFlagBitCount = 1;
 }
