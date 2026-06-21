@@ -392,76 +392,26 @@ public partial class AnimationImporter : Node
         }
     }
 
-    public static void CollectModelNodes(Node node, out Node gltfNode, out Skeleton3D skeleton)
-    {
-        var gltfNodes = new List<Node>();
-        var skeletons = new List<Skeleton3D>();
-        CollectModelNodes(node, gltfNodes, skeletons);
-        if (gltfNodes.Count == 1) gltfNode = gltfNodes[0];
-        else
-        {
-            gltfNode = null;
-            if(gltfNodes.Count > 1)
-                GD.PushError("More than one gltf node found");
-        }
-
-        skeleton = null;
-        foreach (var sk in skeletons)
-        {
-            if (gltfNode?.IsAncestorOf(sk) ?? false)
-            {
-                if (skeleton == null)
-                {
-                    skeleton = sk;
-                }
-                else
-                {
-                    GD.PushError("More than one skeleton node found inside gltf imported node");
-                }
-            }
-        }
-    }
-    
-    private static void CollectModelNodes(Node node, List<Node> gltfImportedNodes, List<Skeleton3D> skeletons)
-    {
-        if(node is Skeleton3D sk) skeletons.Add(sk);
-
-        if (node.SceneFilePath.EndsWith(".gltf"))
-        {
-            gltfImportedNodes.Add(node);
-        }
-        
-        foreach(var child in node.GetChildren()) CollectModelNodes(child, gltfImportedNodes, skeletons);
-    }
-
     private bool GetRequiredNodes(out AnimationPlayer importedAnimationPlayer,
         out AnimationPlayer workingAnimationMixer, out Node gltfNode)
     {
         importedAnimationPlayer = null;
         workingAnimationMixer = null;
         gltfNode = null;
-
-        var sceneRoot = Owner;
-        if (sceneRoot == null)
+        
+        if (GltfRoot == null)
         {
-            Error("This animation importer is not inside a scene?");
+            Error($"No gltf-imported node assigned to {nameof(GltfRoot)}");
             return false;
         }
+        gltfNode = GltfRoot;
 
-        workingAnimationMixer = sceneRoot.GetChildOfType<AnimationPlayer>();
-        if (workingAnimationMixer == null)
+        if (WorkingAnimationPlayer == null)
         {
-            Error("Missing animation player under the scene root");
+            Error($"No animation player assigned to {nameof(WorkingAnimationPlayer)}");
             return false;
         }
-
-        CollectModelNodes(sceneRoot, out gltfNode, out _);
-
-        if (gltfNode == null)
-        {
-            Error("No gltf-imported node in scene");
-            return false;
-        }
+        workingAnimationMixer = WorkingAnimationPlayer;
 
         importedAnimationPlayer = gltfNode.GetChildOfType<AnimationPlayer>();
 
@@ -480,4 +430,8 @@ public partial class AnimationImporter : Node
     //     property["usage"] = (int)(property["usage"].As<PropertyUsageFlags>() & ~PropertyUsageFlags.Editor);
     // }
 #endif
+
+    [ExportGroup("Setup")]
+    [Export] public Node3D GltfRoot = null;
+    [Export] public AnimationPlayer WorkingAnimationPlayer = null;
 }
