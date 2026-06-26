@@ -270,6 +270,8 @@ public partial class StateMachine : Node
             GD.PrintErr($"Failed to enable routine {routine.Name}, already has a parent");
             return;
         }
+
+        routine.Owner = null;
         location.ParentNode.AddChild(routine);
         routine.Owner = location.ParentNode.Owner;
     }
