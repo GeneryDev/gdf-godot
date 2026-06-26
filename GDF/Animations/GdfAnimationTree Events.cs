@@ -11,7 +11,7 @@ public partial class GdfAnimationTree
     /// <summary>
     /// Retrieves a list of animation nodes that are listening to the given animation event name. 
     /// </summary>
-    public List<AnimationNode> CollectListeningNodes(string evt, List<AnimationNode> output)
+    public List<AnimationTreeNavigator> CollectListeners(string evt, List<AnimationTreeNavigator> output)
     {
         EnsureScanStillValid();
         output ??= new();
@@ -19,7 +19,7 @@ public partial class GdfAnimationTree
         {
             foreach (var listener in listeners)
             {
-                output.Add(listener.GetNode(this));
+                output.Add(listener.AsTreeNavigator(this));
             }
         }
         return output;
@@ -162,6 +162,11 @@ public partial class GdfAnimationTree
                     break;
                 }
             }
+        }
+
+        public AnimationTreeNavigator AsTreeNavigator(AnimationTree tree)
+        {
+            return new AnimationTreeNavigator(tree, _parentPath, _fromNodeName, _toNodeName);
         }
     }
 }
