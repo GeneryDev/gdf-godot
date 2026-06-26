@@ -6,6 +6,8 @@ public partial class Room
 {
     public abstract List<int> GetAllPeerIds();
 
+    public int PeerCount => GetAllPeerIds().Count;
+
     public bool HasPeer(int peerId)
     {
         return GetAllPeerIds()?.Contains(peerId) ?? false;
