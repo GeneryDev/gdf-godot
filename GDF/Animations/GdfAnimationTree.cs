@@ -9,12 +9,6 @@ public partial class GdfAnimationTree : AnimationTree
     private readonly Dictionary<StringName, (AnimationNode Node, GdfAnimationNodeMetadata Meta)> _animNodePathsToMetadataNodes = new();
     private readonly Dictionary<StringName, AnimationNodeStateMachinePlayback> _stateMachinePlaybacks = new();
 
-    public override void _Ready()
-    {
-        base._Ready();
-        ScanTree();
-    }
-
     public override void _EnterTree()
     {
         base._EnterTree();

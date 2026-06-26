@@ -6,6 +6,7 @@ public partial class GdfAnimationTree
 {
     public void GetDebugInfo(StringBuilder sb)
     {
+        EnsureScanStillValid();
         foreach (var (key, playback) in _stateMachinePlaybacks)
         {
             sb.Append(key);

@@ -13,6 +13,7 @@ public partial class GdfAnimationTree
     /// </summary>
     public List<AnimationNode> CollectListeningNodes(string evt, List<AnimationNode> output)
     {
+        EnsureScanStillValid();
         output ??= new();
         if (_eventListeners.TryGetValue(evt, out var listeners))
         {
@@ -26,6 +27,7 @@ public partial class GdfAnimationTree
     
     public void TriggerEvent(string evt)
     {
+        EnsureScanStillValid();
         if (string.IsNullOrEmpty(evt)) return;
         if (_eventListeners.TryGetValue(evt, out var listeners))
         {

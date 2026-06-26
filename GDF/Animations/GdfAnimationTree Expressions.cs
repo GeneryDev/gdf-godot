@@ -4,6 +4,7 @@ public partial class GdfAnimationTree
 {
     public void UpdateExpressions(double delta)
     {
+        EnsureScanStillValid();
         var baseNodePath = AdvanceExpressionBaseNode;
         var exprBaseNode = baseNodePath.IsEmpty ? this : GetNode(baseNodePath);
         foreach (var (key, (node, meta)) in _animNodePathsToMetadataNodes)

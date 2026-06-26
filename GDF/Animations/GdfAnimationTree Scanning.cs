@@ -5,15 +5,28 @@ namespace GDF.Animations;
 
 public partial class GdfAnimationTree
 {
-    private void ScanTree()
+    private ulong _lastScannedTreeRootId = 0;
+
+    private void EnsureScanStillValid()
+    {
+        var currentRoot = TreeRoot;
+        ulong currentInstanceId = currentRoot?.GetInstanceId() ?? 0;
+        if (currentInstanceId != _lastScannedTreeRootId)
+        {
+            _lastScannedTreeRootId = currentInstanceId;
+            ScanTree(currentRoot);
+        }
+    }
+
+    private void ScanTree(AnimationRootNode root)
     {
         _animNodePathsToMetadataNodes.Clear();
         _eventListeners.Clear();
         _stateMachinePlaybacks.Clear();
         
         var allNodes = new List<(string Path, AnimationNode Node)>();
-        allNodes.Add((null, TreeRoot));
-        CollectSubNodes(null, TreeRoot, allNodes, recursive: true);
+        allNodes.Add((null, root));
+        CollectSubNodes(null, root, allNodes, recursive: true);
 
         foreach (var entry in allNodes)
         {
