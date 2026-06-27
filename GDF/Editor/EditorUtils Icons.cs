@@ -25,7 +25,7 @@ public static partial class EditorUtils
         return null;
     }
 
-    private static Texture2D GetTypeIcon(Type type)
+    public static Texture2D GetTypeIcon(Type type)
     {
         foreach (var iconAttr in type.GetCustomAttributes<IconAttribute>())
         {
