@@ -10,7 +10,7 @@ namespace GDF.Logical;
 
 [Tool]
 [GlobalClass]
-[Icon($"{GdfConstants.IconRoot}/logic_in.png")]
+[Icon($"{GdfConstants.IconRoot}/method_caller.png")]
 public partial class MethodCaller : TriggerableLogicNode
 {
     [Export]
