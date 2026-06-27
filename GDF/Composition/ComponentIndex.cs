@@ -20,6 +20,8 @@ public partial class ComponentIndex : Node
 
     [Export]
     public Node[] OtherComponentContainers = System.Array.Empty<Node>();
+
+    [Export] public bool SearchInParentOwner = false;
     
     public T GetComponent<T>() where T : class
     {
@@ -30,6 +32,11 @@ public partial class ComponentIndex : Node
             {
                 if (container?.GetChildOfType<T>() is { } otherContainerComp) return otherContainerComp;
             }
+        }
+
+        if (SearchInParentOwner && GetParent().GetFirstAncestorOwner()?.GetChildOfType<ComponentIndex>() is { } parentOwner)
+        {
+            return parentOwner.GetComponent<T>();
         }
         return null;
     }
@@ -52,6 +59,10 @@ public partial class ComponentIndex : Node
                     output.Add(child);
                 }
             }
+        }
+        if (SearchInParentOwner && GetParent().GetFirstAncestorOwner()?.GetChildOfType<ComponentIndex>() is { } parentOwner)
+        {
+            parentOwner.GetComponents<T>(output);
         }
         return output;
     }
