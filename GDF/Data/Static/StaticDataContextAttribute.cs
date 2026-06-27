@@ -1,24 +1,23 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Godot;
 
-namespace GDF.Data.Parameterized;
+namespace GDF.Data.Static;
 
 [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Class, AllowMultiple = true)]
-public class ParameterizedDataContextAttribute : Attribute
+public class StaticDataContextAttribute : Attribute
 {
     public string Id;
 
-    public ParameterizedDataContextAttribute(string id)
+    public StaticDataContextAttribute(string id)
     {
         Id = id;
     }
 }
 
-public static class ParameterizedDataContexts
+public static class StaticDataContexts
 {
     private static readonly Dictionary<string, Definition> Definitions = new();
     private static bool _initialized = false;
@@ -62,7 +61,7 @@ public static class ParameterizedDataContexts
     private static Definition? GetDefinition(string id)
     {
         if (GetDefinitionOrNull(id) is { } def) return def;
-        GD.PrintErr($"No such parameterized data context id '{id}'");
+        GD.PrintErr($"No such static data context id '{id}'");
         return null;
     }
 
@@ -93,17 +92,17 @@ public static class ParameterizedDataContexts
         if (assembly == null) return;
         foreach (var type in assembly.GetTypes())
         {
-            foreach (var attr in type.GetCustomAttributes<ParameterizedDataContextAttribute>())
+            foreach (var attr in type.GetCustomAttributes<StaticDataContextAttribute>())
             {
                 if (!typeof(IDataContext).IsAssignableFrom(type))
                 {
-                    GD.PrintErr($"Invalid ParameterizedDataContext attribute on type {type}: Type must extend {nameof(IDataContext)}");
+                    GD.PrintErr($"Invalid {nameof(StaticDataContextAttribute)} on type {type}: Type must extend {nameof(IDataContext)}");
                     continue;
                 }
                 string id = attr.Id;
                 if (Definitions.TryGetValue(id, out var existing))
                 {
-                    GD.PrintErr($"Duplicate ParameterizedDataContext ID '{id}': {existing.Type} and {type}");
+                    GD.PrintErr($"Duplicate {nameof(StaticDataContextAttribute)} ID '{id}': {existing.Type} and {type}");
                     continue;
                 }
                 var definition = new Definition()
@@ -120,7 +119,7 @@ public static class ParameterizedDataContexts
     private static void InitializeDefinition(ref Definition definition, string id)
     {
         var type = definition.Type;
-        var initializationMethod = typeof(ParameterizedDataContexts)
+        var initializationMethod = typeof(StaticDataContexts)
             .GetMethod(
                 nameof(InitializeDefinitionGeneric),
                 genericParameterCount: 1,
@@ -142,7 +141,7 @@ public static class ParameterizedDataContexts
     {
         definition.Constructor = () => new T();
         
-        var fieldInitializerMethod = typeof(ParameterizedDataContexts)
+        var fieldInitializerMethod = typeof(StaticDataContexts)
             .GetMethod(
                 nameof(InitializeFieldDefinitionGeneric),
                 genericParameterCount: 2,
@@ -255,7 +254,7 @@ public static class ParameterizedDataContexts
     private struct Definition
     {
         public Type Type;
-        public ParameterizedDataContextAttribute Attribute;
+        public StaticDataContextAttribute Attribute;
         
         public Godot.Collections.Array<Godot.Collections.Dictionary> PropertyList;
 

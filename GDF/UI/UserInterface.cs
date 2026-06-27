@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using GDF.Data;
-using GDF.Data.Parameterized;
+using GDF.Data.Static;
 using GDF.Input;
 using GDF.Multiplayer;
 using GDF.Networking;
@@ -122,8 +122,8 @@ public partial class UserInterface : Node, IResynchronizable
         focusVisual.Name = $"Player Focus Visual {playerInfo.PlayerId}";
         focusVisual.MouseFilter = Control.MouseFilterEnum.Ignore;
 
-        if (ParameterizedDataContexts.IsValidId("player_context"))
-            focusVisual.InjectContext(ParameterizedDataContexts.CreateInline("player_context", playerInfo.PlayerId));
+        if (StaticDataContexts.IsValidId("player_context"))
+            focusVisual.InjectContext(StaticDataContexts.CreateInline("player_context", playerInfo.PlayerId));
         return focusVisual;
     }
 

@@ -3,12 +3,12 @@ using GDF.Editor;
 using Godot;
 using Godot.Collections;
 
-namespace GDF.Data.Parameterized;
+namespace GDF.Data.Static;
 
 [Tool]
 [GlobalClass]
 [Icon($"{GdfConstants.IconRoot}/data_context.png")]
-public partial class ParameterizedDataContextNode : Node, IDataContext
+public partial class StaticDataContextNode : Node, IDataContext
 {
     [Signal]
     public delegate void UpdatedEventHandler();
@@ -166,9 +166,9 @@ public partial class ParameterizedDataContextNode : Node, IDataContext
     {
         _paramPropertyList ??= new();
         _paramPropertyList.Clear();
-        if (!string.IsNullOrEmpty(_typeId) && ParameterizedDataContexts.IsValidId(_typeId))
+        if (!string.IsNullOrEmpty(_typeId) && StaticDataContexts.IsValidId(_typeId))
         {
-            foreach (var rawProperty in ParameterizedDataContexts.GetPropertyList(_typeId))
+            foreach (var rawProperty in StaticDataContexts.GetPropertyList(_typeId))
             {
                 string originalName = rawProperty["name"].AsString();
                 var newName = $"params/{originalName}";
@@ -194,8 +194,8 @@ public partial class ParameterizedDataContextNode : Node, IDataContext
         if (propertyName == PropertyName.TypeId)
         {
 #if TOOLS
-            property["hint_string"] = ParameterizedDataContexts.GetAllIds()
-                .OrderBy((id) => ParameterizedDataContexts.GetPropertyList(id).Count).ToArray().Join(",");
+            property["hint_string"] = StaticDataContexts.GetAllIds()
+                .OrderBy((id) => StaticDataContexts.GetPropertyList(id).Count).ToArray().Join(",");
 #endif
         }
         if (propertyName == PropertyName.Params)
@@ -210,7 +210,7 @@ public partial class ParameterizedDataContextNode : Node, IDataContext
     private void OnParametersUpdated()
     {
         _context?.DisconnectUpdateSignal(new Callable(this, MethodName.OnContextUpdated));
-        _context = ParameterizedDataContexts.Create(TypeId, Params);
+        _context = StaticDataContexts.Create(TypeId, Params);
         _context?.ConnectUpdateSignal(new Callable(this, MethodName.OnContextUpdated));
         EmitSignalUpdated();
     }
