@@ -19,7 +19,7 @@ public partial class ComponentIndex : Node
     }
 
     [Export]
-    public Node[] OtherComponentContainers = System.Array.Empty<Node>();
+    public Array<Node> OtherComponentContainers = new();
 
     [Export] public bool SearchInParentOwner = false;
     
