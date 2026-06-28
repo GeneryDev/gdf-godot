@@ -7,6 +7,7 @@ public interface IProperty : IPropertyComputableAsVariant
 {
     public bool ContainsHandle(PropertyFrameHandle handle);
     public void Set<T>(PropertyFrameHandle handle, T input);
+    public void Unset(PropertyFrameHandle handle);
     public void SetWeight(PropertyFrameHandle handle, float weight);
     public void Order(List<PropertyFrameHandle> handleOrder);
     public void InvalidateOrder();

@@ -95,6 +95,17 @@ public partial class PropertyStack : Node
         property.Set(handle, value);
     }
 
+    public void UnsetFrameProperty(PropertyFrameHandle handle, string propertyId)
+    {
+        if (!_properties.TryGetValue(propertyId, out var property))
+        {
+            GD.PushWarning($"No such property '{propertyId}'");
+            return;
+        }
+        
+        property.Unset(handle);
+    }
+
     public void SetFramePropertyWeight(PropertyFrameHandle handle, string propertyId, float weight)
     {
         if (!_properties.TryGetValue(propertyId, out var property))

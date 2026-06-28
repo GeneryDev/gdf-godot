@@ -45,6 +45,13 @@ public class PropertyFrame
         });
     }
 
+    public PropertyFrame Unset(string id)
+    {
+        Stack.UnsetFrameProperty(Handle, id);
+        _propertyIdsSet.Remove(id);
+        return this;
+    }
+
     public PropertyFrame SetWeight(float weight)
     {
         _weight = weight;

@@ -58,6 +58,16 @@ public class PropertyImpl<TMed, TOut, TCache> : IProperty, IProperty<TOut>, IPro
         _modCount++;
     }
 
+    public void Unset(PropertyFrameHandle handle)
+    {
+        int existingIndex = EntryIndexOfHandle(handle);
+        if (existingIndex < 0) return;
+        _entries.RemoveAt(existingIndex);
+        _orderDirty = true;
+        _computedValueDirty = true;
+        _modCount++;
+    }
+
     public void SetWeight(PropertyFrameHandle handle, float weight)
     {
         int existingIndex = EntryIndexOfHandle(handle);
