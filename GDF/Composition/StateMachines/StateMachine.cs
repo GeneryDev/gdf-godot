@@ -299,9 +299,11 @@ public partial class StateMachine : Node
         // _enabledRoutines = newActiveRoutines;
     }
 
-    public List<State>.Enumerator GetStates()
+    public List<State> GetStates(List<State> output = null)
     {
-        return _states.GetEnumerator();
+        output ??= new();
+        output.AddRange(_states);
+        return output;
     }
 
     public override void _Notification(int what)

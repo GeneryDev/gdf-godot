@@ -58,12 +58,16 @@ public partial class State : Node, ITagged<StringName>
 
     public bool HasTag(StringName tag)
     {
+        return DefinesTag(tag) || (ParentState?.HasTag(tag) ?? false);
+    }
+
+    public bool DefinesTag(StringName tag)
+    {
         if (StateTags != null)
             foreach (var t in StateTags)
                 if (t == tag)
                     return true;
-
-        return ParentState?.HasTag(tag) ?? false;
+        return false;
     }
 
     public void CollectSubRoutines(List<Node> routines, bool inherited)
