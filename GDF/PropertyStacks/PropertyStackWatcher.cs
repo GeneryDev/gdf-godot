@@ -10,7 +10,9 @@ namespace GDF.PropertyStacks;
 public partial class PropertyStackWatcher : Node
 {
     [Signal]
-    public delegate void PropertyChangedEventHandler(string propertyId, Variant prevValue, Variant newValue);
+    public delegate void UpdatedEventHandler();
+    [Signal]
+    public delegate void PropertyUpdatedEventHandler(string propertyId, Variant prevValue, Variant newValue);
     
     /// <summary>
     /// The stack whose stack properties are to be tracked
@@ -41,7 +43,7 @@ public partial class PropertyStackWatcher : Node
     private System.Collections.Generic.Dictionary<string, WatchedPropertyState> _prevObservedStates;
     PropertyFrame _networkSyncedFrame;
     private int? _networkSyncedAuthority;
-    private List<string> _observedPropertyIds = new();
+    private readonly List<string> _observedPropertyIds = new();
 
     public override void _Ready()
     {
@@ -85,7 +87,9 @@ public partial class PropertyStackWatcher : Node
         CheckNetworkChanged();
         foreach (string propertyId in _observedPropertyIds)
         {
+            Variant previousValue = default;
             Variant currentValue;
+            bool fireUpdated = false;
             int currentModCount = Stack.GetModCount(propertyId);
             if (_prevObservedStates.TryGetValue(propertyId, out var prevState))
             {
@@ -95,7 +99,8 @@ public partial class PropertyStackWatcher : Node
                     currentValue = Stack.GetEffectiveValue(propertyId);
                     if (!prevState.Value.VariantEquals(currentValue))
                     {
-                        FirePropertyChanged(propertyId, prevState.Value, currentValue);
+                        fireUpdated = true;
+                        previousValue = prevState.Value;
                     }
                 }
                 else
@@ -106,8 +111,9 @@ public partial class PropertyStackWatcher : Node
             else
             {
                 // First time observed this property, fire changed
+                fireUpdated = true;
                 currentValue = Stack.GetEffectiveValue(propertyId);
-                FirePropertyChanged(propertyId, currentValue, currentValue);
+                previousValue = currentValue;
             }
 
             _prevObservedStates[propertyId] = new WatchedPropertyState()
@@ -115,6 +121,11 @@ public partial class PropertyStackWatcher : Node
                 Value = currentValue,
                 ModCount = currentModCount
             };
+
+            if (fireUpdated)
+            {
+                FirePropertyUpdated(propertyId, previousValue, currentValue);
+            }
         }
     }
 
@@ -131,10 +142,11 @@ public partial class PropertyStackWatcher : Node
         }
     }
 
-    private void FirePropertyChanged(string propertyId, Variant prevValue, Variant newValue)
+    private void FirePropertyUpdated(string propertyId, Variant prevValue, Variant newValue)
     {
         // GD.Print($"[{Name}] Property changed: {propertyId} from {prevValue} to {newValue}");
-        EmitSignal(SignalName.PropertyChanged, propertyId, prevValue, newValue);
+        EmitSignalUpdated();
+        EmitSignalPropertyUpdated(propertyId, prevValue, newValue);
 
         if (propertyId == TimeScalePropertyId)
         {

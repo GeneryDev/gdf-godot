@@ -64,14 +64,14 @@ public partial class PerPlayerPropertyStacks : SingletonNode<PerPlayerPropertySt
             watcher.StartObserving(key);
         }
         stack.AddChild(watcher);
-        watcher.PropertyChanged += WatcherOnPropertyChanged;
+        watcher.PropertyUpdated += WatcherOnPropertyUpdated;
 
         // TODO when players disconnect, remove their stacks
 
         return stack;
     }
 
-    private static void WatcherOnPropertyChanged(string propertyId, Variant prevValue, Variant newValue)
+    private static void WatcherOnPropertyUpdated(string propertyId, Variant prevValue, Variant newValue)
     {
         Instance.EmitSignalPlayerControlStackChanged();
     }
