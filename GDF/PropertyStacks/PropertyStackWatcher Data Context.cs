@@ -13,7 +13,7 @@ public partial class PropertyStackWatcher : IDataContext
         {
             case "property":
             {
-                if (_prevObservedStates.TryGetValue(input, out var state))
+                if (_prevObservedStates?.TryGetValue(input, out var state) ?? false)
                 {
                     output = state.Value;
                     return true;
