@@ -359,7 +359,7 @@ public sealed partial class UserInterfaceComponent : Node
         if (!Submittable) return;
         EmitSignal(SignalName.PlayerSubmitted, playerId);
         EmitSignal(SignalName.Submitted);
-        GD.Print($"Player {playerId} pressed Submit on {GetParent()?.GetPath()}");
+        //GD.Print($"Player {playerId} pressed Submit on {GetParent()?.GetPath()}");
     }
 
     public void SubmitSubAction(int playerId, GdfInputAction action)
@@ -370,7 +370,7 @@ public sealed partial class UserInterfaceComponent : Node
         var args = callable.EvaluateArgs(this);
         if (args.Length > 0) args[0] = playerId;
         callable.CallWithArgs(this, args);
-        GD.Print($"Player {playerId} pressed [{action.DisplayName}] on {GetParent()?.GetPath()}");
+        //GD.Print($"Player {playerId} pressed [{action.DisplayName}] on {GetParent()?.GetPath()}");
     }
 
     private void OnControlVisibilityChanged()
