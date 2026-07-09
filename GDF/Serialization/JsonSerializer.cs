@@ -187,6 +187,23 @@ public partial struct JsonSerializer
         }
         else if(PropertyOmissionHandlingMode == PropertyOmissionHandlingModeEnum.UseTypeDefault) field = default;
     }
+    public void Deserialize<T>(Godot.Collections.Dictionary dict, string fieldName, ref T[] field) where T : IJsonSerializable, new()
+    {
+        string propertyName = GetPropertyName(fieldName);
+        if (dict?.TryGetValue(propertyName, out var v) ?? false)
+        {
+            var list = new List<T>();
+            list.Clear();
+            foreach (var rawValue in v.AsGodotArray())
+            {
+                var value = new T();
+                value.Deserialize(rawValue);
+                list.Add(value);
+            }
+            field = list.ToArray();
+        }
+        else if(PropertyOmissionHandlingMode == PropertyOmissionHandlingModeEnum.UseTypeDefault) field = default;
+    }
     public void Deserialize<TValue, TPoly>(Godot.Collections.Dictionary dict, string fieldName, ref List<TValue> field) where TPoly : struct, IPolymorphicJsonSerializer<TValue>
     {
         string propertyName = GetPropertyName(fieldName);
@@ -200,6 +217,22 @@ public partial struct JsonSerializer
                 list.Add(value);
             }
             field = list;
+        }
+        else if(PropertyOmissionHandlingMode == PropertyOmissionHandlingModeEnum.UseTypeDefault) field = default;
+    }
+    public void Deserialize<TValue, TPoly>(Godot.Collections.Dictionary dict, string fieldName, ref TValue[] field) where TPoly : struct, IPolymorphicJsonSerializer<TValue>
+    {
+        string propertyName = GetPropertyName(fieldName);
+        if (dict?.TryGetValue(propertyName, out var v) ?? false)
+        {
+            var list = new List<TValue>();
+            list.Clear();
+            foreach (var rawValue in v.AsGodotArray())
+            {
+                var value = new TPoly().Deserialize(rawValue);
+                list.Add(value);
+            }
+            field = list.ToArray();
         }
         else if(PropertyOmissionHandlingMode == PropertyOmissionHandlingModeEnum.UseTypeDefault) field = default;
     }
@@ -439,10 +472,42 @@ public partial struct JsonSerializer
         }
         else dict.Remove(propertyName);
     }
+    public void Serialize<T>(Godot.Collections.Dictionary dict, string fieldName, ref T[] field) where T : IJsonSerializable, new()
+    {
+        string propertyName = GetPropertyName(fieldName);
+        if (field is {Length: > 0})
+        {
+            var arr = new Godot.Collections.Array();
+            foreach (var value in field)
+            {
+                var serialized = value.Serialize();
+                arr.Add(serialized);
+            }
+
+            dict[propertyName] = arr;
+        }
+        else dict.Remove(propertyName);
+    }
     public void Serialize<TValue, TPoly>(Godot.Collections.Dictionary dict, string fieldName, ref List<TValue> field) where TPoly : struct, IPolymorphicJsonSerializer<TValue>
     {
         string propertyName = GetPropertyName(fieldName);
         if (field is {Count: > 0})
+        {
+            var arr = new Godot.Collections.Array();
+            foreach (var value in field)
+            {
+                var serialized = new TPoly().Serialize(value);
+                arr.Add(serialized);
+            }
+
+            dict[propertyName] = arr;
+        }
+        else dict.Remove(propertyName);
+    }
+    public void Serialize<TValue, TPoly>(Godot.Collections.Dictionary dict, string fieldName, ref TValue[] field) where TPoly : struct, IPolymorphicJsonSerializer<TValue>
+    {
+        string propertyName = GetPropertyName(fieldName);
+        if (field is {Length: > 0})
         {
             var arr = new Godot.Collections.Array();
             foreach (var value in field)
