@@ -269,6 +269,21 @@ public partial struct JsonSerializer
         }
         else if(PropertyOmissionHandlingMode == PropertyOmissionHandlingModeEnum.UseTypeDefault) field = default;
     }
+    public void DeserializeVariants<[MustBeVariant] TKey, [MustBeVariant]T>(Godot.Collections.Dictionary dict, string fieldName, ref System.Collections.Generic.Dictionary<TKey, T> field)
+    {
+        string propertyName = GetPropertyName(fieldName);
+        if (dict?.TryGetValue(propertyName, out var v) ?? false)
+        {
+            var valueDict = field ?? new System.Collections.Generic.Dictionary<TKey, T>();
+            valueDict.Clear();
+            foreach (var (key, rawValue) in v.AsGodotDictionary<TKey, Variant>())
+            {
+                valueDict[key] = rawValue.As<T>();
+            }
+            field = valueDict;
+        }
+        else if(PropertyOmissionHandlingMode == PropertyOmissionHandlingModeEnum.UseTypeDefault) field = default;
+    }
     public void Deserialize<[MustBeVariant] TKey, T>(Godot.Collections.Dictionary dict, string fieldName, ref System.Collections.Generic.Dictionary<TKey, T> field) where T : IJsonSerializable, new()
     {
         string propertyName = GetPropertyName(fieldName);
@@ -546,6 +561,21 @@ public partial struct JsonSerializer
             {
                 var serialized = new TPoly().Serialize(value);
                 arr.Add(serialized);
+            }
+
+            dict[propertyName] = arr;
+        }
+        else dict.Remove(propertyName);
+    }
+    public void SerializeVariants<[MustBeVariant]TKey, [MustBeVariant]T>(Godot.Collections.Dictionary dict, string fieldName, ref System.Collections.Generic.Dictionary<TKey, T> field)
+    {
+        string propertyName = GetPropertyName(fieldName);
+        if (field is {Count: > 0})
+        {
+            var arr = new Godot.Collections.Dictionary();
+            foreach (var (key, value) in field)
+            {
+                arr[Variant.From(key)] = Variant.From(value);
             }
 
             dict[propertyName] = arr;
