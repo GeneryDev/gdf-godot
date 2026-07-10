@@ -160,8 +160,8 @@ public class RootDataContext : IDataContext, ITextPreprocessor
                 string filterQuery = input;
                 ParsedDataQuery filterQueryCache = default;
                 Comparison<IDataContext> comparisonFunction = (a, b) =>
-                    a.Evaluate(filterQuery, ref filterQueryCache, options).AsInt32() -
-                    b.Evaluate(filterQuery, ref filterQueryCache, options).AsInt32();
+                    Math.Sign(a.Evaluate(filterQuery, ref filterQueryCache, options).AsInt64() -
+                    b.Evaluate(filterQuery, ref filterQueryCache, options).AsInt64());
                 
                 output.Sort(fromIndex, count, Comparer<IDataContext>.Create(comparisonFunction));
 
@@ -171,7 +171,7 @@ public class RootDataContext : IDataContext, ITextPreprocessor
             {
                 string filterQuery = input;
                 ParsedDataQuery filterQueryCache = default;
-                Func<IDataContext, int> orderFunction = a => a.Evaluate(filterQuery, ref filterQueryCache, options).AsInt32();
+                Func<IDataContext, long> orderFunction = a => a.Evaluate(filterQuery, ref filterQueryCache, options).AsInt64();
                 var sorted = output.GetRange(fromIndex, count).OrderBy(orderFunction).ToArray();
                 output.RemoveRange(fromIndex, count);
                 output.InsertRange(fromIndex, sorted);
