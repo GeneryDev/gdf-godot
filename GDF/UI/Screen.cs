@@ -35,6 +35,7 @@ public partial class Screen : Control
     [Export(PropertyHint.Enum,"Don't Change:-1,Visible:0,Hidden:1,Captured:2,Confined:3,Confined Hidden:4")] public int MouseMode = (int)Godot.Input.MouseModeEnum.Visible;
 
     [ExportGroup("Layering")]
+    [Export] public bool FollowParentControlRect = false;
     [Export] public bool OrderRelativeToAncestor = false;
     
     [ExportGroup("Shadowing")]
@@ -177,7 +178,10 @@ public partial class Screen : Control
             ShowingInTree = true;
             FadingOut = false;
             if (AutomaticLayering && !IsInsideTree())
+            {
                 ScreenStack.Instance.Push(this);
+                UpdateRect();
+            }
             EmitSignalScreenShown();
         }
         else
@@ -274,6 +278,22 @@ public partial class Screen : Control
         ForceHideScreen();
         QueueFree();
         _placeholder?.QueueFree();
+    }
+
+    private void UpdateRect()
+    {
+        if (FollowParentControlRect && _placeholder?.GetParentOrNull<Control>() is {} parentControl && parentControl.IsInsideTree())
+        {
+            var globalRect = parentControl.GetGlobalRect();
+            this.Position = globalRect.Position;
+            this.Size = globalRect.Size;
+        }
+    }
+
+    public override void _Process(double delta)
+    {
+        base._Process(delta);
+        UpdateRect();
     }
 
     private void NetworkingCall(StringName methodName, params Variant[] args)
