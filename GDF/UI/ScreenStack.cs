@@ -47,13 +47,13 @@ public partial class ScreenStack : Control
         var layer = screen.GetOrCreateLayer();
         AddChild(layer);
 
-        // Place after all other interfaces with order <= the incoming Screen order.
+        // Place after all other screens with order <= the incoming Screen order.
         for (var index = 0; index < children.Count; index++)
         {
             var otherChild = children[index];
             if (otherChild is not CanvasLayer otherScreenLayer) continue;
             if (otherScreenLayer.Layer <= screen.GetEffectiveOrder()) continue;
-            MoveChild(screen, index);
+            MoveChild(layer, index);
             break;
         }
 
