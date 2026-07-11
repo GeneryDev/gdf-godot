@@ -38,6 +38,7 @@ public partial class FormattedLabel : RichTextLabel, IDataContext, IDataQueryOpt
     [ExportGroup("Post Processing")]
     [Export(PropertyHint.GroupEnable)] public bool UsePostProcessing = false;
     [Export] public LabelPostProcessor[] PostProcessors;
+    [Export] public bool OnlyOnTextChange = true;
     [ExportGroup("")]
     
     [Export]
@@ -76,6 +77,7 @@ public partial class FormattedLabel : RichTextLabel, IDataContext, IDataQueryOpt
     private void ExecuteUpdate()
     {
         _updateQueued = false;
+        string oldText = Text;
         Text = QueryType switch
         {
             DataQueryType.Expression => this.Evaluate(TextFormat, ref _textQueryCache, this).AsString(),
@@ -84,7 +86,8 @@ public partial class FormattedLabel : RichTextLabel, IDataContext, IDataQueryOpt
             DataQueryType.Collection => TextFormat,
             _ => TextFormat
         };
-        InvokePostProcessors();
+        if (oldText != Text || !OnlyOnTextChange)
+            InvokePostProcessors();
     }
 
     private void InvokePostProcessors()
