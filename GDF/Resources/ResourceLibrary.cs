@@ -249,7 +249,7 @@ public abstract partial class ResourceLibrary<TRes, TSub> : Node, IResourceLibra
         foreach (var entry in ResourcePathsById) GetCachedResource(entry.Key, entry.Value);
     }
 
-    private static TRes GetCachedResource(StringName id, StringName path)
+    private static TRes GetCachedResource(StringName id, string path)
     {
         if (id.IsNullOrEmpty()) return null;
         if (CachedResourcesById.TryGetValue(id, out var existing)) return existing;
