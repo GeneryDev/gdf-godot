@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using GDF.Editor;
+using GDF.Logical.Signals;
 using GDF.Logical.Values;
 using GDF.Util;
 using Godot;
@@ -11,7 +12,7 @@ namespace GDF.Logical;
 [Tool]
 [GlobalClass]
 [Icon($"{GdfConstants.IconRoot}/method_caller.png")]
-public partial class MethodCaller : TriggerableLogicNode
+public partial class MethodCaller : TriggerableLogicNode, IInboundArgumentSource
 {
     [Export]
     public Node Target
@@ -71,13 +72,67 @@ public partial class MethodCaller : TriggerableLogicNode
     public Array<bool> ArgReplicate = new();
 
     [Export] public Dictionary TargetMethodInfo = new();
-    
+
+    private Array _triggeredWithArgs;
     private Array<Dictionary> _argPropertyList = null;
     private Array<Dictionary> _argInputTypePropertyList = null;
     private Array<Dictionary> _argReplicatePropertyList = null;
     
     public void Trigger()
     {
+        TriggerWithArgs(null);
+    }
+
+    public void Trigger(Variant p0)
+    {
+        TriggerWithArgs(new Array {p0});
+    }
+
+    public void Trigger(Variant p0, Variant p1)
+    {
+        TriggerWithArgs(new Array {p0, p1});
+    }
+
+    public void Trigger(Variant p0, Variant p1, Variant p2)
+    {
+        TriggerWithArgs(new Array {p0, p1, p2});
+    }
+
+    public void Trigger(Variant p0, Variant p1, Variant p2, Variant p3)
+    {
+        TriggerWithArgs(new Array {p0, p1, p2, p3});
+    }
+
+    public void Trigger(Variant p0, Variant p1, Variant p2, Variant p3, Variant p4)
+    {
+        TriggerWithArgs(new Array {p0, p1, p2, p3, p4});
+    }
+
+    public void Trigger(Variant p0, Variant p1, Variant p2, Variant p3, Variant p4, Variant p5)
+    {
+        TriggerWithArgs(new Array {p0, p1, p2, p3, p4, p5});
+    }
+
+    public void Trigger(Variant p0, Variant p1, Variant p2, Variant p3, Variant p4, Variant p5, Variant p6)
+    {
+        TriggerWithArgs(new Array {p0, p1, p2, p3, p4, p5, p6});
+    }
+
+    public void Trigger(Variant p0, Variant p1, Variant p2, Variant p3, Variant p4, Variant p5, Variant p6, Variant p7)
+    {
+        TriggerWithArgs(new Array {p0, p1, p2, p3, p4, p5, p6, p7});
+    }
+
+    public void Trigger(Variant p0, Variant p1, Variant p2, Variant p3, Variant p4, Variant p5, Variant p6, Variant p7,
+        Variant p8)
+    {
+        TriggerWithArgs(new Array {p0, p1, p2, p3, p4, p5, p6, p7, p8});
+    }
+
+    public void TriggerWithArgs(Array triggerArgs)
+    {
+        _triggeredWithArgs = triggerArgs;
+        
         if (!RunInEditor && Engine.IsEditorHint()) return;
         if (!ExecuteOutsideTree && !IsInsideTree()) return;
         if (!AuthorityMode.CanExecute(this)) return;
@@ -586,5 +641,15 @@ public partial class MethodCaller : TriggerableLogicNode
     {
         Constant,
         ValueSource
+    }
+
+    public Variant GetArgument(int index)
+    {
+        if (_triggeredWithArgs != null && index >= 0 && index < _triggeredWithArgs.Count)
+        {
+            return _triggeredWithArgs[index];
+        }
+
+        return default;
     }
 }
