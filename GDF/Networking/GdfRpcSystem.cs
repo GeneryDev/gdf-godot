@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using GDF.Multiplayer;
 using GDF.Util;
 using Godot;
 using Godot.Collections;
@@ -41,8 +42,6 @@ public partial class GdfRpcSystem : SingletonNode<GdfRpcSystem>
     public void Send(Node node, int peerId, StringName methodName, Variant[] args)
     {
         if (node == null) return;
-        
-        int ownId = Multiplayer.GetUniqueId();
 
         if (GdfRpcAttribute.GetAttribute(node, methodName) is not {} attr)
         {
@@ -67,6 +66,7 @@ public partial class GdfRpcSystem : SingletonNode<GdfRpcSystem>
         }
 
         if (attr.Mode == MultiplayerApi.RpcMode.Disabled) return;
+        int ownId = Multiplayer.GetUniqueId();
         if (attr.Mode == MultiplayerApi.RpcMode.Authority && !node.IsMultiplayerAuthority())
         {
             GD.PushError(
@@ -87,6 +87,46 @@ public partial class GdfRpcSystem : SingletonNode<GdfRpcSystem>
 
         if (SerializeArgs(out var serializedArgs, out ulong argFlags, args))
             channelInstance.RpcId(peerId, GdfRpcChannelInstance.MethodName.Receive, node.GetPath(), methodName, serializedArgs, argFlags);
+    }
+    
+    public static void SendOffline(Node node, int peerId, StringName methodName, Variant[] args)
+    {
+        if (node == null) return;
+
+        if (GdfRpcAttribute.GetAttribute(node, methodName) is not {} attr)
+        {
+            GD.PushError(
+                $"Attempted to send an illegal GdfRpc call on node type '{node.GetType()}', method '{methodName}'."
+#if TOOLS
+                + "\nTo enable this method for GdfRpc, add the [GdfRpc] attribute to the method."
+#endif
+            );
+            return;
+        }
+
+        if (attr.Mode == MultiplayerApi.RpcMode.Disabled) return;
+        int ownId = node.Multiplayer.GetUniqueId();
+        if (attr.Mode == MultiplayerApi.RpcMode.Authority && !node.IsMultiplayerAuthority())
+        {
+            GD.PushError(
+                $"Failed to send GdfRpc call on node type '{node.GetType()}', method '{methodName}'. Node is not the authority (expected {node.GetMultiplayerAuthority()}, is {ownId})"
+            );
+            return;
+        }
+
+        if (!attr.CallLocal) return;
+        
+        if (peerId > 0 && peerId != ownId)
+        {
+            // asked to call someone specifically who isn't oneself; don't call
+            return;
+        }
+        if (peerId < 0 && peerId == -ownId)
+        {
+            // asked to call everyone except specifically oneself; don't call
+            return;
+        }
+        node.Call(methodName, args);
     }
 
     public void Receive(Node node, StringName methodName, Array args, ulong argFlags)
@@ -141,10 +181,24 @@ public static class GdfRpcNodeExtensions
 {
     public static void GdfRpc(this Node node, StringName method, params Variant[] args)
     {
-        GdfRpcSystem.Instance?.Send(node, 0, method, args);
+        if (GdfRpcSystem.InstanceExists)
+        {
+            GdfRpcSystem.Instance?.Send(node, 0, method, args);
+        }
+        else
+        {
+            GdfRpcSystem.SendOffline(node, 0, method, args);
+        }
     }
     public static void GdfRpcId(this Node node, int peerId, StringName method, params Variant[] args)
     {
-        GdfRpcSystem.Instance?.Send(node, peerId, method, args);
+        if (GdfRpcSystem.InstanceExists)
+        {
+            GdfRpcSystem.Instance?.Send(node, peerId, method, args);
+        }
+        else
+        {
+            GdfRpcSystem.SendOffline(node, peerId, method, args);
+        }
     }
 }
