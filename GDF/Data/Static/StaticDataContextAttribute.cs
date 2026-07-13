@@ -158,6 +158,7 @@ public static class StaticDataContexts
 
         foreach (var fieldInfo in typeof(T).GetFields())
         {
+            if (fieldInfo.IsStatic) continue;
             string name = fieldInfo.Name.ToSnakeCase();
             propertyNames.Add(name);
 
