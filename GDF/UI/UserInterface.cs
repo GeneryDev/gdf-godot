@@ -694,7 +694,7 @@ public partial class UserInterface : Node, IResynchronizable
         RequestReady();
         AddToGroup(Group);
         
-        if (GdfInputSystem.Instance != null) GdfInputSystem.Instance.PlayerChangedInputDevice += OnInputDeviceChanged;
+        if (GdfInputSystem.InstanceExists) GdfInputSystem.Instance.PlayerChangedInputDevice += OnInputDeviceChanged;
         GlobalLastUsedInputTypeChanged += OnGlobalLastUsedInputTypeChanged;
     }
 
@@ -702,7 +702,7 @@ public partial class UserInterface : Node, IResynchronizable
     {
         if (Engine.IsEditorHint()) return;
         
-        if (GdfInputSystem.Instance != null) GdfInputSystem.Instance.PlayerChangedInputDevice -= OnInputDeviceChanged;
+        if (GdfInputSystem.InstanceExists) GdfInputSystem.Instance.PlayerChangedInputDevice -= OnInputDeviceChanged;
         GlobalLastUsedInputTypeChanged -= OnGlobalLastUsedInputTypeChanged;
     }
 
