@@ -87,7 +87,7 @@ public partial class Room
         public int PlayerId;
         public int IndexInClient;
         public int PlayerIndex => InstanceExists ? Instance.GetPlayerIndex(PlayerId) : 0;
-        public bool IsLocal => InstanceExists && PeerId == Instance.PeerId;
+        public bool IsLocal => !InstanceExists || PeerId == Instance.PeerId;
 
         public Variant Serialize()
         {
