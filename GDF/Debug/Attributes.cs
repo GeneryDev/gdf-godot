@@ -23,5 +23,6 @@ public class DebugCommandAttribute : Attribute
 public enum DebugCommandType
 {
     Trigger,
-    Toggle
+    Toggle,
+    TriggerWithArguments
 }

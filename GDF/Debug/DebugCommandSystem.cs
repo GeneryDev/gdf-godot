@@ -67,22 +67,25 @@ public partial class DebugCommandSystem : SingletonNode<DebugCommandSystem>
         
         if (appendToHistory)
             AppendToHistory(command);
+
+        var parser = new DebugCommandArgumentParser(command);
+        parser.ReadWord(out string commandId);
         
-        if (!Definitions.TryGetValue(command, out var def))
+        if (!Definitions.TryGetValue(commandId, out var def))
         {
-            GD.Print($"No such command '{command}'");
+            GD.Print($"No such command '{commandId}'");
             return;
         }
 
         try
         {
-            def.TriggerAction();
+            def.TriggerAction(parser);
         }
         catch (Exception ex)
         {
             GD.Print($"Exception while running debug command '{command}':\n{ex}");
         }
-        GD.Print($"Executed debug command '{command}'");
+        GD.Print($"Executed debug command '{commandId}'");
     }
 
     private static void AppendToHistory(string command)
@@ -152,6 +155,10 @@ public partial class DebugCommandSystem : SingletonNode<DebugCommandSystem>
                 expectedParamTypes = new Type[] { typeof(bool) };
                 expectedReturnType = typeof(void);
                 break;
+            case DebugCommandType.TriggerWithArguments:
+                expectedParamTypes = new Type[] { typeof(DebugCommandArgumentParser) };
+                expectedReturnType = typeof(void);
+                break;
             default:
                 throw new ArgumentOutOfRangeException();
         }
@@ -189,20 +196,31 @@ public partial class DebugCommandSystem : SingletonNode<DebugCommandSystem>
             return;
         }
         
-        Action triggerAction;
+        Action<DebugCommandArgumentParser> triggerAction;
 
         switch (attr.Type)
         {
             case DebugCommandType.Trigger:
-                triggerAction = method.CreateDelegate<Action>();
+            {
+                var callDelegate = method.CreateDelegate<Action>();
+                triggerAction = _ => callDelegate();
                 break;
+            }
             case DebugCommandType.Toggle:
+            {
                 var callDelegate = method.CreateDelegate<Action<bool>>();
-                triggerAction = () =>
+                triggerAction = _ =>
                 {
                     callDelegate(ToggleCommand(id));
                 };
                 break;
+            }
+            case DebugCommandType.TriggerWithArguments:
+            {
+                var callDelegate = method.CreateDelegate<Action<DebugCommandArgumentParser>>();
+                triggerAction = callDelegate;
+                break;
+            }
             default:
                 throw new ArgumentOutOfRangeException();
         }
@@ -315,7 +333,7 @@ public partial class DebugCommandSystem : SingletonNode<DebugCommandSystem>
     {
         public MethodInfo Method;
         public DebugCommandAttribute Attribute;
-        public Action TriggerAction;
+        public Action<DebugCommandArgumentParser> TriggerAction;
     }
 #endif
 }
