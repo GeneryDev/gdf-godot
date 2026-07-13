@@ -5,8 +5,12 @@ namespace GDF.Util;
 
 public struct CallableEvent
 {
-    private static readonly List<Callable> _callables = new();
-    
+    private readonly List<Callable> _callables = new();
+
+    public CallableEvent()
+    {
+    }
+
     public void Connect(Callable callable)
     {
         _callables.Add(callable);
