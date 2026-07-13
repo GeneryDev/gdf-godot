@@ -83,6 +83,7 @@ public abstract partial class SummarizableScene : Node
         base._Notification(what);
         switch ((long)what)
         {
+#if TOOLS
             case NotificationEditorPreSave:
             {
                 if (EditorInterface.Singleton.GetEditedSceneRoot() == this && !string.IsNullOrEmpty(this.SceneFilePath))
@@ -91,6 +92,7 @@ public abstract partial class SummarizableScene : Node
                 }
                 break;
             }
+#endif
             case NotificationEditorPostSave:
             {
                 if(_generatingSummary) FinishGeneratingSummary();
@@ -138,6 +140,7 @@ public abstract partial class SummarizableScene : Node
             usage &= ~(PropertyUsageFlags.Editor);
         }
 
+#if TOOLS
         if (_generatingSummary && Engine.IsEditorHint() && EditorInterface.Singleton.GetEditedSceneRoot() == this &&
             !string.IsNullOrEmpty(this.SceneFilePath) && Summary != null)
         {
@@ -146,6 +149,7 @@ public abstract partial class SummarizableScene : Node
                 usage &= ~(PropertyUsageFlags.Storage);
             }
         }
+#endif
         
         property["usage"] = Variant.From(usage);
     }

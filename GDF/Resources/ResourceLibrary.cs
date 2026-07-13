@@ -19,8 +19,10 @@ public abstract partial class ResourceLibrary<TRes, TSub> : Node, IResourceLibra
     public static LibraryConfig Config { get; private set; }
     public static StringName FallbackId => Config.FallbackId;
     public static Descriptor Fallback => FromId(FallbackId);
-    
+
+#if TOOLS
     private static ulong? _editorLastScanTimestamp;
+#endif
 
     public virtual LibraryConfig GetLibraryConfig()
     {

@@ -6,6 +6,7 @@ namespace GDF.Debug;
 
 public partial class DebugLoggerInterface : Node, IDataContext
 {
+#if DEBUG
     public void ScrollToBottom(ScrollContainer container)
     {
         var childControl = container?.GetChildOfType<Control>();
@@ -28,4 +29,5 @@ public partial class DebugLoggerInterface : Node, IDataContext
 
         return false;
     }
+#endif
 }

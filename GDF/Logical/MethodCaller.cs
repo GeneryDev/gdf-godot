@@ -73,6 +73,11 @@ public partial class MethodCaller : TriggerableLogicNode, IInboundArgumentSource
 
     [Export] public Dictionary TargetMethodInfo = new();
 
+    private StringName _method = "";
+    private Node _target;
+    private Array<ArgumentInputType> _argInputTypes = new();
+    private int _filterByArgumentCount = -1;
+    
     private Array _triggeredWithArgs;
     private Array<Dictionary> _argPropertyList = null;
     private Array<Dictionary> _argInputTypePropertyList = null;
@@ -533,7 +538,6 @@ public partial class MethodCaller : TriggerableLogicNode, IInboundArgumentSource
         }
     }
 
-
     private Tween _notifyUpdatedTween;
     private void RefreshPropertyListOnDelay(float delay)
     {
@@ -559,10 +563,6 @@ public partial class MethodCaller : TriggerableLogicNode, IInboundArgumentSource
 #if TOOLS
     private NodePath _popupSelectedNodePath;
     private StringName _popupSelectedMethodName;
-    private StringName _method = "";
-    private Node _target;
-    private Array<ArgumentInputType> _argInputTypes = new();
-    private int _filterByArgumentCount = -1;
 
     [InspectorCustomControl(AnchorProperty = nameof(Target), AnchorMode = InspectorPropertyAnchorMode.Before)]
     public Control SelectMethod()

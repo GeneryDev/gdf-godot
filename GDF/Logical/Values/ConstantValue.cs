@@ -69,6 +69,7 @@ public partial class ConstantValue : ValueSource
         return Value;
     }
 
+#if TOOLS
     public override void _ValidateProperty(Dictionary property)
     {
         base._ValidateProperty(property);
@@ -87,6 +88,7 @@ public partial class ConstantValue : ValueSource
             property["usage"] = Variant.From(usage);
         }
     }
+#endif
 
     public override string ToString()
     {

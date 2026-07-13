@@ -2,6 +2,7 @@
 
 namespace GDF.Debug;
 
+#if DEBUG
 public partial class DebugCommandLineEdit : LineEdit
 {
     [Signal]
@@ -90,3 +91,4 @@ public partial class DebugCommandLineEdit : LineEdit
         Clear();
     }
 }
+#endif

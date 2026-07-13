@@ -17,7 +17,9 @@ public partial class AnimationHelperTool : Node
     [Export] public bool DisableTreeWhileOnPlayer = false;
 
     [ExportCategory("Root Motion")]
+#if TOOLS
     [ExportToolButton("Set Root Motion Track Path")] private Callable ButtonSetRootMotionTrackPath => new Callable(this, MethodName.SetRootMotionTrackPath);
+#endif
     [Export]
     public string RootTrackPath;
 
