@@ -85,7 +85,6 @@ public partial class UserInterface : Node, IResynchronizable
     {
         var state = new PlayerFocusState
         {
-            PlayerIndex = playerInfo.PlayerIndex,
             FocusVisual = CreateFocusVisual(playerInfo)
         };
 
@@ -253,6 +252,32 @@ public partial class UserInterface : Node, IResynchronizable
         _playerInputStates.Remove(playerId);
     }
 
+    private bool TryGetPlayerInfo(int playerId, out Room.PlayerInfo playerInfo)
+    {
+        playerInfo = default;
+        switch (Operability)
+        {
+            case OperabilityEnum.Playerless:
+            case OperabilityEnum.PlayerlessAuthority:
+            {
+                playerInfo = new Room.PlayerInfo()
+                {
+                    PeerId = Operability is OperabilityEnum.PlayerlessAuthority ? GetMultiplayerAuthority() : Multiplayer.GetUniqueId(),
+                    IndexInClient = 0,
+                    PlayerId = PlayerlessId
+                };
+                return true;
+            }
+            case OperabilityEnum.SpecificPlayer:
+            case OperabilityEnum.AllPlayers:
+            {
+                return Room.Instance.TryGetPlayerInfo(playerId, out playerInfo);
+            }
+            default:
+                return false;
+        }
+    }
+
     public void Focus(int playerId, UserInterfaceComponent node)
     {
         if (!AcceptsPlayerId(playerId, out playerId, true, node == null)) return;
@@ -276,30 +301,8 @@ public partial class UserInterface : Node, IResynchronizable
     [GdfRpc]
     private void FocusRpc(int playerId, UserInterfaceComponent node)
     {
-        Room.PlayerInfo playerInfo;
-        switch (Operability)
-        {
-            case OperabilityEnum.Playerless:
-            case OperabilityEnum.PlayerlessAuthority:
-            {
-                playerId = PlayerlessId;
-                playerInfo = new Room.PlayerInfo()
-                {
-                    PeerId = Operability is OperabilityEnum.PlayerlessAuthority ? GetMultiplayerAuthority() : Multiplayer.GetUniqueId(),
-                    IndexInClient = 0,
-                    PlayerId = PlayerlessId
-                };
-                break;
-            }
-            case OperabilityEnum.SpecificPlayer:
-            case OperabilityEnum.AllPlayers:
-            {
-                if (!Room.Instance.TryGetPlayerInfo(playerId, out playerInfo)) return;
-                break;
-            }
-            default:
-                return;
-        }
+        if (!TryGetPlayerInfo(playerId, out var playerInfo)) return;
+        playerId = playerInfo.PlayerId;
 
         var path = node != null ? GetPathTo(node) : null;
 
@@ -395,7 +398,8 @@ public partial class UserInterface : Node, IResynchronizable
             var state = _playerFocusStates[playerId];
             if (!state.IsFocusVisualValid())
             {
-                state.FocusVisual = CreateFocusVisual(Room.Instance.GetPlayerInfo(playerId) ?? default);
+                TryGetPlayerInfo(playerId, out var playerInfo);
+                state.FocusVisual = CreateFocusVisual(playerInfo);
                 _playerFocusStates[playerId] = state;
                 if (updateAroundElement) UpdateAllVisualsAround(state.FocusedComponent);
             }
@@ -747,7 +751,6 @@ public partial class UserInterface : Node, IResynchronizable
         public UserInterfaceComponent FocusedComponent;
         public PlayerFocusVisual FocusVisual;
         public GdfPlayerInput Input;
-        public int PlayerIndex;
 
         public bool IsFocusVisualValid()
         {
