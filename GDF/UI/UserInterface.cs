@@ -481,7 +481,7 @@ public partial class UserInterface : Node, IResynchronizable
             state.FocusedComponent?.Submit(playerId);
         }
 
-        state.FocusedComponent?.HandleSubActions(playerId, state.Input);
+        state.FocusedComponent?.HandleFocusedActions(playerId, state.Input);
 
         _playerInputStates[playerId] = inputState;
     }

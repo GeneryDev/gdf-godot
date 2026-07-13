@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.Reflection.Metadata.Ecma335;
 using GDF.Input;
+using GDF.Logical.Signals;
 using GDF.Logical.Values;
 using GDF.Multiplayer;
 using GDF.Util;
@@ -10,7 +12,7 @@ namespace GDF.UI;
 
 [GlobalClass]
 [Icon($"{GdfConstants.IconRoot}/user_interface_component.png")]
-public sealed partial class UserInterfaceComponent : Node
+public sealed partial class UserInterfaceComponent : Node, IInboundArgumentSource
 {
     public static readonly StringName GroupName = "ui_component";
 
@@ -50,7 +52,10 @@ public sealed partial class UserInterfaceComponent : Node
     [Signal]
     public delegate void GroupExclusiveFocusExitedEventHandler();
 
-    [Export]
+    [Export] public bool Submittable = false;
+    
+    [ExportGroup("Navigable To")]
+    [Export(PropertyHint.GroupEnable)]
     public bool NavigableTo
     {
         get => _navigableTo;
@@ -60,37 +65,48 @@ public sealed partial class UserInterfaceComponent : Node
             UpdateFocusable();
         }
     }
+    [Export] public NavigabilityConditionEnum NavigabilityCondition = NavigabilityConditionEnum.WhenGroupHasFocus;
+    [Export] public int AutoFocusPriority = 0;
+    
+    [ExportGroup("Clickable")]
+    [Export(PropertyHint.GroupEnable)] public bool Clickable = false;
+    [Export] public ClickModeEnum ClickMode = ClickModeEnum.SubmitOnly;
+    
+    [ExportGroup("Tappable")]
+    [Export(PropertyHint.GroupEnable)] public bool Tappable = false;
+    [Export] public TapModeEnum TapMode = TapModeEnum.SubmitOnly;
 
-    [Export] public bool Submittable = true;
-
-    [Export] public Control OverrideOutlinedControl;
-    [Export] public UserInterfaceGroup OverrideParentGroup;
-    [ExportGroup("Input")]
-    [Export] public Array<Side> ConsumedNavigationSides = new();
-    [Export] public Godot.Collections.Dictionary<GdfInputAction, ObjectCallable> SubActions;
-    [Export] public bool Clickable = true;
-    [Export] public ClickModeEnum ClickMode = ClickModeEnum.OnceFocusAndSubmit;
+    [ExportGroup("Consumes Navigation")]
+    [Export(PropertyHint.GroupEnable)] public bool ConsumesNavigation = false;
+    [Export] public Godot.Collections.Dictionary<Side, ObjectCallable> ConsumedNavigationSides = new();
+    
+    [ExportGroup("Focused Actions")]
+    [Export(PropertyHint.GroupEnable)] public bool FocusedActionsEnabled = false;
+    [Export] public Godot.Collections.Dictionary<GdfInputAction, ObjectCallable> FocusedActions = new();
 
     [ExportGroup("Shortcut")]
+    [Export(PropertyHint.GroupEnable)] public bool ShortcutEnabled = false;
     [Export] public GdfInputAction ShortcutAction;
     [Export] public ShortcutConditionEnum ShortcutCondition = ShortcutConditionEnum.WhenGroupHasFocus;
     [Export] public ShortcutModeEnum ShortcutMode = ShortcutModeEnum.SubmitOnly;
 
     [ExportGroup("UX")]
-    [Export] public int AutoFocusPriority = 0;
+    [Export] public Control OverrideOutlinedControl;
+    [Export] public UserInterfaceGroup OverrideParentGroup;
     [Export] public bool EmulateButtonHover = false;
-    [Export] public bool DisableTrueFocus = true;
+    [Export] public bool DisableBuiltInFocus = true;
+    
+    [ExportGroup("Texts")]
     [Export] public bool ShowSubmitContextAction = true;
-    [Export] public bool ShowSubActionContextAction = true;
+    [Export] public bool ShowFocusedActionContextAction = true;
     [Export] public bool ShowShortcutContextAction = true;
-    [Export] public NavigabilityConditionEnum NavigabilityCondition = NavigabilityConditionEnum.WhenGroupHasFocus;
     [Export] public string OverrideSubmitText = null;
     [Export] public string OverrideShortcutText = null;
-    [Export] public Godot.Collections.Dictionary<GdfInputAction, string> OverrideSubActionTexts = null;
+    [Export] public Godot.Collections.Dictionary<GdfInputAction, string> OverrideFocusedActionTexts = new();
 
     public Control OutlinedControl => OverrideOutlinedControl ?? GetParent<Control>();
 
-    private bool _navigableTo = true;
+    private bool _navigableTo = false;
     private bool _groupHasFocus = true;
     private bool _groupHasExclusiveFocus = true;
     private UserInterface _ui;
@@ -98,6 +114,7 @@ public sealed partial class UserInterfaceComponent : Node
     private bool _wasFocusedBeforePress = false;
     private List<int> _playersEnabledShortcut;
     private List<int> _focusedPlayers;
+    private int _callableArgPlayerId = -1;
 
     public Control FocusableControl;
 
@@ -105,8 +122,6 @@ public sealed partial class UserInterfaceComponent : Node
 
     public override void _Ready()
     {
-        ConsumedNavigationSides = ConsumedNavigationSides?.Duplicate();
-
         FocusableControl = GetParent<Control>();
 
         var parent = GetParent<Control>();
@@ -116,7 +131,7 @@ public sealed partial class UserInterfaceComponent : Node
 
         if (FocusableControl != null)
         {
-            FocusableControl.FocusEntered += OnTrueFocusEntered;
+            FocusableControl.FocusEntered += OnBuiltInFocusEntered;
             FocusableControl.GuiInput += OnGuiInput;
         }
     }
@@ -189,40 +204,40 @@ public sealed partial class UserInterfaceComponent : Node
 
     private void OnGuiInput(InputEvent evt)
     {
-        if (!Clickable || !(_ui?.HasControl() ?? false)) return;
-        if (evt is InputEventMouseButton { ButtonIndex: MouseButton.Left } mEvt)
+        if (!(_ui?.HasControl() ?? false)) return;
+        if (Clickable && evt is InputEventMouseButton { ButtonIndex: MouseButton.Left } mEvt)
         {
             if (evt.IsPressed())
             {
                 if (ClickMode is ClickModeEnum.FocusOnly or ClickModeEnum.OnceFocusAndSubmit
                     or ClickModeEnum.OnceFocusTwiceSubmit)
-                    PressedDirectly(false, UserInterface.NavigationInputType.Mouse);
+                    PressedDirectly(false, UserInterface.NavigationInputType.Mouse, ClickMode);
             }
             else if (FocusableControl.GetGlobalRect().HasPoint(mEvt.GlobalPosition))
             {
                 if (ClickMode is ClickModeEnum.OnceFocusAndSubmit or ClickModeEnum.SubmitOnly
                     or ClickModeEnum.OnceFocusTwiceSubmit)
-                    PressedDirectly(true, UserInterface.NavigationInputType.Mouse);
+                    PressedDirectly(true, UserInterface.NavigationInputType.Mouse, ClickMode);
             }
         }
-        else if (evt is InputEventScreenTouch tEvt)
+        else if (Tappable && evt is InputEventScreenTouch tEvt)
         {
             if (evt.IsPressed())
             {
-                if (ClickMode is ClickModeEnum.FocusOnly or ClickModeEnum.OnceFocusAndSubmit
-                    or ClickModeEnum.OnceFocusTwiceSubmit)
-                    PressedDirectly(false, UserInterface.NavigationInputType.Touch);
+                if (TapMode is TapModeEnum.FocusOnly or TapModeEnum.OnceFocusAndSubmit
+                    or TapModeEnum.OnceFocusTwiceSubmit)
+                    PressedDirectly(false, UserInterface.NavigationInputType.Touch, (ClickModeEnum)(int)TapMode);
             }
             else if (FocusableControl.GetGlobalRect().HasPoint(tEvt.Position))
             {
-                if (ClickMode is ClickModeEnum.OnceFocusAndSubmit or ClickModeEnum.SubmitOnly
-                    or ClickModeEnum.OnceFocusTwiceSubmit)
-                    PressedDirectly(true, UserInterface.NavigationInputType.Touch);
+                if (TapMode is TapModeEnum.OnceFocusAndSubmit or TapModeEnum.SubmitOnly
+                    or TapModeEnum.OnceFocusTwiceSubmit)
+                    PressedDirectly(true, UserInterface.NavigationInputType.Touch, (ClickModeEnum)(int)TapMode);
             }
         }
     }
 
-    private void PressedDirectly(bool isRelease, UserInterface.NavigationInputType type)
+    private void PressedDirectly(bool isRelease, UserInterface.NavigationInputType type, ClickModeEnum mode)
     {
         var focusInterface = GetUserInterface();
         if (focusInterface is { ClickToFocus: true })
@@ -253,17 +268,17 @@ public sealed partial class UserInterfaceComponent : Node
             if (playerId != -1 || focusInterface.Operability is UserInterface.OperabilityEnum.Playerless or UserInterface.OperabilityEnum.PlayerlessAuthority)
             {
                 _ui?.UpdateInputType(type);
-                if (ClickMode != ClickModeEnum.SubmitOnly) focusInterface.Focus(playerId, this);
-                if (isRelease && (ClickMode is ClickModeEnum.OnceFocusAndSubmit or ClickModeEnum.SubmitOnly ||
-                                  (ClickMode is ClickModeEnum.OnceFocusTwiceSubmit && _wasFocusedBeforePress)))
+                if (mode != ClickModeEnum.SubmitOnly) focusInterface.Focus(playerId, this);
+                if (isRelease && (mode is ClickModeEnum.OnceFocusAndSubmit or ClickModeEnum.SubmitOnly ||
+                                  (mode is ClickModeEnum.OnceFocusTwiceSubmit && _wasFocusedBeforePress)))
                     Submit(playerId);
             }
         }
     }
 
-    private void OnTrueFocusEntered()
+    private void OnBuiltInFocusEntered()
     {
-        if (DisableTrueFocus && FocusableControl.HasFocus()) FocusableControl.ReleaseFocus();
+        if (DisableBuiltInFocus && FocusableControl.HasFocus()) FocusableControl.ReleaseFocus();
     }
 
     public override void _Notification(int what)
@@ -362,14 +377,12 @@ public sealed partial class UserInterfaceComponent : Node
         //GD.Print($"Player {playerId} pressed Submit on {GetParent()?.GetPath()}");
     }
 
-    public void SubmitSubAction(int playerId, GdfInputAction action)
+    public void SubmitFocusedAction(int playerId, GdfInputAction action)
     {
         if (!Submittable) return;
-        var callable = SubActions?.GetValueOrDefault(action);
-        if (callable == null) return;
-        var args = callable.EvaluateArgs(this);
-        if (args.Length > 0) args[0] = playerId;
-        callable.CallWithArgs(this, args);
+        var callable = FocusedActions?.GetValueOrDefault(action);
+        InvokeCallable(callable, playerId);
+        
         //GD.Print($"Player {playerId} pressed [{action.DisplayName}] on {GetParent()?.GetPath()}");
     }
 
@@ -442,31 +455,37 @@ public sealed partial class UserInterfaceComponent : Node
 
     public bool ConsumeNavigation(int playerId, Side side)
     {
-        foreach (var consumedSide in ConsumedNavigationSides)
-            if (consumedSide == side)
-            {
-                EmitSignal(SignalName.ConsumedNavigation, Variant.From(side));
-                EmitSignal(SignalName.PlayerConsumedNavigation, playerId, Variant.From(side));
-                return true;
-            }
+        if (!ConsumesNavigation) return false;
+
+        if (ConsumedNavigationSides?.TryGetValue(side, out var callable) ?? false)
+        {
+            EmitSignal(SignalName.ConsumedNavigation, Variant.From(side));
+            EmitSignal(SignalName.PlayerConsumedNavigation, playerId, Variant.From(side));
+
+            InvokeCallable(callable, playerId);
+
+            return true;
+        }
 
         return false;
     }
 
-    public void HandleSubActions(int playerId, GdfPlayerInput input)
+    public void HandleFocusedActions(int playerId, GdfPlayerInput input)
     {
-        if (SubActions == null) return;
-        foreach (var (action, callable) in SubActions)
+        if (!FocusedActionsEnabled) return;
+        if (FocusedActions == null) return;
+        foreach (var (action, callable) in FocusedActions)
             if (input.ConsumeActionEvent(action))
             {
                 _ui?.UpdateInputType(UserInterface.NavigationInputType.ButtonsAndSticks);
-                SubmitSubAction(playerId, action);
+                SubmitFocusedAction(playerId, action);
             }
     }
 
     public bool IsShortcutEnabled(int playerId)
     {
         if (FocusableControl == null || !FocusableControl.IsVisibleInTree()) return false;
+        if (!ShortcutEnabled) return false;
         switch (ShortcutCondition)
         {
             case ShortcutConditionEnum.WhenGroupHasFocus:
@@ -507,6 +526,20 @@ public sealed partial class UserInterfaceComponent : Node
         _ui?.UpdateInputType(type);
     }
 
+    private void InvokeCallable(ObjectCallable callable, int playerId)
+    {
+        if (callable == null) return;
+        var args = callable.EvaluateArgs(this);
+        if (args.Length > 0) args[0] = playerId;
+        callable.CallWithArgs(this, args);
+    }
+
+    public Variant GetArgument(int index)
+    {
+        if (index == 0) return _callableArgPlayerId;
+        return default;
+    }
+
     public enum ShortcutModeEnum
     {
         FocusOnly,
@@ -532,6 +565,14 @@ public sealed partial class UserInterfaceComponent : Node
     }
 
     public enum ClickModeEnum
+    {
+        FocusOnly,
+        OnceFocusTwiceSubmit,
+        OnceFocusAndSubmit,
+        SubmitOnly
+    }
+
+    public enum TapModeEnum
     {
         FocusOnly,
         OnceFocusTwiceSubmit,
