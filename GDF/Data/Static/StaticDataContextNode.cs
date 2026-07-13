@@ -12,6 +12,9 @@ public partial class StaticDataContextNode : Node, IDataContext
 {
     [Signal]
     public delegate void UpdatedEventHandler();
+
+    [Signal]
+    public delegate void ContextSignalReceivedEventHandler(StringName signalName, Array args);
     
     [Export(PropertyHint.Enum)]
     public string TypeId
@@ -210,8 +213,10 @@ public partial class StaticDataContextNode : Node, IDataContext
     private void OnParametersUpdated()
     {
         _context?.DisconnectUpdateSignal(new Callable(this, MethodName.OnContextUpdated));
+        _context?.DisconnectContextSignal(new Callable(this, MethodName.ReceiveContextSignal));
         _context = StaticDataContexts.Create(TypeId, Params);
         _context?.ConnectUpdateSignal(new Callable(this, MethodName.OnContextUpdated));
+        _context?.ConnectContextSignal(new Callable(this, MethodName.ReceiveContextSignal));
         EmitSignalUpdated();
     }
 
@@ -220,7 +225,13 @@ public partial class StaticDataContextNode : Node, IDataContext
         EmitSignalUpdated();
     }
 
+    public void ReceiveContextSignal(StringName signalName, Array args)
+    {
+        EmitSignalContextSignalReceived(signalName, args);
+    }
+
     public StringName UpdatedSignalName => SignalName.Updated;
+    public StringName ContextSignalReceivedSignalName => SignalName.ContextSignalReceived;
 
     public IDataContext ParentContext => _context;
 
@@ -230,6 +241,7 @@ public partial class StaticDataContextNode : Node, IDataContext
         if (what == NotificationPredelete)
         {
             _context?.DisconnectUpdateSignal(new Callable(this, MethodName.OnContextUpdated));
+            _context?.DisconnectContextSignal(new Callable(this, MethodName.ReceiveContextSignal));
         }
     }
 }

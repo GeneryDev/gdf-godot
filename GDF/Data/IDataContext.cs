@@ -35,6 +35,7 @@ public interface IDataContext
     }
 
     public StringName UpdatedSignalName => null;
+    public StringName ContextSignalReceivedSignalName => null;
 
     public virtual void ConnectUpdateSignal(Callable callable)
     {
@@ -45,6 +46,18 @@ public interface IDataContext
     public virtual void DisconnectUpdateSignal(Callable callable)
     {
         var signalName = UpdatedSignalName;
+        if (!signalName.IsNullOrEmpty() && this is GodotObject obj) obj.TryDisconnect(signalName, callable);
+    }
+
+    public virtual void ConnectContextSignal(Callable callable)
+    {
+        var signalName = ContextSignalReceivedSignalName;
+        if (!signalName.IsNullOrEmpty() && this is GodotObject obj) obj.TryConnect(signalName, callable);
+    }
+
+    public virtual void DisconnectContextSignal(Callable callable)
+    {
+        var signalName = ContextSignalReceivedSignalName;
         if (!signalName.IsNullOrEmpty() && this is GodotObject obj) obj.TryDisconnect(signalName, callable);
     }
 

@@ -12,6 +12,9 @@ public partial class InjectedDataContext : Node, IDataContext, IDataContextInjec
 {
     [Signal]
     public delegate void UpdatedEventHandler();
+
+    [Signal]
+    public delegate void ContextSignalReceivedEventHandler(StringName signalName, Array args);
     
     [Export] public StringName InjectableSlotId = "";
 
@@ -41,8 +44,10 @@ public partial class InjectedDataContext : Node, IDataContext, IDataContextInjec
         set
         {
             _itemContextNode?.DisconnectUpdateSignal(new Callable(this, MethodName.Update));
+            _itemContextNode?.DisconnectContextSignal(new Callable(this, MethodName.ReceiveContextSignal));
             _itemContextNode = value;
             _itemContextNode?.ConnectUpdateSignal(new Callable(this, MethodName.Update));
+            _itemContextNode?.ConnectContextSignal(new Callable(this, MethodName.ReceiveContextSignal));
             Update();
         }
     }
@@ -57,6 +62,11 @@ public partial class InjectedDataContext : Node, IDataContext, IDataContextInjec
     {
         if (!_suppressUpdate)
             EmitSignalUpdated();
+    }
+
+    public void ReceiveContextSignal(StringName signalName, Array args)
+    {
+        EmitSignalContextSignalReceived(signalName, args);
     }
 
     public StringName GetInjectableSlotId()
@@ -148,6 +158,7 @@ public partial class InjectedDataContext : Node, IDataContext, IDataContextInjec
     }
 
     StringName IDataContext.UpdatedSignalName => SignalName.Updated;
+    StringName IDataContext.ContextSignalReceivedSignalName => SignalName.ContextSignalReceived;
 
     IDataContext IDataContext.ParentContext => ParentContext;
 
@@ -157,6 +168,7 @@ public partial class InjectedDataContext : Node, IDataContext, IDataContextInjec
         {
             _parentContext?.DisconnectUpdateSignal(new Callable(this, MethodName.Update));
             _itemContextNode?.DisconnectUpdateSignal(new Callable(this, MethodName.Update));
+            _itemContextNode?.DisconnectContextSignal(new Callable(this, MethodName.ReceiveContextSignal));
         }
     }
 }
