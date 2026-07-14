@@ -24,7 +24,7 @@ public partial class PropertyStackWatcher : Node
     /// <summary>
     /// The mappings of stack property id => node path:property to set 
     /// </summary>
-    [Export] public Godot.Collections.Dictionary<string, NodePath> Mappings;
+    [Export] public Godot.Collections.Dictionary<string, NodePath> Mappings = new();
 
     [ExportGroup("Special Mappings")]
     [Export] public string TimeScalePropertyId;
@@ -34,7 +34,7 @@ public partial class PropertyStackWatcher : Node
     [Export] public string CurrentCamera3DPropertyId;
     
     [ExportGroup("Network","Network")]
-    [Export] public Array<string> NetworkSyncedProperties;
+    [Export] public Array<string> NetworkSyncedProperties = new();
     [Export] public int NetworkChannel = GdfConstants.DefaultRpcTransferChannel;
     
     [ExportGroup("Advanced")]
