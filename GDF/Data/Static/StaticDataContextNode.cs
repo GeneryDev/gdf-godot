@@ -212,6 +212,7 @@ public partial class StaticDataContextNode : Node, IDataContext
 
     private void OnParametersUpdated()
     {
+        if (Engine.IsEditorHint()) return;
         _context?.DisconnectUpdateSignal(new Callable(this, MethodName.OnContextUpdated));
         _context?.DisconnectContextSignal(new Callable(this, MethodName.ReceiveContextSignal));
         _context = StaticDataContexts.Create(TypeId, Params);
