@@ -56,10 +56,10 @@ public partial class GdfViewportUserSettings : Resource, IJsonSerializable
         }
     }
 
-    private Vector2I _resolution = default;
-    private DisplayServer.WindowMode _fullscreenMode;
-    private DisplayServer.WindowMode _lastUsedFullscreenMode;
-    private DisplayServer.WindowMode _lastUsedWindowedMode;
+    private Vector2I _resolution = default; // default: Resizable
+    private DisplayServer.WindowMode _fullscreenMode = default;
+    private DisplayServer.WindowMode _lastUsedFullscreenMode = DisplayServer.WindowMode.Fullscreen;
+    private DisplayServer.WindowMode _lastUsedWindowedMode = DisplayServer.WindowMode.Maximized;
 
     public void Deserialize(Variant v)
     {
