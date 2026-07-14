@@ -73,8 +73,15 @@ public partial class DebugCommandSystem : SingletonNode<DebugCommandSystem>
         
         if (!Definitions.TryGetValue(commandId, out var def))
         {
-            GD.Print($"No such command '{commandId}'");
-            return;
+            if (!commandId.Contains(':') && Definitions.TryGetValue($"gdf:{commandId}", out def))
+            {
+                // use namespaced command
+            }
+            else
+            {
+                GD.Print($"No such command '{commandId}'");
+                return;
+            }
         }
 
         try
@@ -257,12 +264,12 @@ public partial class DebugCommandSystem : SingletonNode<DebugCommandSystem>
     }
 
 
-    [DebugCommand("help")]
+    [DebugCommand("gdf:help")]
     public static void Help()
     {
         GD.Print("Help!!!!");
     }
-    [DebugCommand("console")]
+    [DebugCommand("gdf:console")]
     public static void ShowConsole()
     {
         ShowScreen($"{GdfConstants.PluginRoot}/scenes/debug/debug_console.tscn");

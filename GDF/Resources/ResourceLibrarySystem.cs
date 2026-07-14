@@ -97,7 +97,7 @@ public static class ResourceLibrarySystem
             $"{Variant.Type.StringName:D}/{PropertyHint.EnumSuggestion:D}:{library.GetAllIdsCommaSeparated()}";
     }
 
-    [DebugCommand("resource_libraries")]
+    [DebugCommand("gdf:resource_libraries")]
     public static void LogResourceLibraries()
     {
         GD.Print($"Resource Libraries:");
