@@ -412,7 +412,7 @@ public partial class AnimationTimingTool : Node
 
         public void RetimeLength(double[] oldTimes, double[] newTimes)
         {
-            float oldLength = _anim.Length;
+            double oldLength = _anim.Length;
             double newLength = RemapTime(oldLength, oldTimes, newTimes);
             CreateAction(true);
             _undoRedo.AddDoProperty(_anim, Animation.PropertyName.Length, newLength);
@@ -441,7 +441,7 @@ public partial class AnimationTimingTool : Node
                 if (moveOnly)
                 {
                     // Move the keyframe to a temporary time after the end of the animation, keeping the same order
-                    float tempTime = _anim.Length + 10 + keyIndex;
+                    double tempTime = _anim.Length + 10 + keyIndex;
 
                     _undoRedo.AddDoMethod(transaction, KeyTransaction.MethodName.Move, tempTime);
                     _undoRedo.AddUndoMethod(transaction, KeyTransaction.MethodName.Move, originalTime);
@@ -464,7 +464,7 @@ public partial class AnimationTimingTool : Node
                 if (moveOnly)
                 {
                     // Move the keyframe back from the temporary time to the new remapped time
-                    float tempTime = _anim.Length + 10 + keyIndex;
+                    double tempTime = _anim.Length + 10 + keyIndex;
                     _undoRedo.AddDoMethod(transaction, KeyTransaction.MethodName.Move, remappedTime);
                     _undoRedo.AddUndoMethod(transaction, KeyTransaction.MethodName.Move, tempTime);
                 }

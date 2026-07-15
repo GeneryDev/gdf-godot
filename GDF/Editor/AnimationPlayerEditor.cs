@@ -99,7 +99,7 @@ public partial class AnimationPlayerEditor : GodotObject
             return;
         }
         _topBar = _editorControl.GetChild<Control>(0);
-#if GODOT4_6_0_OR_GREATER
+#if GODOT4_6_OR_GREATER
         _topBar = _topBar?.GetChild<Control>(0);
 #endif
         if (_topBar == null) return;

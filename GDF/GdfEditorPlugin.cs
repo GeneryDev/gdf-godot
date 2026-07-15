@@ -53,7 +53,7 @@ public partial class GdfEditorPlugin : EditorPlugin
 
     public Control FindAnimationPlayerEditor()
     {
-#if GODOT4_6_0_OR_GREATER
+#if GODOT4_6_OR_GREATER
         var dummyControl = new EditorDock()
         {
             DefaultSlot = EditorDock.DockSlot.Bottom,
@@ -74,7 +74,7 @@ public partial class GdfEditorPlugin : EditorPlugin
         }
         finally
         {
-#if GODOT4_6_0_OR_GREATER
+#if GODOT4_6_OR_GREATER
             RemoveDock(dummyControl);
 #else
             RemoveControlFromBottomPanel(dummyControl);

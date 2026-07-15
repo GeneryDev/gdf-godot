@@ -76,7 +76,7 @@ public partial class AnimationInspectorPlugin : EditorInspectorPlugin
         editor.UseFolding = true;
         editor.DrawBackground = false;
         AddPropertyEditor($"metadata/{GdfAnimationTree.MetaNameMetadata}", editor, false, "GDF Metadata");
-#if GODOT4_6_0_OR_GREATER
+#if GODOT4_6_OR_GREATER
         editor.GetChildOfType<EditorResourcePicker>()?.SetModulate(new Color(1,1,1,0));
         if (editor.GetChildOfType<EditorResourcePicker>()?.GetChild(1) is Button button)
         {
