@@ -70,7 +70,14 @@ public partial class PeerAwaiter : Node, IResynchronizable, IDataContext
     {
         ids.Clear();
 
-        foreach (int peerId in Room.Instance.GetAllPeerIds()) ids.Add(peerId);
+        if (Room.InstanceExists)
+        {
+            foreach (int peerId in Room.Instance.GetAllPeerIds()) ids.Add(peerId);
+        }
+        else
+        {
+            ids.Add(GetMultiplayerAuthority());
+        }
 
         return ids;
     }
@@ -313,14 +320,20 @@ public partial class PeerAwaiter : Node, IResynchronizable, IDataContext
 
     public override void _EnterTree()
     {
-        Room.Instance.PeerConnected += OnPeerConnected;
-        Room.Instance.PeerDisconnected += OnPeerDisconnected;
+        if (Room.InstanceExists)
+        {
+            Room.Instance.PeerConnected += OnPeerConnected;
+            Room.Instance.PeerDisconnected += OnPeerDisconnected;
+        }
     }
 
     public override void _ExitTree()
     {
-        Room.Instance.PeerConnected -= OnPeerConnected;
-        Room.Instance.PeerDisconnected -= OnPeerDisconnected;
+        if (Room.InstanceExists)
+        {
+            Room.Instance.PeerConnected -= OnPeerConnected;
+            Room.Instance.PeerDisconnected -= OnPeerDisconnected;
+        }
     }
 
     public override void _Ready()
