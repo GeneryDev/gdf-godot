@@ -127,4 +127,14 @@ public static class NodeExtensions
 
         return null;
     }
+
+    public static void CopyGlobalTransformFrom(this Node to, Node from)
+    {
+        if (from is Node3D from3d && to is Node3D to3d)
+            to3d.GlobalTransform = from3d.GlobalTransform * to3d.Transform;
+        else if (from is Node2D from2d && to is Node2D to2d)
+            to2d.GlobalTransform = from2d.GlobalTransform * to2d.Transform;
+        else if (from is Control fromControl && to is Control toControl)
+            toControl.GlobalPosition = fromControl.GlobalPosition + toControl.Position;
+    }
 }
