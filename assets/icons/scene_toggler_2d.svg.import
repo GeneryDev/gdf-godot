@@ -2,16 +2,17 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b53jac2l3s7c"
-path="res://.godot/imported/scene_toggler.png-1ee3cf08a2516c20d55bb0f80e210993.ctex"
+uid="uid://ddq42en0flvun"
+path="res://.godot/imported/scene_toggler_2d.svg-56afbd4d3e37221810bb428b4cbdb46b.ctex"
 metadata={
+"has_editor_variant": true,
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://addons/gdf-godot/assets/icons/scene_toggler.png"
-dest_files=["res://.godot/imported/scene_toggler.png-1ee3cf08a2516c20d55bb0f80e210993.ctex"]
+source_file="res://addons/gdf-godot/assets/icons/scene_toggler_2d.svg"
+dest_files=["res://.godot/imported/scene_toggler_2d.svg-56afbd4d3e37221810bb428b4cbdb46b.ctex"]
 
 [params]
 
@@ -38,3 +39,6 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
+svg/scale=1.0
+editor/scale_with_editor_scale=true
+editor/convert_colors_with_editor_theme=true

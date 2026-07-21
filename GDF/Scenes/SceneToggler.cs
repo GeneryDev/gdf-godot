@@ -5,7 +5,7 @@ namespace GDF.Scenes;
 
 [Tool]
 [GlobalClass]
-[Icon($"{GdfConstants.IconRoot}/scene_toggler.png")]
+[Icon($"{GdfConstants.IconRoot}/scene_toggler.svg")]
 public partial class SceneToggler : Node, ISceneToggler
 {
     [Signal]
