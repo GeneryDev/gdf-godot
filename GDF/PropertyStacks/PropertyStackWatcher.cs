@@ -24,7 +24,11 @@ public partial class PropertyStackWatcher : Node
     /// <summary>
     /// The mappings of stack property id => node path:property to set 
     /// </summary>
-    [Export] public Godot.Collections.Dictionary<string, NodePath> Mappings = new();
+    [Export] public Godot.Collections.Dictionary<string, NodePath> Mappings
+#if !GODOT_WEB
+            = new()
+#endif
+        ;
 
     [ExportGroup("Special Mappings")]
     [Export] public string TimeScalePropertyId;

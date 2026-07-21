@@ -122,7 +122,11 @@ public partial class NodeFactory : Node, IDataContext, IDataQueryOptions
     private string _collectionQuery;
     private string _subContextQuery;
     private Node _contextNode;
-    private Godot.Collections.Dictionary<StringName, NodePath> _injectDataContextsBySlot = new();
+    private Godot.Collections.Dictionary<StringName, NodePath> _injectDataContextsBySlot
+#if !GODOT_WEB
+            = new()
+#endif
+        ;
     private bool _updateQueued = false;
     private bool _everUpdated = false;
 

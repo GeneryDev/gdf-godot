@@ -78,11 +78,19 @@ public sealed partial class UserInterfaceComponent : Node, IInboundArgumentSourc
 
     [ExportGroup("Consumes Navigation")]
     [Export(PropertyHint.GroupEnable)] public bool ConsumesNavigation = false;
-    [Export] public Godot.Collections.Dictionary<Side, ObjectCallable> ConsumedNavigationSides = new();
+    [Export] public Godot.Collections.Dictionary<Side, ObjectCallable> ConsumedNavigationSides
+#if !GODOT_WEB
+            = new()
+#endif
+        ;
     
     [ExportGroup("Focused Actions")]
     [Export(PropertyHint.GroupEnable)] public bool FocusedActionsEnabled = false;
-    [Export] public Godot.Collections.Dictionary<GdfInputAction, ObjectCallable> FocusedActions = new();
+    [Export] public Godot.Collections.Dictionary<GdfInputAction, ObjectCallable> FocusedActions
+#if !GODOT_WEB
+            = new()
+#endif
+        ;
 
     [ExportGroup("Shortcut")]
     [Export(PropertyHint.GroupEnable)] public bool ShortcutEnabled = false;
@@ -102,7 +110,11 @@ public sealed partial class UserInterfaceComponent : Node, IInboundArgumentSourc
     [Export] public bool ShowShortcutContextAction = true;
     [Export] public string OverrideSubmitText = null;
     [Export] public string OverrideShortcutText = null;
-    [Export] public Godot.Collections.Dictionary<GdfInputAction, string> OverrideFocusedActionTexts = new();
+    [Export] public Godot.Collections.Dictionary<GdfInputAction, string> OverrideFocusedActionTexts
+#if !GODOT_WEB
+            = new()
+#endif
+        ;
 
     public Control OutlinedControl => OverrideOutlinedControl ?? GetParent<Control>();
 
