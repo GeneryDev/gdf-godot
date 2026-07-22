@@ -111,13 +111,15 @@ public partial class SceneManager : SingletonNode<SceneManager>
         }
 
         if (!sync && interruptingSyncedTransition)
+        {
             // If interrupting a synchronized transition with a non-synchronized transition,
             // confirm self to ensure other peers aren't locked waiting for this peer.
             SceneReadyAwaiter.ConfirmSelf();
+        }
 
         if (sync && interruptingSyncedTransition)
         {
-            GD.PushWarning("Interrupting synced scene transition with another synced transition!");
+            GD.Print("Interrupting synced scene transition with another synced transition!");
         }
 
         Instance._activeTransition = ScreenTransitionSystem.Instance.StartTransition(transitionReference,
@@ -277,12 +279,21 @@ public partial class SceneManager : SingletonNode<SceneManager>
         Instance.TransitionStatus = TransitionStatusEnum.WaitingForPeers;
         if (MimicSyncedTransitionDelayOffline && SceneReadyAwaiter.TotalAwaiting == 1)
         {
-            Instance.GetTree().CreateTimer(0.1f, true, false, true).Timeout += () => SceneReadyAwaiter.ConfirmSelf();
+            Instance.GetTree().CreateTimer(0.1f, true, false, true).Timeout += TryConfirmReadyToChangeScene;
         }
         else
         {
-            SceneReadyAwaiter.ConfirmSelf();
+            TryConfirmReadyToChangeScene();
         }
+    }
+
+    private static void TryConfirmReadyToChangeScene()
+    {
+        if (Instance.TransitionStatus < TransitionStatusEnum.WaitingForPeers)
+        {
+            return;
+        }
+        SceneReadyAwaiter.ConfirmSelf();
     }
 
     private void FinishSyncedSceneChange()
@@ -421,7 +432,7 @@ public partial class SceneManager : SingletonNode<SceneManager>
         return false;
     }
 
-    public static void MultiPassGarbageCollect(int maxPasses, bool silent = false)
+    public static void MultiPassGarbageCollect(int maxPasses, bool verbose = false)
     {
         if (maxPasses <= 0) return;
         const int finalizationCountBreakThreshold = 2;
@@ -445,7 +456,7 @@ public partial class SceneManager : SingletonNode<SceneManager>
             }
         }
 
-        if (!silent)
+        if (verbose)
             GD.Print(
                 $"Finished multi-pass garbage collection after {Mathf.Min(currentPass, maxPasses)} of {maxPasses} passes ({fromFinalizationPendingCount} -> {prevFinalizationPendingCount} pending finalizers)");
     }
