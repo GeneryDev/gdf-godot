@@ -12,6 +12,7 @@ namespace GDF.Debug;
 
 [HasDebugCommands]
 [GlobalClass]
+[SingletonUsage(SingletonUsage.Autoload)]
 public partial class DebugCommandSystem : SingletonNode<DebugCommandSystem>
 {
     [Export] public Array<DebugCommandMacro> Macros = new();

@@ -9,7 +9,7 @@ public static class GodotObjectExtensions
     /// </summary>
     public static bool TryConnect(this GodotObject obj, StringName signal, Callable callable, GodotObject.ConnectFlags flags = 0)
     {
-        if (callable.Method == null) return false;
+        if (callable.Method == null && callable.Delegate == null) return false;
         if (obj == null || !GodotObject.IsInstanceValid(obj)) return false;
         if (!obj.IsConnected(signal, callable))
         {
@@ -24,7 +24,7 @@ public static class GodotObjectExtensions
     /// </summary>
     public static bool TryDisconnect(this GodotObject obj, StringName signal, Callable callable)
     {
-        if (callable.Method == null) return false;
+        if (callable.Method == null && callable.Delegate == null) return false;
         if (obj == null || !GodotObject.IsInstanceValid(obj)) return false;
         if (obj.IsConnected(signal, callable))
         {

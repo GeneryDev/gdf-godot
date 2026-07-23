@@ -6,6 +6,7 @@ using Godot;
 namespace GDF.Scenes.Transitions;
 
 [GlobalClass]
+[SingletonUsage(SingletonUsage.Autoload)]
 public partial class ScreenTransitionSystem : SingletonNode<ScreenTransitionSystem>
 {
     private ScreenTransition _activeTransition;

@@ -3,7 +3,7 @@ using Godot;
 
 namespace GDF.Util;
 
-public struct CallableEvent
+public readonly struct CallableEvent
 {
     private readonly List<Callable> _callables = new();
 

@@ -4,6 +4,7 @@ using Godot;
 namespace GDF.Audio;
 
 [GlobalClass]
+[SingletonUsage(SingletonUsage.Autoload)]
 public partial class GlobalAudioPlayerPool : SingletonNode<GlobalAudioPlayerPool>
 {
     private AudioPlayerPoolInstance _pool;

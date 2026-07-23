@@ -8,6 +8,7 @@ using Godot;
 namespace GDF.Scenes;
 
 [GlobalClass]
+[SingletonUsage(SingletonUsage.Autoload)]
 public partial class SceneManager : SingletonNode<SceneManager>
 {
     public static readonly StringName GroupNameAsyncDisabled = "async_disabled";
