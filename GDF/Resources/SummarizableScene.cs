@@ -119,7 +119,7 @@ public abstract partial class SummarizableScene : Node
 
     private void LoadFromSummary()
     {
-        if (Summary != null)
+        if (Summary != null && Summary.HasData())
         {
             Name = Summary.RootNodeName;
             foreach (var (propName, value) in Summary.RootNodeProperties)
