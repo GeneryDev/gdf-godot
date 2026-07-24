@@ -333,13 +333,23 @@ public sealed partial class UserInterfaceComponent : Node, IInboundArgumentSourc
         if (EmulateButtonHover && FocusableControl is Button btn)
         {
             var normalStyleboxName = "normal";
+            var normalStyleboxOverridePropertyName = "theme_override_styles/normal";
+            var normalStyleboxMetaName = "_gdf_normal_stylebox_override";
             if (_focusedPlayers is { Count: > 0 })
             {
+                if (!btn.HasMeta(normalStyleboxMetaName))
+                {
+                    btn.SetMeta(normalStyleboxMetaName, btn.Get(normalStyleboxOverridePropertyName));
+                }
                 btn.AddThemeStyleboxOverride(normalStyleboxName, btn.GetThemeStylebox("hover"));
             }
             else
             {
                 btn.RemoveThemeStyleboxOverride(normalStyleboxName);
+                if (btn.HasMeta(normalStyleboxMetaName))
+                {
+                    btn.Set(normalStyleboxOverridePropertyName, btn.GetMeta(normalStyleboxMetaName));
+                }
             }
         }
     }
