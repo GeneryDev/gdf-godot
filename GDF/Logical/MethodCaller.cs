@@ -69,6 +69,9 @@ public partial class MethodCaller : TriggerableLogicNode, IInboundArgumentSource
     }
 
     [Export]
+    public Array<bool> ArgAbortIfNull = new();
+
+    [Export]
     public Array<bool> ArgReplicate = new();
 
     [Export] public Dictionary TargetMethodInfo = new();
@@ -81,6 +84,7 @@ public partial class MethodCaller : TriggerableLogicNode, IInboundArgumentSource
     private Array _triggeredWithArgs;
     private Array<Dictionary> _argPropertyList = null;
     private Array<Dictionary> _argInputTypePropertyList = null;
+    private Array<Dictionary> _argAbortIfNullPropertyList = null;
     private Array<Dictionary> _argReplicatePropertyList = null;
     
     public void Trigger()
@@ -213,6 +217,8 @@ public partial class MethodCaller : TriggerableLogicNode, IInboundArgumentSource
             if (ArgInputTypes[i] == ArgumentInputType.ValueSource)
                 if (arg.VariantType == Variant.Type.Object && arg.AsGodotObject() is IValueSource argValueSource)
                     arg = argValueSource.GetValue(this);
+
+            if (ArgAbortIfNull[i] && arg.VariantType == Variant.Type.Nil) return false;
             
             args[i] = arg;
         }
@@ -224,6 +230,7 @@ public partial class MethodCaller : TriggerableLogicNode, IInboundArgumentSource
     {
         _argPropertyList = null;
         _argInputTypePropertyList = null;
+        _argAbortIfNullPropertyList = null;
         _argReplicatePropertyList = null;
     }
 
@@ -254,6 +261,17 @@ public partial class MethodCaller : TriggerableLogicNode, IInboundArgumentSource
                 ArgInputTypes.Add(ArgumentInputType.Constant);
             }
         }
+        if (ArgAbortIfNull.Count != _argPropertyList.Count)
+        {
+            while (ArgAbortIfNull.Count > _argPropertyList.Count)
+            {
+                ArgAbortIfNull.RemoveAt(ArgAbortIfNull.Count-1);
+            }
+            while (ArgAbortIfNull.Count < _argPropertyList.Count)
+            {
+                ArgAbortIfNull.Add(false);
+            }
+        }
         if (ArgReplicate.Count != _argPropertyList.Count)
         {
             while (ArgReplicate.Count > _argPropertyList.Count)
@@ -272,7 +290,7 @@ public partial class MethodCaller : TriggerableLogicNode, IInboundArgumentSource
     private bool EnsurePropertyListReady()
     {
         if (Target == null) return false;
-        if (_argPropertyList != null && _argInputTypePropertyList != null && _argReplicatePropertyList != null) return true;
+        if (_argPropertyList != null && _argInputTypePropertyList != null && _argAbortIfNullPropertyList != null && _argReplicatePropertyList != null) return true;
         
         UpdatePropertyList();
         return true;
@@ -365,6 +383,17 @@ public partial class MethodCaller : TriggerableLogicNode, IInboundArgumentSource
                 {"default", 0}
             });
             
+            _argAbortIfNullPropertyList.Add(new Dictionary()
+            {
+                {"name", $"configure_args/{i}_{argName}/abort_if_null"},
+                {"class_name", ""},
+                {"type", Variant.From(Variant.Type.Bool)},
+                {"hint", Variant.From(PropertyHint.None)},
+                {"hint_string", ""},
+                {"usage", Variant.From(PropertyUsageFlags.Editor)},
+                {"default", false}
+            });
+            
             _argReplicatePropertyList.Add(new Dictionary()
             {
                 {"name", $"configure_args/{i}_{argName}/replicate"},
@@ -400,6 +429,16 @@ public partial class MethodCaller : TriggerableLogicNode, IInboundArgumentSource
                 {
                     ArgInputTypes[argIndex] = value.As<ArgumentInputType>();
                     NotifyPropertyListChanged();
+                }
+
+                argIndex++;
+            }
+            argIndex = 0;
+            foreach (var propertyInfo in _argAbortIfNullPropertyList)
+            {
+                if (propertyInfo["name"].AsStringName() == property)
+                {
+                    ArgAbortIfNull[argIndex] = value.AsBool();
                 }
 
                 argIndex++;
@@ -444,6 +483,16 @@ public partial class MethodCaller : TriggerableLogicNode, IInboundArgumentSource
                 argIndex++;
             }
             argIndex = 0;
+            foreach (var propertyInfo in _argAbortIfNullPropertyList)
+            {
+                if (propertyInfo["name"].AsStringName() == property)
+                {
+                    return ArgAbortIfNull[argIndex];
+                }
+
+                argIndex++;
+            }
+            argIndex = 0;
             foreach (var propertyInfo in _argReplicatePropertyList)
             {
                 if (propertyInfo["name"].AsStringName() == property)
@@ -468,6 +517,13 @@ public partial class MethodCaller : TriggerableLogicNode, IInboundArgumentSource
             }
         }
         foreach (var propertyInfo in _argInputTypePropertyList)
+        {
+            if (propertyInfo["name"].AsStringName() == property)
+            {
+                return true;
+            }
+        }
+        foreach (var propertyInfo in _argAbortIfNullPropertyList)
         {
             if (propertyInfo["name"].AsStringName() == property)
             {
@@ -501,6 +557,13 @@ public partial class MethodCaller : TriggerableLogicNode, IInboundArgumentSource
                 return Variant.From(ArgumentInputType.Constant);
             }
         }
+        foreach (var propertyInfo in _argAbortIfNullPropertyList)
+        {
+            if (propertyInfo["name"].AsStringName() == property)
+            {
+                return false;
+            }
+        }
         foreach (var propertyInfo in _argReplicatePropertyList)
         {
             if (propertyInfo["name"].AsStringName() == property)
@@ -517,6 +580,7 @@ public partial class MethodCaller : TriggerableLogicNode, IInboundArgumentSource
         var arr = new Array<Dictionary>();
         arr.AddRange(_argPropertyList);
         arr.AddRange(_argInputTypePropertyList);
+        arr.AddRange(_argAbortIfNullPropertyList);
         arr.AddRange(_argReplicatePropertyList);
         return arr;
     }
@@ -527,6 +591,8 @@ public partial class MethodCaller : TriggerableLogicNode, IInboundArgumentSource
         _argPropertyList.Clear();
         _argInputTypePropertyList ??= new();
         _argInputTypePropertyList.Clear();
+        _argAbortIfNullPropertyList ??= new();
+        _argAbortIfNullPropertyList.Clear();
         _argReplicatePropertyList ??= new();
         _argReplicatePropertyList.Clear();
         var targetMethodInfo = GetTargetMethodInfo();
@@ -551,7 +617,7 @@ public partial class MethodCaller : TriggerableLogicNode, IInboundArgumentSource
     {
         var propertyName = property["name"].AsStringName();
         var usage = property["usage"].As<PropertyUsageFlags>();
-        if (propertyName == PropertyName.Args || propertyName == PropertyName.ArgInputTypes || propertyName == PropertyName.ArgReplicate || propertyName == PropertyName.TargetMethodInfo)
+        if (propertyName == PropertyName.Args || propertyName == PropertyName.ArgInputTypes || propertyName == PropertyName.ArgAbortIfNull || propertyName == PropertyName.ArgReplicate || propertyName == PropertyName.TargetMethodInfo)
         {
             usage &= ~(PropertyUsageFlags.Editor);
         }
