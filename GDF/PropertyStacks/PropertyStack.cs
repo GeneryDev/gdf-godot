@@ -20,13 +20,6 @@ public partial class PropertyStack : Node
     [Export]
     public Godot.Collections.Dictionary<string, Variant> OverrideDefaultValues;
     
-    private readonly System.Collections.Generic.Dictionary<string, IProperty> _properties = new();
-    private readonly List<PropertyFrameHandle> _frameHandles = new();
-    private readonly List<FrameValidator> _frameValidationRules = new();
-    private int _nextFrameHandleId = 1;
-
-    private PropertyStackDebugger _debugger;
-    
     public IEnumerable<string> PropertyIds => _properties.Keys;
 
     [ExportGroup("Debugging")]
@@ -38,10 +31,25 @@ public partial class PropertyStack : Node
     public bool DumpFrameData = false;
     [Export] public Dictionary DebuggerOutput;
 
+    private readonly System.Collections.Generic.Dictionary<string, IProperty> _properties = new();
+    private readonly List<PropertyFrameHandle> _frameHandles = new();
+    private readonly List<FrameValidator> _frameValidationRules = new();
+    private int _nextFrameHandleId = 1;
+
+    private PropertyStackDebugger _debugger;
+    private bool _initialized = false;
+
     public override void _Ready()
     {
-        PropertyRegistry?.PopulatePropertiesDictionary(_properties);
+        Initialize();
+    }
 
+    private void Initialize()
+    {
+        if (_initialized) return;
+        _initialized = true;
+        
+        PropertyRegistry?.PopulatePropertiesDictionary(_properties);
         CreateDefaultValueOverrides();
     }
 
@@ -412,6 +420,19 @@ public partial class PropertyStack : Node
     {
         AllActiveStacks.Remove(this);
         base._ExitTree();
+    }
+
+    public override void _Notification(int what)
+    {
+        base._Notification(what);
+        switch ((long)what)
+        {
+            case GdfConstants.NotificationDeepSceneInstantiated:
+            {
+                Initialize();
+                break;
+            }
+        }
     }
 
     public static PropertyStack GetGlobalInstance()
