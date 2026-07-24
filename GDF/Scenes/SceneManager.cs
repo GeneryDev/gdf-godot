@@ -68,7 +68,7 @@ public partial class SceneManager : SingletonNode<SceneManager>
         TransitionToScene(requestRes, transitionRes, synced);
     }
 
-    public static void TransitionToScene(SceneChangeRequest request, ScreenTransitionReference transitionReference, bool sync = false)
+    public static void TransitionToScene(SceneChangeRequest request, ScreenTransitionReference transitionReference = null, bool sync = false)
     {
         var requestSerialized = request.Serialize();
         transitionReference ??= Instance.DefaultScreenTransition;
