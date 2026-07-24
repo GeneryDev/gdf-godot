@@ -96,16 +96,16 @@ public interface ISingletonContext<T> : IDataContext where T : SingletonNode<T>,
         public static readonly CallableEvent ContextSignalConnections = new();
         private static T _connectedInstance;
 
-        private static readonly Callable FireUpdateCallable = Callable.From(() => FireUpdateSignal());
-        private static readonly Callable FireContextSignalCallable = Callable.From(() => FireContextSignal());
+        private static readonly Callable FireUpdateCallable = Callable.From(FireUpdateSignal);
+        private static readonly Callable FireContextSignalCallable = Callable.From((StringName signalName, Godot.Collections.Array args) => FireContextSignal(signalName, args));
 
         public static void FireUpdateSignal()
         {
             UpdateSignalConnections.Invoke();
         }
-        public static void FireContextSignal()
+        public static void FireContextSignal(StringName signalName, Godot.Collections.Array args)
         {
-            ContextSignalConnections.Invoke();
+            ContextSignalConnections.Invoke(signalName, args);
         }
 
         public static void OnInstanceChanged()
