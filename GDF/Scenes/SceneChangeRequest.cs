@@ -44,4 +44,12 @@ public partial class SceneChangeRequest : Resource, IJsonSerializable
         }
         return dict;
     }
+    
+    public static implicit operator SceneChangeRequest(ResourceReference sceneReference)
+    {
+        return new SceneChangeRequest()
+        {
+            SceneReference = sceneReference
+        };
+    }
 }
