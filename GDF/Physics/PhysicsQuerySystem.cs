@@ -5,6 +5,7 @@ using Godot.Collections;
 namespace GDF.Physics;
 
 [GlobalClass]
+[SingletonUsage(SingletonUsage.Autoload)]
 public partial class PhysicsQuerySystem : SingletonNode<PhysicsQuerySystem>
 {
     [Export] public ImplementationMode Mode = default;

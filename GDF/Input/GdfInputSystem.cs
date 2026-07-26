@@ -7,6 +7,7 @@ namespace GDF.Input;
 
 [GlobalClass]
 [Icon($"{GdfConstants.IconRoot}/input_system.png")]
+[SingletonUsage(SingletonUsage.Autoload)]
 public partial class GdfInputSystem : SingletonNode<GdfInputSystem>
 {
     [Export]

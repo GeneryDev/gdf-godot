@@ -4,6 +4,7 @@ using Godot;
 namespace GDF.Multiplayer;
 
 [GlobalClass]
+[SingletonUsage(SingletonUsage.Autoload)]
 public abstract partial class Room : SingletonNode<Room>
 {
     [Signal]

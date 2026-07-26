@@ -7,6 +7,7 @@ using Godot.Collections;
 namespace GDF.Networking;
 
 [GlobalClass]
+[SingletonUsage(SingletonUsage.Autoload)]
 public partial class GdfRpcSystem : SingletonNode<GdfRpcSystem>
 {
     private System.Collections.Generic.Dictionary<string, GdfRpcChannelInstance> _instancesByPresetName;

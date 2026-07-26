@@ -24,10 +24,10 @@ public partial class ResourceReference : Resource
         }
     }
 
-    [Export] public string StoredResourceId { get; set; }
-    [Export] public string StoredResourcePath { get; set; }
-    [Export] public string StoredResourceName { get; set; }
-    [Export] public string StoredResourceType { get; set; }
+    [Export] public string StoredResourceId;
+    [Export] public string StoredResourcePath;
+    [Export] public string StoredResourceName;
+    [Export] public string StoredResourceType;
 
     public string StoredResourceIdOrPath => !string.IsNullOrEmpty(StoredResourceId) ? StoredResourceId : StoredResourcePath;
 

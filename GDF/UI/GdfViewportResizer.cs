@@ -4,6 +4,7 @@ using Godot;
 namespace GDF.UI;
 
 [GlobalClass]
+[SingletonUsage(SingletonUsage.Autoload)]
 public partial class GdfViewportResizer : SingletonNode<GdfViewportResizer>
 {
 	[Signal]

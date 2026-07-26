@@ -3,6 +3,7 @@ using Godot;
 
 namespace GDF.Data;
 
+[SingletonUsage(SingletonUsage.Autoload)]
 public partial class DataContextPerformance : SingletonNode<DataContextPerformance>
 {
     public int AccumulatedBindingUpdates = 0;

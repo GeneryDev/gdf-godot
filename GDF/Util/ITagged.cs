@@ -35,4 +35,17 @@ public static class TaggedExtensions
                 return false;
         return true;
     }
+
+    public static int FirstTagIndex<T>(this ITagged<T> tagged, IEnumerable<T> tags)
+    {
+        if (tags == null) return -1;
+        var index = 0;
+        foreach (var tag in tags)
+        {
+            if (tagged.HasTag(tag))
+                return index;
+            index++;
+        }
+        return -1;
+    }
 }

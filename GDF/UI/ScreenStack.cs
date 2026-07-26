@@ -80,7 +80,8 @@ public partial class ScreenStack : Control
         for (int index = children.Count - 1; index >= 0; index--)
         {
             var node = children[index];
-            if (node is not Screen otherScreen) continue;
+            if (node is not CanvasLayer otherScreenLayer) continue;
+            if (otherScreenLayer.GetChildOrNull<Screen>(0) is not {} otherScreen) continue;
 
             if (otherScreen.HideOnShadowed)
                 otherScreen.Visible = !shadowed;

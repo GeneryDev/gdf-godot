@@ -1,4 +1,5 @@
-﻿using Godot;
+﻿using GDF.Util;
+using Godot;
 using Godot.Collections;
 
 namespace GDF.Resources;
@@ -54,5 +55,10 @@ public partial class SceneSummary : Resource
         if (summaryPath == null) return null;
         var summary = GD.Load<SceneSummary>(summaryPath);
         return summary;
+    }
+
+    public bool HasData()
+    {
+        return !RootNodeName.IsNullOrEmpty();
     }
 }

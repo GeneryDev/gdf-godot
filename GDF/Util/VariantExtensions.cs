@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using Godot;
 
 namespace GDF.Util;
@@ -68,6 +69,57 @@ public static class VariantExtensions
             Variant.Type.PackedColorArray => left.AsColorArray().Equals(right.AsColorArray()),
             _ => throw new ArgumentOutOfRangeException(nameof(left))
         };
+    }
+    
+    public static string VariantToString(Variant v)
+    {
+#if GODOT4_7_1_OR_GREATER
+// Variant.ToString and Variant.AsString is broken in this build, so add a hacky fix to convert values
+        return v.VariantType switch
+        {
+            Variant.Type.Nil => "",
+            Variant.Type.Bool => v.AsBool().ToString(),
+            Variant.Type.Int => v.AsInt64().ToString(),
+            Variant.Type.Float => v.AsDouble().ToString(CultureInfo.InvariantCulture),
+            Variant.Type.String => v.AsString(),
+            Variant.Type.Vector2 => v.AsVector2().ToString(),
+            Variant.Type.Vector2I => v.AsVector2I().ToString(),
+            Variant.Type.Rect2 => v.AsRect2().ToString(),
+            Variant.Type.Rect2I => v.AsRect2I().ToString(),
+            Variant.Type.Vector3 => v.AsVector3().ToString(),
+            Variant.Type.Vector3I => v.AsVector3I().ToString(),
+            Variant.Type.Transform2D => v.AsTransform2D().ToString(),
+            Variant.Type.Vector4 => v.AsVector4().ToString(),
+            Variant.Type.Vector4I => v.AsVector4I().ToString(),
+            Variant.Type.Plane => v.AsPlane().ToString(),
+            Variant.Type.Quaternion => v.AsQuaternion().ToString(),
+            Variant.Type.Aabb => v.AsAabb().ToString(),
+            Variant.Type.Basis => v.AsBasis().ToString(),
+            Variant.Type.Transform3D => v.AsTransform3D().ToString(),
+            Variant.Type.Projection => v.AsProjection().ToString(),
+            Variant.Type.Color => v.AsColor().ToString(),
+            Variant.Type.StringName => v.AsStringName().ToString(),
+            Variant.Type.NodePath => v.AsNodePath().ToString(),
+            Variant.Type.Rid => v.AsRid().ToString(),
+            Variant.Type.Object => v.AsGodotObject().ToString(),
+            Variant.Type.Callable => v.AsCallable().ToString(),
+            Variant.Type.Signal => v.AsSignal().ToString(),
+            Variant.Type.Dictionary => v.AsGodotDictionary().ToString(),
+            Variant.Type.Array => v.AsGodotArray().ToString(),
+            Variant.Type.PackedByteArray => v.AsByteArray().ToString(),
+            Variant.Type.PackedInt32Array => v.AsInt32Array().ToString(),
+            Variant.Type.PackedInt64Array => v.AsInt64Array().ToString(),
+            Variant.Type.PackedFloat32Array => v.AsFloat32Array().ToString(),
+            Variant.Type.PackedFloat64Array => v.AsFloat64Array().ToString(),
+            Variant.Type.PackedStringArray => v.AsStringArray().ToString(),
+            Variant.Type.PackedVector2Array => v.AsVector2Array().ToString(),
+            Variant.Type.PackedVector3Array => v.AsVector3Array().ToString(),
+            Variant.Type.PackedColorArray => v.AsColorArray().ToString(),
+            _ => v.Obj?.ToString() ?? ""
+        };
+#else
+    return v.AsString();
+#endif
     }
 
     public static bool IsNullOrEmpty(this StringName name)

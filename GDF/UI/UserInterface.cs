@@ -109,13 +109,13 @@ public partial class UserInterface : Node, IResynchronizable
         }
     }
 
-    private PlayerFocusVisual CreateFocusVisual(Room.PlayerInfo playerInfo)
+    private Control CreateFocusVisual(Room.PlayerInfo playerInfo)
     {
-        PlayerFocusVisual focusVisual;
+        Control focusVisual;
         if (FocusVisualTemplate != null)
-            focusVisual = FocusVisualTemplate.Instantiate<PlayerFocusVisual>();
+            focusVisual = FocusVisualTemplate.Instantiate<Control>();
         else
-            focusVisual = new PlayerFocusVisual()
+            focusVisual = new Control()
                 { SelfModulate = Colors.Transparent, MouseFilter = Control.MouseFilterEnum.Ignore };
 
         focusVisual.Name = $"Player Focus Visual {playerInfo.PlayerId}";
@@ -749,7 +749,7 @@ public partial class UserInterface : Node, IResynchronizable
 
         // Local
         public UserInterfaceComponent FocusedComponent;
-        public PlayerFocusVisual FocusVisual;
+        public Control FocusVisual;
         public GdfPlayerInput Input;
 
         public bool IsFocusVisualValid()
@@ -779,7 +779,8 @@ public partial class UserInterface : Node, IResynchronizable
 
             FocusVisual.Position = Vector2.Zero;
             FocusVisual.SetSize(control.Size);
-            FocusVisual.Update(occurrenceIndex, totalOccurrences);
+            if (FocusVisual is PlayerFocusVisual legacyFocusVisual)
+                legacyFocusVisual.Update(occurrenceIndex, totalOccurrences);
             return true;
         }
 

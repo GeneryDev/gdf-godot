@@ -315,7 +315,7 @@ public static class DataContext
                 if (ctx.GetContextVariable(key, input, ref variant, options) &&
                     variant.VariantType is Variant.Type.String or Variant.Type.StringName or Variant.Type.Int
                         or Variant.Type.Float or Variant.Type.Bool)
-                    return variant.AsString();
+                    return VariantExtensions.VariantToString(variant);
             }
         }
 

@@ -1,6 +1,7 @@
 ﻿#if TOOLS
 using GDF.Animations;
 using GDF.Editor;
+using GDF.Scenes;
 using Godot;
 
 namespace GDF;
@@ -32,6 +33,7 @@ public partial class GdfEditorPlugin : EditorPlugin
         AnimationEditor ??= new AnimationPlayerEditor();
         
         GD.Print("Initialized Genery Development Framework Editor Plugin");
+        SceneManager.AddProjectSettings();
     }
 
     public override void _ExitTree()
