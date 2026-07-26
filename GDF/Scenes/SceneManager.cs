@@ -12,9 +12,12 @@ namespace GDF.Scenes;
 public partial class SceneManager : SingletonNode<SceneManager>
 {
     public static readonly StringName GroupNameAsyncDisabled = "async_disabled";
+
+    public static readonly StringName ProjectSettingNameLoadingStrategy = "gdf_godot/scene_manager/loading_strategy";
+    private const int ProjectSettingDefaultValueLoadingStrategy = 3;
     
     public const bool MimicSyncedTransitionDelayOffline = true;
-    public static SceneLoadingStrategy LoadingStrategy = SceneLoadingStrategy.AsynchronousMultipleCollection;
+    public static SceneLoadingStrategy LoadingStrategy = SceneLoadingStrategy.Synchronous;
     
     [Signal]
     public delegate void SceneChangedEventHandler(Resource request);
@@ -50,6 +53,14 @@ public partial class SceneManager : SingletonNode<SceneManager>
     {
         base._Ready();
         CurrentScene = GetTree().CurrentScene;
+        LoadingStrategy = ProjectSettings.GetSetting(ProjectSettingNameLoadingStrategy, ProjectSettingDefaultValueLoadingStrategy).AsInt32() switch
+        {
+            0 => SceneLoadingStrategy.Synchronous,
+            1 => SceneLoadingStrategy.Asynchronous,
+            2 => SceneLoadingStrategy.AsynchronousSingleCollection,
+            3 => SceneLoadingStrategy.AsynchronousMultipleCollection,
+            _ => SceneLoadingStrategy.AsynchronousMultipleCollection
+        };
         AddChild(SceneReadyAwaiter = new PeerAwaiter()
             { Name = "Scene Ready Awaiter", Mode = PeerAwaiter.PeerAwaitMode.AllPeers });
         SceneReadyAwaiter.Completed += FinishSyncedSceneChange;
@@ -460,6 +471,22 @@ public partial class SceneManager : SingletonNode<SceneManager>
         if (verbose)
             GD.Print(
                 $"Finished multi-pass garbage collection after {Mathf.Min(currentPass, maxPasses)} of {maxPasses} passes ({fromFinalizationPendingCount} -> {prevFinalizationPendingCount} pending finalizers)");
+    }
+
+    public static void AddProjectSettings()
+    {
+        if (ProjectSettings.GetSetting(ProjectSettingNameLoadingStrategy).VariantType == Variant.Type.Nil)
+        {
+            ProjectSettings.SetSetting(ProjectSettingNameLoadingStrategy, Variant.From(ProjectSettingDefaultValueLoadingStrategy));
+        }
+        ProjectSettings.AddPropertyInfo(new Godot.Collections.Dictionary()
+        {
+            { "name", ProjectSettingNameLoadingStrategy },
+            { "type", (int)Variant.Type.Int },
+            { "hint", (int)PropertyHint.Enum },
+            { "hint_string", "Synchronous,Asynchronous,Asynchronous Single Collection,Asynchronous Multiple Collection" },
+        });
+        ProjectSettings.SetInitialValue(ProjectSettingNameLoadingStrategy, Variant.From(ProjectSettingDefaultValueLoadingStrategy));
     }
 
     public enum TransitionStatusEnum
