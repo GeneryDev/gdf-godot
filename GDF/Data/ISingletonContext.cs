@@ -28,6 +28,7 @@ public interface ISingletonContext<T> : IDataContext where T : SingletonNode<T>,
     {
         if (RerouteSignalsStatically)
         {
+            StaticSignals.Initialize();
             StaticSignals.UpdateSignalConnections.Connect(callable);
         }
         else
@@ -40,6 +41,7 @@ public interface ISingletonContext<T> : IDataContext where T : SingletonNode<T>,
     {
         if (RerouteSignalsStatically)
         {
+            StaticSignals.Initialize();
             StaticSignals.UpdateSignalConnections.Disconnect(callable);
         }
         else
@@ -52,6 +54,7 @@ public interface ISingletonContext<T> : IDataContext where T : SingletonNode<T>,
     {
         if (RerouteSignalsStatically)
         {
+            StaticSignals.Initialize();
             StaticSignals.ContextSignalConnections.Connect(callable);
         }
         else
@@ -64,6 +67,7 @@ public interface ISingletonContext<T> : IDataContext where T : SingletonNode<T>,
     {
         if (RerouteSignalsStatically)
         {
+            StaticSignals.Initialize();
             StaticSignals.ContextSignalConnections.Disconnect(callable);
         }
         else
@@ -79,17 +83,6 @@ public interface ISingletonContext<T> : IDataContext where T : SingletonNode<T>,
 
     private static bool RerouteSignalsStatically => SingletonNode<T>.UsageAttribute.Usage != SingletonUsage.Autoload;
     
-    static ISingletonContext()
-    {
-        if (Engine.IsEditorHint()) return;
-
-        if (RerouteSignalsStatically)
-        {
-            SingletonNode<T>.InstanceChangedEvent.Connect(Callable.From(StaticSignals.OnInstanceChanged));
-            StaticSignals.OnInstanceChanged();
-        }
-    }
-
     private static class StaticSignals
     {
         public static readonly CallableEvent UpdateSignalConnections = new();
@@ -98,6 +91,22 @@ public interface ISingletonContext<T> : IDataContext where T : SingletonNode<T>,
 
         private static readonly Callable FireUpdateCallable = Callable.From(FireUpdateSignal);
         private static readonly Callable FireContextSignalCallable = Callable.From((StringName signalName, Godot.Collections.Array args) => FireContextSignal(signalName, args));
+
+        private static bool _initialized = false;
+
+        public static void Initialize()
+        {
+            if (_initialized) return;
+            _initialized = true;
+            
+            if (Engine.IsEditorHint()) return;
+
+            if (RerouteSignalsStatically)
+            {
+                SingletonNode<T>.InstanceChangedEvent.Connect(Callable.From(StaticSignals.OnInstanceChanged));
+                StaticSignals.OnInstanceChanged();
+            }
+        }
 
         public static void FireUpdateSignal()
         {

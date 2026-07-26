@@ -17,7 +17,11 @@ public partial class GdfAnimationNodeMetadata : Resource
     public float BlendSpeed = -1;
     [ExportGroup("Trigger via Events")]
     [Export]
-    public Dictionary<string, GdfAnimationEventAction> TriggeringEvents = new();
+    public Dictionary<string, GdfAnimationEventAction> TriggeringEvents
+#if !GODOT_WEB
+            = new()
+#endif
+        ;
     
     private Expression _cachedExpression;
 
