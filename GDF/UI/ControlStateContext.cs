@@ -7,7 +7,7 @@ using Godot;
 namespace GDF.UI;
 
 [GlobalClass]
-[Icon($"{GdfConstants.IconRoot}/data_context.png")]
+[Icon(GdfIcons.DataContext)]
 public partial class ControlStateContext : Node, IDataContext
 {
     [Signal]

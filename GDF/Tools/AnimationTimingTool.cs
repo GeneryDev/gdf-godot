@@ -8,7 +8,7 @@ namespace GDF.Tools;
 
 [Tool]
 [GlobalClass]
-[Icon($"{GdfConstants.IconRoot}/tool_wrench.png")]
+[Icon(GdfIcons.ToolWrench)]
 public partial class AnimationTimingTool : Node
 {
     [Export] public string OriginalControlPoints;

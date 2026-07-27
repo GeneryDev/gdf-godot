@@ -9,7 +9,7 @@ namespace GDF.Logical;
 
 [Tool]
 [GlobalClass]
-[Icon($"{GdfConstants.IconRoot}/logic_multi_out_ordered.png")]
+[Icon(GdfIcons.LogicMultiOutOrdered)]
 public partial class CallableChain : TriggerableLogicNode, IInboundArgumentSource
 {
     private Array _receivingArgs;

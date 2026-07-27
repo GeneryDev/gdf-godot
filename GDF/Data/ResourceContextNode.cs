@@ -4,7 +4,7 @@ namespace GDF.Data;
 
 [Tool]
 [GlobalClass]
-[Icon($"{GdfConstants.IconRoot}/data_context.png")]
+[Icon(GdfIcons.DataContext)]
 public partial class ResourceContextNode : Node, IDataContext
 {
     [Signal]

@@ -4,7 +4,7 @@ namespace GDF.Logical;
 
 [Tool]
 [GlobalClass]
-[Icon($"{GdfConstants.IconRoot}/logic_in.png")]
+[Icon(GdfIcons.LogicIn)]
 public abstract partial class TriggerableLogicNode : Node
 {
     [Signal]
