@@ -4,7 +4,7 @@ namespace GDF.Logical;
 
 [Tool]
 [GlobalClass]
-[Icon($"{GdfConstants.IconRoot}/logic_through.png")]
+[Icon(GdfIcons.LogicThrough)]
 public partial class Diode : TriggerableLogicNode
 {
     public void Trigger()

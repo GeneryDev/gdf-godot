@@ -7,7 +7,7 @@ namespace GDF.Data;
 
 [Tool]
 [GlobalClass]
-[Icon($"{GdfConstants.IconRoot}/data_context_injectable.png")]
+[Icon(GdfIcons.DataContextInjectable)]
 public partial class InjectedDataContext : Node, IDataContext, IDataContextInjectable
 {
     [Signal]

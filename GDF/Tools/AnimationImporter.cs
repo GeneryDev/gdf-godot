@@ -9,7 +9,7 @@ namespace GDF.Tools;
 
 [Tool]
 [GlobalClass]
-[Icon($"{GdfConstants.IconRoot}/tool_cog.png")]
+[Icon(GdfIcons.ToolCog)]
 public partial class AnimationImporter : Node
 {
     private static readonly StringName MetaNameInheritingFromAnimation = "inheriting_from_animation";

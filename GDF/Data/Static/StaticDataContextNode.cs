@@ -7,7 +7,7 @@ namespace GDF.Data.Static;
 
 [Tool]
 [GlobalClass]
-[Icon($"{GdfConstants.IconRoot}/data_context.png")]
+[Icon(GdfIcons.DataContext)]
 public partial class StaticDataContextNode : Node, IDataContext
 {
     [Signal]
