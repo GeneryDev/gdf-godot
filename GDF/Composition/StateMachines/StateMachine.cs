@@ -185,7 +185,7 @@ public partial class StateMachine : Node
             _activeRoutines.Clear();
             to?.CollectSubRoutines(_activeRoutines, inherited: true);
             _tempRoutineListEntering.AddRange(_activeRoutines);
-            RemoveDuplicates(_tempRoutineListExiting, _tempRoutineListEntering);
+            ListUtil.RemoveCommonElements(_tempRoutineListExiting, _tempRoutineListEntering);
             // tempRoutineListExiting now contains routines to disable
             // tempRoutineListEntering now contains routines to enable
             // activeRoutines now contains active routines (whether they were already active or not)

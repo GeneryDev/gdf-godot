@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Godot;
 
 namespace GDF.Util;
 
@@ -31,6 +32,25 @@ public static class ListUtil
                 i--;
                 list.RemoveAt(i);
                 continue;
+            }
+        }
+    }
+    
+    public static void RemoveCommonElements<T>(List<T> listA, List<T> listB) where T : class
+    {
+        for (var i = 0; i < listA.Count; i++)
+        {
+            for (var j = 0; j < listB.Count; j++)
+            {
+                if (listA[i] == listB[j])
+                {
+                    // common
+                    listA.RemoveAt(i);
+                    listB.RemoveAt(j);
+                    i--;
+                    j--;
+                    break;
+                }
             }
         }
     }
