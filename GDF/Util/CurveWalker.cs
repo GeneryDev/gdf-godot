@@ -126,11 +126,11 @@ public struct CurveWalker
         }
         
         // Outside the value range
-        float minCurveY = Curve.MinValue;
-        float maxCurveY = Curve.MaxValue;
-        float diffFromCurveStart = Mathf.Abs(y - Sample(minCurveY));
-        float diffFromCurveEnd = Mathf.Abs(y - Sample(maxCurveY));
-        return diffFromCurveStart < diffFromCurveEnd ? minCurveY : maxCurveY;
+        float minCurveX = Curve.MinDomain;
+        float maxCurveX = Curve.MinDomain;
+        float diffFromCurveStart = Mathf.Abs(y - Sample(minCurveX));
+        float diffFromCurveEnd = Mathf.Abs(y - Sample(maxCurveX));
+        return diffFromCurveStart < diffFromCurveEnd ? minCurveX : maxCurveX;
     }
 
     private float SampleInverseInRange(float y, float minX, float maxX)
