@@ -200,7 +200,7 @@ public partial class GdfPlayerInput : Node
                     _actionEventBuffer[i] = evt with
                     {
                         Type = InputActionEventType.Expired,
-                        RemainingTime = evt.Action.ExpireEventBufferTime
+                        RemainingTime = evt.Action.ExpireEventBufferTime / 1000f
                     };
                 }
                 else
