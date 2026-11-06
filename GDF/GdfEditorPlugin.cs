@@ -15,6 +15,7 @@ public partial class GdfEditorPlugin : EditorPlugin
 
     private ToolInspectorPlugin _toolInspectorPlugin;
     private AnimationInspectorPlugin _animationInspectorPlugin;
+    private EditorInspectorPlugin _materialInspectorPlugin;
     
     private AnimationMixer _editingAnimationMixer;
     private bool _editingMixerUnselectedButStillInTree = false;
@@ -29,6 +30,7 @@ public partial class GdfEditorPlugin : EditorPlugin
         Instance = this;
         AddInspectorPlugin(_toolInspectorPlugin = new ToolInspectorPlugin());
         AddInspectorPlugin(_animationInspectorPlugin = new AnimationInspectorPlugin());
+        AddInspectorPlugin(_materialInspectorPlugin = GD.Load<GDScript>($"{GdfConstants.PluginRoot}/gdscript/plugin/material_inspector_plugin.gd").New().As<EditorInspectorPlugin>());
         
         AnimationEditor ??= new AnimationPlayerEditor();
         
@@ -39,8 +41,9 @@ public partial class GdfEditorPlugin : EditorPlugin
     public override void _ExitTree()
     {
         if (Instance == this) Instance = null;
-        RemoveInspectorPlugin(_toolInspectorPlugin);
-        RemoveInspectorPlugin(_animationInspectorPlugin);
+        if(_toolInspectorPlugin != null) RemoveInspectorPlugin(_toolInspectorPlugin);
+        if(_animationInspectorPlugin != null) RemoveInspectorPlugin(_animationInspectorPlugin);
+        if(_materialInspectorPlugin != null) RemoveInspectorPlugin(_materialInspectorPlugin);
     }
 
     public override void _Process(double delta)
