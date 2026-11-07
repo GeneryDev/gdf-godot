@@ -124,6 +124,7 @@ func _get_shader_type_string() -> String:
 	return "spatial"
 
 func _set(property: StringName, value: Variant) -> bool:
+	_ensure_custom_property_list_ready()
 	if property in _custom_property_map:
 		custom_properties[property] = value
 		var flags : MaterialPropertyFlag = _custom_property_map[property].material_flags as MaterialPropertyFlag
@@ -135,6 +136,7 @@ func _set(property: StringName, value: Variant) -> bool:
 	return false
 
 func _get(property: StringName) -> Variant:
+	_ensure_custom_property_list_ready()
 	if !(property in _custom_property_map):
 		return null
 	if property in custom_properties:
