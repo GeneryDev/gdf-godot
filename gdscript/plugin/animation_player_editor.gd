@@ -32,10 +32,15 @@ static var current_animation_name: StringName:
 				_animation_picker.selected = i
 				return
 
-static var editing_animation_mixer: AnimationMixer:
+static var current_animation_mixer: AnimationMixer:
 	get:
 		_sanitize_editing_mixer()
 		return _editing_animation_mixer
+
+static var animation_editor_control: Control:
+	get:
+		_prepare_to_access_editor()
+		return _animation_editor
 
 static var is_open: bool:
 	get:

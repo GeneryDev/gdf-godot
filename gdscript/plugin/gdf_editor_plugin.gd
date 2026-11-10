@@ -8,7 +8,8 @@ var animation_editor
 var _inspector_plugins : Array[EditorInspectorPlugin]
 var _resource_conversion_plugins : Array[EditorResourceConversionPlugin]
 
-var _animation_player_editor: Script = load("res://addons/gdf-godot/gdscript/plugin/animation_player_editor.gd")
+var _animation_player_editor: Script = load(PLUGIN_ROOT + "/gdscript/plugin/animation_player_editor.gd")
+var _animation_timing_tool_editor
 
 func _enter_tree() -> void:
 	instance = self
@@ -20,6 +21,10 @@ func _enter_tree() -> void:
 	_resource_conversion_plugins.append(load(PLUGIN_ROOT + "/gdscript/plugin/custom_material_to_shader_converter.gd").new())
 	_add_plugins(_inspector_plugins, add_inspector_plugin)
 	_add_plugins(_resource_conversion_plugins, add_resource_conversion_plugin)
+
+	_animation_timing_tool_editor = load(PLUGIN_ROOT + "/gdscript/plugin/animation_timing_tool_editor.gd").new()
+	if _animation_timing_tool_editor:
+		_animation_timing_tool_editor.enable()
 	
 	print("Initialized Genery Development Framework Editor Plugin (gdscript)")
 	SceneManager.AddProjectSettings()
@@ -27,6 +32,9 @@ func _enter_tree() -> void:
 func _exit_tree() -> void:
 	if instance == self:
 		instance = null
+
+	if _animation_timing_tool_editor:
+		_animation_timing_tool_editor.disable()
 
 	_remove_plugins(_inspector_plugins, remove_inspector_plugin)
 	_remove_plugins(_resource_conversion_plugins, remove_resource_conversion_plugin)
