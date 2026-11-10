@@ -510,7 +510,7 @@ public partial class AnimationTimingTool : Node
     }
 }
 
-public partial class KeyTransaction : GodotObject
+public partial class KeyTransaction : RefCounted
 {
     public KeyState State;
 
@@ -603,7 +603,7 @@ public partial class KeyTransaction : GodotObject
     }
 }
 
-public partial class KeyState : GodotObject
+public partial class KeyState : RefCounted
 {
     public double Time;
     public Variant Value;
