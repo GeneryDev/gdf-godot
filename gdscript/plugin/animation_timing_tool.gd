@@ -112,6 +112,28 @@ func has_applied_timing_changes(anim: Animation = null, mixer: AnimationMixer = 
 	
 	# Original and current tracks match. Likely no timing changes have been applied, assuming no external changes or user error.
 	return false
+
+func bake() -> void:
+	var working_objects := _get_animation()
+	if !working_objects: return
+	var mixer: AnimationMixer = working_objects.mixer
+	var anim: Animation = working_objects.anim
+	
+	_transactions = Transactions.new(EditorInterface.get_editor_undo_redo(), anim, "Animation Timing Tool: Bake")
+
+	var anim_root_node := mixer.get_node(mixer.root_node)
+	var track_indices := _find_track_indices(anim, anim_root_node)
+	if track_indices.a == -1 && track_indices.b == -1 && track_indices.c == -1: return
+
+	if track_indices.a != -1:
+		_transactions.remove_track(track_indices.a)
+		track_indices = _find_track_indices(anim, anim_root_node)
+	if track_indices.b != -1:
+		_transactions.remove_track(track_indices.b)
+		track_indices = _find_track_indices(anim, anim_root_node)
+	if track_indices.c != -1:
+		_transactions.remove_track(track_indices.c)
+		track_indices = _find_track_indices(anim, anim_root_node)
 	
 	
 func initialize_tracks() -> void:
@@ -449,6 +471,14 @@ class Transactions extends RefCounted:
 		var track_state := TrackState.create_from(_anim, track_index)
 		
 		clear_track(track_index)
+		
+		# Remove
+		create_action(true)
+		_undo_redo.add_do_method(_anim, &"remove_track", track_index)
+		track_state.write_undo(_undo_redo, _anim, track_index)
+		_undo_redo.add_undo_method(_anim, &"track_set_path", track_index, track_path)
+		_undo_redo.add_undo_method(_anim, &"add_track", track_type, track_index)
+		_undo_redo.commit_action()
 		
 	func insert_key(track_index: int, state: KeyState) -> void:
 		create_action(true)
