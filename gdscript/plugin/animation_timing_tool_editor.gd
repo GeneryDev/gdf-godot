@@ -37,7 +37,7 @@ func _add_track(index: int) -> void:
 	if index == _retiming_tracks_popup_item_index:
 		_editor_controls.pick_track.hide()
 		var tool = timing_tool_script.new()
-		tool.initialize_tracks()
+		tool.set_context_from_editor().initialize_tracks()
 
 func _on_move_selection_commit() -> void:
 	print("move selection commit")
@@ -76,7 +76,7 @@ func _on_timing_track_edit_created(track_edit: Control, property_path: String) -
 
 func _on_remove_request(track_index: int) -> void:
 	var tool = timing_tool_script.new()
-	tool.bake()
+	tool.set_context_from_editor().bake()
 
 class EditorControlCache extends RefCounted:
 	var editor

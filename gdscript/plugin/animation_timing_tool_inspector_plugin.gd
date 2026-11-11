@@ -31,11 +31,11 @@ func _parse_end(object: Object) -> void:
 	# print(object.get_meta_list())
 
 func _add_buttons() -> void:
-	_add_button("Bake Timing Changes", EditorInterface.get_editor_theme().get_icon(&"Remove", &"EditorIcons"), func(): _tool.bake())
-	_add_button("Revert Timing Changes", EditorInterface.get_editor_theme().get_icon(&"Reload", &"EditorIcons"), func(): _tool.revert_timing())
-	_add_button("Initialize Timing Tracks", load("res://addons/gdf-godot/assets/icons/timing_tool_control_points.svg"), func(): _tool.initialize_tracks())
-	_add_button("Original Control Points Done", load("res://addons/gdf-godot/assets/icons/timing_tool_control_points_done.svg"), func(): _tool.original_control_points_done())
-	_add_button("Update Timings", load("res://addons/gdf-godot/assets/icons/timing_tool_update_timing.svg"), func(): _tool.update_timing())
+	_add_button("Bake Timing Changes", EditorInterface.get_editor_theme().get_icon(&"Remove", &"EditorIcons"), func(): _tool.set_context_from_editor().bake())
+	_add_button("Revert Timing Changes", EditorInterface.get_editor_theme().get_icon(&"Reload", &"EditorIcons"), func(): _tool.set_context_from_editor().revert_timing())
+	_add_button("Initialize Timing Tracks", load("res://addons/gdf-godot/assets/icons/timing_tool_control_points.svg"), func(): _tool.set_context_from_editor().initialize_tracks())
+	_add_button("Original Control Points Done", load("res://addons/gdf-godot/assets/icons/timing_tool_control_points_done.svg"), func(): _tool.set_context_from_editor().original_control_points_done())
+	_add_button("Update Timings", load("res://addons/gdf-godot/assets/icons/timing_tool_update_timing.svg"), func(): _tool.set_context_from_editor().update_timing())
 
 func _add_button(text: String, icon: Texture2D, callback: Callable) -> void:
 	var btn := Button.new()
