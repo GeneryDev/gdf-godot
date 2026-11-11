@@ -28,7 +28,9 @@ var _undo_redo: EditorUndoRedoManager
 
 func _init():
 	resource_name = "Animation Timing Tool"
-	
+
+### CONTEXT METHODS
+
 func set_context(mixer: AnimationMixer, anim: Animation, anim_name: StringName):
 	_mixer = mixer
 	_anim = anim
@@ -81,6 +83,8 @@ func _find_track_indices(all_required: bool = false) -> Dictionary:
 		"c" = track_index_c
 	}
 
+### GETTERS
+
 func has_timing_tracks() -> bool:
 	if !is_context_complete(): return false
 	
@@ -116,6 +120,21 @@ func has_applied_timing_changes() -> bool:
 	# Original and current tracks match. Likely no timing changes have been applied, assuming no external changes or user error.
 	return false
 
+func get_original_retimed_animation_length() -> Variant:
+	if !is_context_complete(): return null
+
+	var track_indices := _find_track_indices()
+
+	if track_indices.a == -1: return null
+
+	var control_point_count := _anim.track_get_key_count(track_indices.a)
+
+	if control_point_count < 2: return null
+
+	return _anim.track_get_key_time(track_indices.a, control_point_count - 1)
+
+### ACTIONS
+
 func bake() -> void:
 	if !is_context_complete(): return
 	
@@ -133,20 +152,19 @@ func bake() -> void:
 	if track_indices.c != -1:
 		_transactions.remove_track(track_indices.c)
 		track_indices = _find_track_indices()
-	
-	
-func initialize_tracks() -> void:
+
+func prompt_initialize() -> void:
 	if has_timing_tracks() && has_applied_timing_changes():
 		if !is_context_complete(): return
 		
-		var confirmation_dialog := AcceptDialog.new()
-		confirmation_dialog.theme = EditorInterface.get_editor_theme()
-		confirmation_dialog.title = "Reinitialize Timing?"
-		confirmation_dialog.ok_button_text = "Revert and Reinitialize"
-		confirmation_dialog.add_button("Bake and Reinitialize", true, "bake")
-		confirmation_dialog.add_button("Cancel", true, "close")
-		
-		confirmation_dialog.dialog_text = ("This animation (%s) already contains timing tracks, indicating that it has been retimed.\n" + \
+		var prompt := AcceptDialog.new()
+		prompt.theme = EditorInterface.get_editor_theme()
+		prompt.title = "Reinitialize Timing?"
+		prompt.ok_button_text = "Revert and Reinitialize"
+		prompt.add_button("Bake and Reinitialize", true, "bake")
+		prompt.add_button("Cancel", true, "close")
+
+		prompt.dialog_text = ("This animation (%s) already contains timing tracks, indicating that it has been retimed.\n" + \
 				"You can either:\n" + \
 				"Revert and Reinitialize: Revert all prior timing changes to the animation\n" + \
 				"and redo the timing from its original state\n" + \
@@ -155,24 +173,24 @@ func initialize_tracks() -> void:
 				"(Note that if this is an imported animation, baking\n" + \
 				"and reimporting the animation may result in broken timings)") % [_anim_name]
 		
-		var body_label: Label = confirmation_dialog.find_children("*","Label",false,false)[0]
+		var body_label: Label = prompt.find_children("*","Label",false,false)[0]
 		body_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
-		confirmation_dialog.confirmed.connect(func ():
-			revert_timing()
-			force_initialize_tracks()
+		prompt.confirmed.connect(func ():
+			revert()
+			initialize()
 		)
-		confirmation_dialog.custom_action.connect(func (action):
+		prompt.custom_action.connect(func (action):
 			if action == "bake":
-				force_initialize_tracks()
-			confirmation_dialog.hide()
-			confirmation_dialog.queue_free()
+				initialize()
+			prompt.hide()
+			prompt.queue_free()
 		)
-		EditorInterface.popup_dialog_centered(confirmation_dialog)
+		EditorInterface.popup_dialog_centered(prompt)
 	else:
-		force_initialize_tracks()
+		initialize()
 
-func force_initialize_tracks() -> void:
+func initialize() -> void:
 	if !is_context_complete(): return
 
 	_transactions = Transactions.new(EditorInterface.get_editor_undo_redo(), _anim, "Animation Timing Tool: Initialize")
@@ -190,7 +208,7 @@ func force_initialize_tracks() -> void:
 	_transactions.insert_key(track_indices.a, KeyState.time_value_pair(0, self.get_script()))
 	_transactions.insert_key(track_indices.a, KeyState.time_value_pair(_anim.length, self.get_script()))
 
-func revert_timing() -> void:
+func revert() -> void:
 	if !is_context_complete(): return
 
 	_transactions = Transactions.new(EditorInterface.get_editor_undo_redo(), _anim, "Animation Timing Tool: Revert")
@@ -215,8 +233,8 @@ func revert_timing() -> void:
 		_transactions.insert_key(track_indices.c, state)
 		if insert_to_current_track:
 			_transactions.insert_key(track_indices.b, state)
-	
-	update_timing(false)
+
+	apply_timing_change(false)
 
 	# Clear non-original tracks
 	_transactions.clear_track(track_indices.b)
@@ -227,11 +245,11 @@ func revert_timing() -> void:
 	_transactions.update_track(track_indices.b, TrackState.blank(false, true))
 	_transactions.update_track(track_indices.c, TrackState.blank(false))
 
-func original_control_points_done(start_new_transaction: bool = true) -> void:
+func submit_original_control_points(start_new_transaction: bool = true) -> void:
 	if !is_context_complete(): return
 
 	if start_new_transaction:
-		_transactions = Transactions.new(EditorInterface.get_editor_undo_redo(), _anim, "Animation Timing Tool: Original Control Points Done")
+		_transactions = Transactions.new(EditorInterface.get_editor_undo_redo(), _anim, "Animation Timing Tool: Submit Original Control Points")
 
 	var track_indices := _find_track_indices(true)
 	if !track_indices:
@@ -263,11 +281,11 @@ func original_control_points_done(start_new_transaction: bool = true) -> void:
 	_transactions.update_track(track_indices.b, TrackState.blank(false, true))
 	_transactions.update_track(track_indices.c, TrackState.blank(true))
 
-func update_timing(start_new_transaction: bool = true) -> void:
+func apply_timing_change(start_new_transaction: bool = true) -> void:
 	if !is_context_complete(): return
 
 	if start_new_transaction:
-		_transactions = Transactions.new(EditorInterface.get_editor_undo_redo(), _anim, "Animation Timing Tool: Update Animation Timing")
+		_transactions = Transactions.new(EditorInterface.get_editor_undo_redo(), _anim, "Animation Timing Tool: Apply Timing Change")
 
 	var track_indices := _find_track_indices()
 	if track_indices.a == -1 || track_indices.c == -1:
@@ -282,7 +300,7 @@ func update_timing(start_new_transaction: bool = true) -> void:
 		return
 	
 	if track_indices.b == -1:
-		_recover_current_control_point_track()
+		_restore_timing_after_reimport()
 		reimported = true
 		
 		# Find tracks again
@@ -330,7 +348,7 @@ func update_timing(start_new_transaction: bool = true) -> void:
 	_transactions.update_track(track_indices.b, TrackState.blank(false, true))
 	_transactions.update_track(track_indices.c, TrackState.blank(true))
 
-func _recover_current_control_point_track() -> void:
+func _restore_timing_after_reimport() -> void:
 	var track_indices := _find_track_indices()
 
 	_transactions.initialize_track(track_indices.b, &"current_control_points", _mixer, _anim_root_node, self.get_script(), TrackState.blank(false, true))
@@ -347,19 +365,7 @@ func _recover_current_control_point_track() -> void:
 	# Disabled due to undo-redo inconsistencies
 	# _transactions.move_track(track_indices.b, track_indices.a+1)
 
-func get_original_retimed_animation_length() -> Variant:
-	if !is_context_complete(): return null
-	
-	var track_indices := _find_track_indices()
-	
-	if track_indices.a == -1: return null
-
-	var control_point_count := _anim.track_get_key_count(track_indices.a)
-	
-	if control_point_count < 2: return null
-	
-	return _anim.track_get_key_time(track_indices.a, control_point_count - 1)
-		
+### Engine callbacks
 
 func _validate_property(property: Dictionary) -> void:
 	var property_name : StringName = property.name
