@@ -2,17 +2,9 @@
 @icon("res://addons/gdf-godot/assets/icons/tool_wrench")
 extends Resource
 
-@export var original_control_points: Script:
-	get:
-		return self.get_script()
-	set(value):
-		return
-@export var current_control_points: Script:
-	get:
-		return self.get_script()
-	set(value):
-		return
-@export var desired_control_points: Script:
+const META_NAME_RETIMING_DATA := &"_retiming_data"
+
+@export var edit_control_points: Script:
 	get:
 		return self.get_script()
 	set(value):
@@ -58,62 +50,68 @@ static func get_context_from_editor() -> Dictionary:
 		"anim_name": anim_name
 	}
 
-func _find_track_indices(all_required: bool = false) -> Dictionary:
-	var track_index_a := -1
-	var track_index_b := -1
-	var track_index_c := -1
-	
+func _find_edit_track_index() -> int:
 	for track_idx in range(_anim.get_track_count()):
 		var path := _anim.track_get_path(track_idx)
 		var prop_name : StringName = path.get_subname(path.get_subname_count() - 1)
 		
 		match prop_name:
-			&"original_control_points":
-				track_index_a = track_idx
-			&"current_control_points":
-				track_index_b = track_idx
-			&"desired_control_points":
-				track_index_c = track_idx
+			&"edit_control_points":
+				return track_idx
 	
-	if all_required && (track_index_a == -1 || track_index_b == -1 || track_index_c == -1):
-		return {}
-	return {
-		"a" = track_index_a,
-		"b" = track_index_b,
-		"c" = track_index_c
-	}
+	return -1
 
 ### GETTERS
 
 func has_timing_tracks() -> bool:
 	if !is_context_complete(): return false
+
+	return _find_edit_track_index() != -1
+
+func has_timing_data() -> bool:
+	if !is_context_complete(): return false
+
+	return _anim.has_meta(META_NAME_RETIMING_DATA) && _anim.get_meta(META_NAME_RETIMING_DATA) is Dictionary
+
+func get_timing_data() -> Dictionary:
+	if !has_timing_data(): return {}
+
+	return _anim.get_meta(META_NAME_RETIMING_DATA) as Dictionary
+
+func is_linked() -> bool:
+	if !has_timing_data(): return false
+	return get_timing_data().linked
+
+func has_control_points() -> bool:
+	if !has_timing_data(): return false
+	var timing_data := get_timing_data()
 	
-	var track_indices := _find_track_indices()
-	if track_indices.a != -1 || track_indices.b != -1 || track_indices.c != -1:
-		return true
-	else:
+	if !timing_data.original_control_points:
 		return false
+	
+	return timing_data.original_control_points.size()
+
+func get_control_point_count() -> int:
+	if !has_timing_data(): return 0
+	var timing_data := get_timing_data()
+	return timing_data.original_control_points.size()
 
 func has_applied_timing_changes() -> bool:
 	if !is_context_complete(): return false
+	if !has_timing_data(): return false
+	if !has_control_points(): return false
+	var timing_data := get_timing_data()
 
-	var track_indices := _find_track_indices()
-	if track_indices.a == -1:
-		# No original control points
-		return false
-	if track_indices.b == -1:
-		# No current control points, but has original control points
-		# Assuming the animation was reimported
-		return true
+	var original_control_points : Array[float] = timing_data.original_control_points
+	var current_control_points : Array[float] = timing_data.current_control_points
+	var control_point_count := original_control_points.size()
 
-	var control_point_count := _anim.track_get_key_count(track_indices.a)
-
-	if _anim.track_get_key_count(track_indices.b) != control_point_count:
-		# Mismatching control point counts. Likely user error. Assuming there has been a change.
+	if original_control_points.size() != current_control_points.size():
+		# Mismatching control point counts. Likely user error if not a bug. Assuming there has been a change.
 		return true
 	
 	for key_index in range(control_point_count):
-		if abs(_anim.track_get_key_time(track_indices.a, key_index) - _anim.track_get_key_time(track_indices.b, key_index)) > 0.001:
+		if abs(original_control_points[key_index] - current_control_points[key_index]) > 0.001:
 			# Mismatching key between original and current; timing changes have definitely been applied
 			return true
 	
@@ -122,55 +120,37 @@ func has_applied_timing_changes() -> bool:
 
 func get_original_retimed_animation_length() -> Variant:
 	if !is_context_complete(): return null
+	if !has_timing_data(): return false
+	var timing_data := get_timing_data()
 
-	var track_indices := _find_track_indices()
-
-	if track_indices.a == -1: return null
-
-	var control_point_count := _anim.track_get_key_count(track_indices.a)
+	var control_point_count := get_control_point_count()
 
 	if control_point_count < 2: return null
 
-	return _anim.track_get_key_time(track_indices.a, control_point_count - 1)
+	var original_control_points : Array[float] = timing_data.original_control_points
+	return original_control_points[control_point_count - 1]
 
 ### ACTIONS
 
-func bake() -> void:
-	if !is_context_complete(): return
-	
-	_transactions = Transactions.new(EditorInterface.get_editor_undo_redo(), _anim, "Animation Timing Tool: Bake")
-
-	var track_indices := _find_track_indices()
-	if track_indices.a == -1 && track_indices.b == -1 && track_indices.c == -1: return
-
-	if track_indices.a != -1:
-		_transactions.remove_track(track_indices.a)
-		track_indices = _find_track_indices()
-	if track_indices.b != -1:
-		_transactions.remove_track(track_indices.b)
-		track_indices = _find_track_indices()
-	if track_indices.c != -1:
-		_transactions.remove_track(track_indices.c)
-		track_indices = _find_track_indices()
-
 func prompt_initialize() -> void:
-	if has_timing_tracks() && has_applied_timing_changes():
+	if has_applied_timing_changes():
 		if !is_context_complete(): return
 		
 		var prompt := AcceptDialog.new()
 		prompt.theme = EditorInterface.get_editor_theme()
 		prompt.title = "Reinitialize Timing?"
 		prompt.ok_button_text = "Revert and Reinitialize"
-		prompt.add_button("Bake and Reinitialize", true, "bake")
+		prompt.add_button("Reinitialize as-is", true, "just_reinitialize")
 		prompt.add_button("Cancel", true, "close")
 
 		prompt.dialog_text = ("This animation (%s) already contains timing tracks, indicating that it has been retimed.\n" + \
 				"You can either:\n" + \
 				"Revert and Reinitialize: Revert all prior timing changes to the animation\n" + \
 				"and redo the timing from its original state\n" + \
-				"Bake and Reinitialize: Bake the current timing into the animation\nand redo the timing from the current state\n" + \
+				"Reinitialize as-is: Keep the current animation timing\n" +
+				"and redo the timing from the current state\n" + \
 				"\n" + \
-				"(Note that if this is an imported animation, baking\n" + \
+				"(Note that if this is an imported animation, reinitializing as-is\n" + \
 				"and reimporting the animation may result in broken timings)") % [_anim_name]
 		
 		var body_label: Label = prompt.find_children("*","Label",false,false)[0]
@@ -178,162 +158,215 @@ func prompt_initialize() -> void:
 
 		prompt.confirmed.connect(func ():
 			revert()
+			unlink()
 			initialize()
 		)
 		prompt.custom_action.connect(func (action):
-			if action == "bake":
-				initialize()
 			prompt.hide()
 			prompt.queue_free()
+			if action == "just_reinitialize":
+				initialize()
 		)
 		EditorInterface.popup_dialog_centered(prompt)
 	else:
 		initialize()
+
+func prompt_unlink() -> void:
+	if has_applied_timing_changes():
+		if !is_context_complete(): return
+
+		var prompt := AcceptDialog.new()
+		prompt.theme = EditorInterface.get_editor_theme()
+		prompt.title = "Unlink"
+		prompt.ok_button_text = "Revert and Unlink"
+		prompt.add_button("Unlink as-is", true, "just_unlink")
+		prompt.add_button("Cancel", true, "close")
+
+		prompt.dialog_text = ("This animation (%s) has already been retimed. Unlinking will allow you to add,\n" +
+				"remove or move control points freely.\n" + \
+				"You can either:\n" + \
+				"Revert and Unlink: Revert all prior timing changes to the animation\n" + \
+				"and manually redo the timing from its original state\n" + \
+				"Unlink as-is: Keep the current animation timing\n" +
+				"\n" + \
+				"(Note that if this is an imported animation, unlinking as-is\n" + \
+				"and reimporting the animation may result in broken timings)") % [_anim_name]
+
+		var body_label: Label = prompt.find_children("*","Label",false,false)[0]
+		body_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+
+		prompt.confirmed.connect(func ():
+			revert()
+			unlink()
+		)
+		prompt.custom_action.connect(func (action):
+			prompt.hide()
+			prompt.queue_free()
+			if action == "just_unlink":
+				unlink()
+		)
+		EditorInterface.popup_dialog_centered(prompt)
+	else:
+		unlink()
 
 func initialize() -> void:
 	if !is_context_complete(): return
 
 	_transactions = Transactions.new(EditorInterface.get_editor_undo_redo(), _anim, "Animation Timing Tool: Initialize")
 
-	var track_indices := _find_track_indices()
+	var edit_track_index := _initialize_edit_track()
 
-	# Add any missing tracks
-	_transactions.initialize_track(track_indices.a, &"original_control_points", _mixer, _anim_root_node, self.get_script(), TrackState.blank(true))
-	_transactions.initialize_track(track_indices.c, &"desired_control_points", _mixer, _anim_root_node, self.get_script(), TrackState.blank(false))
-	_transactions.initialize_track(track_indices.b, &"current_control_points", _mixer, _anim_root_node, self.get_script(), TrackState.blank(false, true))
+	_array_to_track_keys([0, _anim.length], edit_track_index)
 
-	# Find tracks again
-	track_indices = _find_track_indices()
+	# Set timing data
+	var new_timing_data := {
+		"linked": false,
+		"original_control_points": [] as Array[float],
+		"current_control_points": [] as Array[float]
+	}
+	_transactions.set_anim_metadata(META_NAME_RETIMING_DATA, new_timing_data)
 
-	_transactions.insert_key(track_indices.a, KeyState.time_value_pair(0, self.get_script()))
-	_transactions.insert_key(track_indices.a, KeyState.time_value_pair(_anim.length, self.get_script()))
+func _get_or_add_edit_track() -> int:
+	var edit_track_index := _find_edit_track_index()
+	if edit_track_index != -1:
+		return edit_track_index
+	else:
+		return _initialize_edit_track()
+
+func _initialize_edit_track() -> int:
+	var edit_track_index := _find_edit_track_index()
+	edit_track_index = _transactions.initialize_track(edit_track_index, &"edit_control_points", _mixer, _anim_root_node, self.get_script(), TrackState.blank(true, true))
+	return edit_track_index
+
+func uninitialize() -> void:
+	if !is_context_complete(): return
+
+	_transactions = Transactions.new(EditorInterface.get_editor_undo_redo(), _anim, "Animation Timing Tool: Uninitialize")
+	
+	_transactions.remove_track(_find_edit_track_index())
+	_transactions.set_anim_metadata(META_NAME_RETIMING_DATA, null)
 
 func revert() -> void:
 	if !is_context_complete(): return
+	if !has_timing_data(): return
+	var timing_data := get_timing_data()
+	if !is_linked(): return
 
 	_transactions = Transactions.new(EditorInterface.get_editor_undo_redo(), _anim, "Animation Timing Tool: Revert")
 
-	var track_indices := _find_track_indices(true)
-	if !track_indices:
-		printerr("One or more control point tracks not found in current animation")
-		return
-
-	var control_point_count := _anim.track_get_key_count(track_indices.a)
-
-	if control_point_count < 2:
-		printerr("Not enough control points in the 'original_control_points' track! At least 2 control points are needed. In animation: %s" % [_anim_name])
-		return
+	var edit_track_index := _get_or_add_edit_track()
+	
+	var original_control_points : Array[float] = timing_data.original_control_points
 
 	# Copy all control point keyframes from the original to the "desired" control point track
-	_transactions.clear_track(track_indices.c)
-	var insert_to_current_track := _anim.track_get_key_count(track_indices.b) == 0
-	for key_index in range(control_point_count):
-		var state := KeyState.create_from(_anim, track_indices.a, key_index)
-
-		_transactions.insert_key(track_indices.c, state)
-		if insert_to_current_track:
-			_transactions.insert_key(track_indices.b, state)
+	_array_to_track_keys(original_control_points, edit_track_index)
 
 	apply_timing_change(false)
 
-	# Clear non-original tracks
-	_transactions.clear_track(track_indices.b)
-	_transactions.clear_track(track_indices.c)
-	
-	# Update checkboxes
-	_transactions.update_track(track_indices.a, TrackState.blank(true))
-	_transactions.update_track(track_indices.b, TrackState.blank(false, true))
-	_transactions.update_track(track_indices.c, TrackState.blank(false))
-
-func submit_original_control_points(start_new_transaction: bool = true) -> void:
+func unlink() -> void:
 	if !is_context_complete(): return
+	if !has_timing_data(): return
+	if !is_linked(): return
+	
+	_transactions = Transactions.new(EditorInterface.get_editor_undo_redo(), _anim, "Animation Timing Tool: Unlink")
+
+	var edit_track_index := _find_edit_track_index()
+	if edit_track_index == -1:
+		printerr("No timing control point track found in current animation")
+		return
+	
+	var new_timing_data := {
+		"linked": false,
+		"original_control_points": [] as Array[float],
+		"current_control_points": [] as Array[float]
+	}
+	var key_times := _track_keys_to_array(edit_track_index)
+	new_timing_data.original_control_points = key_times.size()
+	
+	_transactions.set_anim_metadata(META_NAME_RETIMING_DATA, new_timing_data)
+
+func link(start_new_transaction: bool = true) -> void:
+	if !is_context_complete(): return
+	if !has_timing_data(): return
+	var timing_data := get_timing_data()
+	if is_linked():
+		return
 
 	if start_new_transaction:
-		_transactions = Transactions.new(EditorInterface.get_editor_undo_redo(), _anim, "Animation Timing Tool: Submit Original Control Points")
+		_transactions = Transactions.new(EditorInterface.get_editor_undo_redo(), _anim, "Animation Timing Tool: Link")
 
-	var track_indices := _find_track_indices(true)
-	if !track_indices:
-		printerr("One or more control point tracks not found in current animation")
+	var edit_track_index := _find_edit_track_index()
+	if edit_track_index == -1:
+		printerr("No timing control point track found in current animation")
 		return
 	
-	var control_point_count := _anim.track_get_key_count(track_indices.a)
+	var control_point_count := _anim.track_get_key_count(edit_track_index)
 	if control_point_count < 2:
-		printerr("Not enough control points in the 'original_control_points' track! At least 2 control points are needed")
+		printerr("Not enough control points! At least 2 control points are needed")
 		return
 
-	if _anim.track_get_key_count(track_indices.b) > 0:
-		printerr("The 'current_control_points' track must be empty!")
-		return
-	
-	if _anim.track_get_key_count(track_indices.c) > 0:
-		printerr("The 'desired_control_points' track must be empty!")
-		return
+	var new_timing_data := {
+		"linked": true,
+		"original_control_points": [] as Array[float],
+		"current_control_points": [] as Array[float]
+	}
 	
 	# Copy all control point keyframes from the original to both "current" and "desired" control point tracks
-	for key_index in range(control_point_count):
-		var state := KeyState.create_from(_anim, track_indices.a, key_index)
+	var key_times := _track_keys_to_array(edit_track_index)
+	new_timing_data.original_control_points = key_times.duplicate()
+	new_timing_data.current_control_points = key_times.duplicate()
 
-		_transactions.insert_key(track_indices.b, state)
-		_transactions.insert_key(track_indices.c, state)
-	
-	# Update checkboxes
-	_transactions.update_track(track_indices.a, TrackState.blank(false))
-	_transactions.update_track(track_indices.b, TrackState.blank(false, true))
-	_transactions.update_track(track_indices.c, TrackState.blank(true))
+	_transactions.set_anim_metadata(META_NAME_RETIMING_DATA, new_timing_data)
 
 func apply_timing_change(start_new_transaction: bool = true) -> void:
 	if !is_context_complete(): return
+	if !has_timing_data(): return
+	var timing_data := get_timing_data()
+	if !is_linked():
+		printerr("Cannot apply timing changes; timing track must be linked.")
+		return
 
 	if start_new_transaction:
 		_transactions = Transactions.new(EditorInterface.get_editor_undo_redo(), _anim, "Animation Timing Tool: Apply Timing Change")
-
-	var track_indices := _find_track_indices()
-	if track_indices.a == -1 || track_indices.c == -1:
-		printerr("One or more control point tracks not found in current animation. In animation: '%s'" % [_anim_name])
-		return
 	
-	var control_point_count := _anim.track_get_key_count(track_indices.a)
 	var reimported := false
 	
-	if control_point_count < 2:
-		printerr("Not enough control points in the 'original_control_points' track! At least 2 control points are needed. In animation: %s" % [_anim_name])
-		return
-	
-	if track_indices.b == -1:
-		_restore_timing_after_reimport()
+	if !has_timing_tracks():
+		# Missing timing tracks! Assuming reimported
 		reimported = true
-		
-		# Find tracks again
-		track_indices = _find_track_indices()
+		_restore_timing_after_reimport()
+
+	var edit_track_index := _find_edit_track_index()
+	if edit_track_index == -1:
+		printerr("No timing control point track found in current animation")
+		return
 	
-	if _anim.track_get_key_count(track_indices.b) != control_point_count:
-		printerr("The 'current_control_points' track must have exactly %s keyframes! If you need a different number of control points, press Initialize Tracks and redesign the original control point track. In animation: '%s'" % [control_point_count, _anim_name])
+	var control_point_count := get_control_point_count()
+
+	var original_control_points : Array[float] = timing_data.original_control_points
+	var current_control_points : Array[float] = timing_data.current_control_points
+	
+	if _anim.track_get_key_count(edit_track_index) != control_point_count:
+		printerr("The control points track must have exactly %s keyframes! If you need a different number of control points, press Initialize Tracks and redesign the original control point track. In animation: '%s'" % [control_point_count, _anim_name])
+		return
+	
+	if current_control_points.size() != control_point_count:
+		printerr("Mismatching array sizes between current_control_points and original_control_points. Likely a bug. Cannot apply timing changes")
 		return
 
-	if _anim.track_get_key_count(track_indices.c) != control_point_count:
-		printerr("The 'desired_control_points' track must have exactly %s keyframes! If you need a different number of control points, press Initialize Tracks and redesign the original control point track. In animation: '%s'" % [control_point_count, _anim_name])
-		return
-
-	var old_times: Array[float] = []
-	var new_times: Array[float] = []
+	var old_times: Array[float] = current_control_points.duplicate()
+	var new_times: Array[float] = _track_keys_to_array(edit_track_index)
 	old_times.resize(control_point_count)
 	new_times.resize(control_point_count)
 	
-	var any_timing_changes := false
-	for key_index in range(control_point_count):
-		var old_time := _anim.track_get_key_time(track_indices.b, key_index)
-		var new_time := _anim.track_get_key_time(track_indices.c, key_index)
-		old_times[key_index] = old_time
-		new_times[key_index] = new_time
-		
-		if old_time != new_time: any_timing_changes = true
+	var any_timing_changes := old_times != new_times
 	
 	if !any_timing_changes:
 		return
 	
 	for track_index in range(_anim.get_track_count()):
-		if track_index == track_indices.a || track_index == track_indices.c:
-			# Skip over Original Control Points track and Desired Control Points track
+		if track_index == edit_track_index:
+			# Skip over Control Points track
 			continue
 		if reimported && !_anim.track_is_imported(track_index):
 			# If the animation was re-imported, only re-time tracks that were imported.
@@ -342,28 +375,35 @@ func apply_timing_change(start_new_transaction: bool = true) -> void:
 		_transactions.retime_track(track_index, old_times, new_times)
 	
 	_transactions.retime_length(old_times, new_times)
-	
-	# Update checkboxes
-	_transactions.update_track(track_indices.a, TrackState.blank(false))
-	_transactions.update_track(track_indices.b, TrackState.blank(false, true))
-	_transactions.update_track(track_indices.c, TrackState.blank(true))
+
+	var new_timing_data := timing_data.duplicate(true)
+	new_timing_data.current_control_points = new_times.duplicate()
+	_transactions.set_anim_metadata(META_NAME_RETIMING_DATA, new_timing_data)
 
 func _restore_timing_after_reimport() -> void:
-	var track_indices := _find_track_indices()
+	if !has_timing_data(): return
+	var edit_track_index := _initialize_edit_track()
+	var timing_data := get_timing_data()
 
-	_transactions.initialize_track(track_indices.b, &"current_control_points", _mixer, _anim_root_node, self.get_script(), TrackState.blank(false, true))
+	var current_control_points : Array[float] = timing_data.current_control_points
+	var control_point_count := current_control_points.size()
 	
-	track_indices = _find_track_indices()
-
-	var control_point_count := _anim.track_get_key_count(track_indices.a)
 	# Copy all control point keyframes from the original to the "current" track
-	for key_index in range(control_point_count):
-		var state := KeyState.create_from(_anim, track_indices.a, key_index)
-		_transactions.insert_key(track_indices.b, state)
+	_array_to_track_keys(current_control_points, edit_track_index)
 
-	track_indices = _find_track_indices()
-	# Disabled due to undo-redo inconsistencies
-	# _transactions.move_track(track_indices.b, track_indices.a+1)
+### Private Utility
+
+func _track_keys_to_array(track_index: int) -> Array[float]:
+	var times : Array[float] = []
+	for key_index in range(_anim.track_get_key_count(track_index)):
+		times.append(_anim.track_get_key_time(track_index, key_index))
+	return times
+
+func _array_to_track_keys(times: Array[float], track_index: int) -> void:
+	_transactions.clear_track(track_index)
+	for key_index in range(times.size()):
+		var state := KeyState.time_value_pair(times[key_index], self.get_script())
+		_transactions.insert_key(track_index, state)
 
 ### Engine callbacks
 
@@ -381,6 +421,8 @@ func _hide_script_from_inspector() -> bool:
 func _hide_metadata_from_inspector() -> bool:
 	return true
 
+### Transactions
+
 class Transactions extends RefCounted:
 	var _undo_redo: EditorUndoRedoManager
 	var _anim: Animation
@@ -393,6 +435,17 @@ class Transactions extends RefCounted:
 	
 	func create_action(backward_undo_ops: bool = false) -> void:
 		_undo_redo.create_action(_action_name if _action_name else "Animation Timing Tool", UndoRedo.MERGE_ALL, _anim, backward_undo_ops)
+		
+	func set_anim_metadata(meta_name: StringName, new_value: Variant) -> void:
+		create_action(true)
+		_undo_redo.add_do_method(_anim, &"set_meta", meta_name, new_value)
+		if _anim.has_meta(meta_name):
+			_undo_redo.add_undo_method(_anim, &"set_meta", meta_name, _anim.get_meta(meta_name))
+		else:
+			_undo_redo.add_undo_method(_anim, &"remove_meta", meta_name)
+		_undo_redo.add_do_method(_anim, &"emit_changed")
+		_undo_redo.add_undo_method(_anim, &"emit_changed")
+		_undo_redo.commit_action()
 	
 	func initialize_track(track_index: int, property_name: StringName, mixer: AnimationMixer, anim_root_node: Node, tool_script: Script, state: TrackState) -> int:
 		if track_index < 0:
@@ -444,6 +497,8 @@ class Transactions extends RefCounted:
 		_undo_redo.commit_action()
 	
 	func remove_track(track_index: int) -> void:
+		if track_index == -1: return
+		
 		var track_path := _anim.track_get_path(track_index)
 		var track_type := _anim.track_get_type(track_index)
 		var track_state := TrackState.create_from(_anim, track_index)
@@ -619,7 +674,7 @@ class KeyTransaction extends RefCounted:
 class KeyState extends RefCounted:
 	var time: float
 	var value: Variant
-	var transition: float
+	var transition: float = 1
 	
 	var animation: StringName
 	
