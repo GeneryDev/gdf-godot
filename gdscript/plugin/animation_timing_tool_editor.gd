@@ -308,20 +308,10 @@ class EditorControlCache extends RefCounted:
 		# editor_control.print_tree_pretty()
 		
 		main_vbox = editor_control.find_children("*","VBoxContainer", true, false)[0]
-		print("main_vbox:")
-		print(main_vbox)
-		
 		top_hbox = main_vbox.find_children("*","HBoxContainer", true, false)[0]
-		print("top_hbox:")
-		print(top_hbox)
-		
 		tool_anim = top_hbox.find_children("*","MenuButton", true, false)[0]
-		print("tool_anim:")
-		print(tool_anim)
 
 		animation_track_editor = main_vbox.find_children("*","AnimationTrackEditor", true, false)[0]
-		print("animation_track_editor:")
-		print(animation_track_editor)
 		
 		if !track_vbox:
 			for candidate: MarginContainer in animation_track_editor.find_children("*","MarginContainer", true, false):
@@ -329,16 +319,9 @@ class EditorControlCache extends RefCounted:
 					track_vbox = candidate.get_child(0)
 					break
 
-		print("track_vbox:")
-		print(track_vbox)
-
 		pick_track = animation_track_editor.find_children("*","SceneTreeDialog", true, false)[0]
-		print("pick_track:")
-		print(pick_track)
 
 		timeline_edit = animation_track_editor.find_children("*","AnimationTimelineEdit", true, false)[0]
-		print("timeline_edit:")
-		print(timeline_edit)
 		
 		add_track_hb = timeline_edit.get_child(1)
 		
@@ -347,9 +330,5 @@ class EditorControlCache extends RefCounted:
 		filter_track = add_track_hb.find_children("*","LineEdit", false, false)[0]
 		
 		len_hb = timeline_edit.get_child(2)
-		print("len_hb:")
-		print(len_hb)
 
 		length_slider = len_hb.find_children("*","EditorSpinSlider", true, false)[0]
-		print("length_slider:")
-		print(length_slider)

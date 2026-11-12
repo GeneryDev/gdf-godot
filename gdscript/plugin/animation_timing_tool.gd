@@ -3,6 +3,7 @@
 extends Resource
 
 const META_NAME_RETIMING_DATA := &"_retiming_data"
+const TIME_TOLERANCE := 0.001
 
 @export var edit_control_points: Script:
 	get:
@@ -111,24 +112,12 @@ func has_applied_timing_changes() -> bool:
 		return true
 	
 	for key_index in range(control_point_count):
-		if abs(original_control_points[key_index] - current_control_points[key_index]) > 0.001:
+		if abs(original_control_points[key_index] - current_control_points[key_index]) > TIME_TOLERANCE:
 			# Mismatching key between original and current; timing changes have definitely been applied
 			return true
 	
 	# Original and current tracks match. Likely no timing changes have been applied, assuming no external changes or user error.
 	return false
-
-func get_original_retimed_animation_length() -> Variant:
-	if !is_context_complete(): return null
-	if !has_timing_data(): return false
-	var timing_data := get_timing_data()
-
-	var control_point_count := get_control_point_count()
-
-	if control_point_count < 2: return null
-
-	var original_control_points : Array[float] = timing_data.original_control_points
-	return original_control_points[control_point_count - 1]
 
 ### ACTIONS
 
@@ -228,7 +217,9 @@ func initialize() -> void:
 	var new_timing_data := {
 		"linked": false,
 		"original_control_points": [] as Array[float],
-		"current_control_points": [] as Array[float]
+		"current_control_points": [] as Array[float],
+		"original_animation_length": -1,
+		"current_animation_length": -1
 	}
 	_transactions.set_anim_metadata(META_NAME_RETIMING_DATA, new_timing_data)
 
@@ -296,11 +287,14 @@ func unlink() -> void:
 	var new_timing_data := {
 		"linked": false,
 		"original_control_points": [] as Array[float],
-		"current_control_points": [] as Array[float]
+		"current_control_points": [] as Array[float],
+		"original_animation_length": -1,
+		"current_animation_length": -1
 	}
 	var key_times := _track_keys_to_array(edit_track_index)
 	new_timing_data.original_control_points = key_times.size()
-	
+	new_timing_data.original_animation_length = _anim.length
+
 	_transactions.set_anim_metadata(META_NAME_RETIMING_DATA, new_timing_data)
 
 func link(start_new_transaction: bool = true) -> void:
@@ -330,13 +324,17 @@ func link(start_new_transaction: bool = true) -> void:
 	var new_timing_data := {
 		"linked": true,
 		"original_control_points": [] as Array[float],
-		"current_control_points": [] as Array[float]
+		"current_control_points": [] as Array[float],
+		"original_animation_length": -1,
+		"current_animation_length": -1
 	}
 	
 	# Copy all control point keyframes from the original to both "current" and "desired" control point tracks
 	var key_times := _track_keys_to_array(edit_track_index)
 	new_timing_data.original_control_points = key_times.duplicate()
 	new_timing_data.current_control_points = key_times.duplicate()
+	new_timing_data.original_animation_length = _anim.length
+	new_timing_data.current_animation_length = _anim.length
 
 	_transactions.set_anim_metadata(META_NAME_RETIMING_DATA, new_timing_data)
 
@@ -347,7 +345,6 @@ func apply_timing_change(start_new_transaction: bool = true) -> void:
 	if !has_timing_data():
 		_error(ErrorReason.NOT_INITIALIZED)
 		return
-	var timing_data := get_timing_data()
 	if !is_linked():
 		_error(ErrorReason.INVALID_LINK_STATE, "Cannot apply timing changes; timing track must be linked.")
 		return
@@ -366,7 +363,8 @@ func apply_timing_change(start_new_transaction: bool = true) -> void:
 	if edit_track_index == -1:
 		_error(ErrorReason.MISSING_TIMING_TRACK)
 		return
-	
+
+	var timing_data := get_timing_data()
 	var control_point_count := get_control_point_count()
 
 	var original_control_points : Array[float] = timing_data.original_control_points
@@ -404,6 +402,7 @@ func apply_timing_change(start_new_transaction: bool = true) -> void:
 
 	var new_timing_data := timing_data.duplicate(true)
 	new_timing_data.current_control_points = new_times.duplicate()
+	new_timing_data.current_animation_length = _anim.length
 	_transactions.set_anim_metadata(META_NAME_RETIMING_DATA, new_timing_data)
 
 func _restore_timing_after_reimport() -> void:
@@ -417,7 +416,43 @@ func _restore_timing_after_reimport() -> void:
 	var control_point_count := current_control_points.size()
 	
 	# Copy all control point keyframes from the original to the "current" track
+
 	_array_to_track_keys(current_control_points, edit_track_index)
+	var new_timing_data := timing_data.duplicate(true)
+	new_timing_data.current_control_points = new_timing_data.original_control_points
+	new_timing_data.current_animation_length = new_timing_data.original_animation_length
+	_transactions.set_anim_metadata(META_NAME_RETIMING_DATA, new_timing_data)
+
+func retime_reimported_animations() -> void:
+	if !_mixer:
+		_error(ErrorReason.INCOMPLETE_CONTEXT)
+		return
+
+	var retimed_count := 0
+	for entry in _get_all_animations():
+		var anim: Animation = entry.anim
+		var anim_name: StringName = entry.anim_name
+		set_context(_mixer, anim, anim_name)
+		if !has_timing_data(): continue
+		if !is_linked(): continue
+
+		_transactions = Transactions.new(EditorInterface.get_editor_undo_redo(), _anim, "Animation Timing Tool: Retime Animation '%s'" % [anim_name])
+		apply_timing_change(false)
+		retimed_count += 1
+	_info("Retimed %s animations" % [retimed_count])
+
+func _get_all_animations() -> Array[Dictionary]:
+	var output: Array[Dictionary] = []
+	for library_name: StringName in _mixer.get_animation_library_list():
+		var library := _mixer.get_animation_library(library_name)
+		for anim_name: StringName in library.get_animation_list():
+			var anim := library.get_animation(anim_name)
+			var full_anim_name := StringName("%s/%s" % [library_name, anim_name]) if library_name else anim_name
+			output.append({
+				"anim": anim,
+				"anim_name": full_anim_name
+			})
+	return output
 
 ### Private Utility
 
@@ -450,6 +485,10 @@ func _error(reason: ErrorReason, message: String = "") -> void:
 				pass
 	EditorInterface.get_editor_toaster().push_toast(message, EditorToaster.SEVERITY_ERROR)
 	printerr("[Animation Timing Tool | %s] %s (In animation: %s)" % [ErrorReason.find_key(reason), message, _anim_name])
+
+func _info(message: String = "") -> void:
+	EditorInterface.get_editor_toaster().push_toast(message, EditorToaster.SEVERITY_INFO)
+	print("[Animation Timing Tool | INFO] %s" % [message])
 
 ### Engine callbacks
 
