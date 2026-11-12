@@ -93,6 +93,7 @@ func _on_remove_request(track_index: int) -> void:
 	tool.set_context_from_editor().uninitialize()
 	
 class TimingTrackOverlay extends Control:
+	const ACTION_INITIALIZE := 0
 	const ACTION_LINK := 1
 	const ACTION_UNLINK := 2
 	const ACTION_APPLY_TIMING_CHANGE := 3
@@ -109,6 +110,7 @@ class TimingTrackOverlay extends Control:
 	var _linked_icon : Texture2D = EditorInterface.get_editor_theme().get_icon(&"Instance", &"EditorIcons")
 	var _unlinked_icon : Texture2D = EditorInterface.get_editor_theme().get_icon(&"Unlinked", &"EditorIcons")
 	var _dropdown_icon : Texture2D = EditorInterface.get_editor_theme().get_icon(&"GuiDropdown", &"EditorIcons")
+	var _broken_icon : Texture2D = EditorInterface.get_editor_theme().get_icon(&"FileBroken", &"EditorIcons")
 
 	var _menu: PopupMenu
 
@@ -131,22 +133,31 @@ class TimingTrackOverlay extends Control:
 	func _update_state() -> void:
 		var tool := timing_tool_script.new()
 		tool.set_context_from_editor()
-		if tool.is_linked():
-			_link_button.icon = _linked_icon
-			_link_button.tooltip_text = "Control points linked to animation timing.\nPress to unlink."
-			_link_button.set_pressed_no_signal(true)
+		
+		if tool.has_timing_data():
+			_link_button.disabled = false
+			if tool.is_linked():
+				_link_button.icon = _linked_icon
+				_link_button.tooltip_text = "Control points linked to animation timing.\nPress to unlink."
+				_link_button.set_pressed_no_signal(true)
+			else:
+				_link_button.icon = _unlinked_icon
+				_link_button.tooltip_text = "Control points are free to edit.\nPress to link control points to animation timing."
+				_link_button.set_pressed_no_signal(false)
 		else:
-			_link_button.icon = _unlinked_icon
-			_link_button.tooltip_text = "Control points are free to edit.\nPress to link control points to animation timing."
+			_link_button.disabled = true
+			_link_button.icon = _broken_icon
+			_link_button.tooltip_text = "This timing track has not been initialized correctly."
 			_link_button.set_pressed_no_signal(false)
 	
 	func _on_link_button_pressed() -> void:
 		var tool := timing_tool_script.new()
 		tool.set_context_from_editor()
-		if !tool.is_linked():
-			tool.link()
-		else:
-			tool.prompt_unlink()
+		if tool.has_timing_data():
+			if !tool.is_linked():
+				tool.link()
+			else:
+				tool.prompt_unlink()
 		_update_state()
 	
 	func _ready() -> void:
@@ -179,23 +190,25 @@ class TimingTrackOverlay extends Control:
 		tool.set_context_from_editor()
 			
 		_menu.clear()
-		if !tool.is_linked():
-			_menu.add_icon_item(_linked_icon, "Link", ACTION_LINK)
-			_menu.set_item_tooltip(_menu.item_count-1, "Linking the control points to the animation allows to retime the entire animation by dragging the keyframes on this track.\nYou may not add or remove control points after linking.")
-		else:
-			_menu.add_icon_item(_unlinked_icon, "Unlink", ACTION_UNLINK)
-			_menu.set_item_tooltip(_menu.item_count-1, "Unlinking will allow you to add, remove, or move control points freely without affecting the rest of the animation.")
-		if tool.is_linked():
+		if tool.has_timing_data():
+			if !tool.is_linked():
+				_menu.add_icon_item(_linked_icon, "Link", ACTION_LINK)
+				_menu.set_item_tooltip(_menu.item_count-1, "Linking the control points to the animation allows to retime the entire animation by dragging the keyframes on this track.\nYou may not add or remove control points after linking.")
+			else:
+				_menu.add_icon_item(_unlinked_icon, "Unlink", ACTION_UNLINK)
+				_menu.set_item_tooltip(_menu.item_count-1, "Unlinking will allow you to add, remove, or move control points freely without affecting the rest of the animation.")
+			if tool.is_linked():
+				_menu.add_separator()
+				_menu.add_item("Apply Timing Changes", ACTION_APPLY_TIMING_CHANGE)
+				_menu.set_item_tooltip(_menu.item_count-1, "Apply the current state of the keyframes to the timing of the animation.\nThis is done automatically when moving keyframes in this track while linked.")
+				_menu.add_icon_item(_revert_icon, "Revert", ACTION_REVERT)
+				_menu.set_item_tooltip(_menu.item_count-1, "Revert the timing of the animation to how it was when this track was last linked.")
+				_menu.set_item_disabled(_menu.item_count-1, !tool.has_applied_timing_changes())
 			_menu.add_separator()
-			_menu.add_item("Apply Timing Changes", ACTION_APPLY_TIMING_CHANGE)
-			_menu.set_item_tooltip(_menu.item_count-1, "Apply the current state of the keyframes to the timing of the animation.\nThis is done automatically when moving keyframes in this track while linked.")
-			_menu.add_icon_item(_revert_icon, "Revert", ACTION_REVERT)
-			_menu.set_item_tooltip(_menu.item_count-1, "Revert the timing of the animation to how it was when this track was last linked.")
-			_menu.set_item_disabled(_menu.item_count-1, !tool.has_applied_timing_changes())
-
-		_menu.add_separator()
-		_menu.add_icon_item(_remove_icon, "Remove Timing Track", ACTION_REMOVE)
-		_menu.set_item_tooltip(_menu.item_count-1, "Remove timing track entirely, keeping the current state of the animation.\nDon't do this if the animation is imported! Keeping this track will allow you to quickly apply the same timing changes next time it is reimported.")
+			_menu.add_icon_item(_remove_icon, "Remove Timing Track", ACTION_REMOVE)
+			_menu.set_item_tooltip(_menu.item_count-1, "Remove timing track entirely, keeping the current state of the animation.\nDon't do this if the animation is imported! Keeping this track will allow you to quickly apply the same timing changes next time it is reimported.")
+		else:
+			_menu.add_item("Initialize", ACTION_INITIALIZE)
 		
 		_menu.reset_size()
 		_menu.position = position
@@ -206,6 +219,8 @@ class TimingTrackOverlay extends Control:
 		tool.set_context_from_editor()
 		
 		match id:
+			ACTION_INITIALIZE:
+				tool.prompt_initialize()
 			ACTION_LINK:
 				tool.link()
 			ACTION_UNLINK:
