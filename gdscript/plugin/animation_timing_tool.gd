@@ -134,7 +134,9 @@ func get_original_retimed_animation_length() -> Variant:
 
 func prompt_initialize() -> void:
 	if has_applied_timing_changes():
-		if !is_context_complete(): return
+		if !is_context_complete():
+			_error(ErrorReason.INCOMPLETE_CONTEXT)
+			return
 		
 		var prompt := AcceptDialog.new()
 		prompt.theme = EditorInterface.get_editor_theme()
@@ -173,7 +175,9 @@ func prompt_initialize() -> void:
 
 func prompt_unlink() -> void:
 	if has_applied_timing_changes():
-		if !is_context_complete(): return
+		if !is_context_complete():
+			_error(ErrorReason.INCOMPLETE_CONTEXT)
+			return
 
 		var prompt := AcceptDialog.new()
 		prompt.theme = EditorInterface.get_editor_theme()
@@ -210,7 +214,9 @@ func prompt_unlink() -> void:
 		unlink()
 
 func initialize() -> void:
-	if !is_context_complete(): return
+	if !is_context_complete():
+		_error(ErrorReason.INCOMPLETE_CONTEXT)
+		return
 
 	_transactions = Transactions.new(EditorInterface.get_editor_undo_redo(), _anim, "Animation Timing Tool: Initialize")
 
@@ -235,11 +241,15 @@ func _get_or_add_edit_track() -> int:
 
 func _initialize_edit_track() -> int:
 	var edit_track_index := _find_edit_track_index()
-	edit_track_index = _transactions.initialize_track(edit_track_index, &"edit_control_points", _mixer, _anim_root_node, self.get_script(), TrackState.blank(true, true))
+	edit_track_index = _transactions.initialize_track(edit_track_index, &"edit_control_points", _mixer, _anim_root_node, self.get_script(), TrackState.blank(false, true))
 	return edit_track_index
 
 func uninitialize() -> void:
-	if !is_context_complete(): return
+	if !is_context_complete():
+		_error(ErrorReason.INCOMPLETE_CONTEXT)
+		return
+	if !has_timing_data() && !has_timing_tracks():
+		return
 
 	_transactions = Transactions.new(EditorInterface.get_editor_undo_redo(), _anim, "Animation Timing Tool: Uninitialize")
 	
@@ -247,8 +257,12 @@ func uninitialize() -> void:
 	_transactions.set_anim_metadata(META_NAME_RETIMING_DATA, null)
 
 func revert() -> void:
-	if !is_context_complete(): return
-	if !has_timing_data(): return
+	if !is_context_complete():
+		_error(ErrorReason.INCOMPLETE_CONTEXT)
+		return
+	if !has_timing_data():
+		_error(ErrorReason.NOT_INITIALIZED)
+		return
 	var timing_data := get_timing_data()
 	if !is_linked(): return
 
@@ -264,15 +278,19 @@ func revert() -> void:
 	apply_timing_change(false)
 
 func unlink() -> void:
-	if !is_context_complete(): return
-	if !has_timing_data(): return
+	if !is_context_complete():
+		_error(ErrorReason.INCOMPLETE_CONTEXT)
+		return
+	if !has_timing_data():
+		_error(ErrorReason.NOT_INITIALIZED)
+		return
 	if !is_linked(): return
 	
 	_transactions = Transactions.new(EditorInterface.get_editor_undo_redo(), _anim, "Animation Timing Tool: Unlink")
 
 	var edit_track_index := _find_edit_track_index()
 	if edit_track_index == -1:
-		printerr("No timing control point track found in current animation")
+		_error(ErrorReason.MISSING_TIMING_TRACK)
 		return
 	
 	var new_timing_data := {
@@ -286,8 +304,12 @@ func unlink() -> void:
 	_transactions.set_anim_metadata(META_NAME_RETIMING_DATA, new_timing_data)
 
 func link(start_new_transaction: bool = true) -> void:
-	if !is_context_complete(): return
-	if !has_timing_data(): return
+	if !is_context_complete():
+		_error(ErrorReason.INCOMPLETE_CONTEXT)
+		return
+	if !has_timing_data():
+		_error(ErrorReason.NOT_INITIALIZED)
+		return
 	var timing_data := get_timing_data()
 	if is_linked():
 		return
@@ -297,12 +319,12 @@ func link(start_new_transaction: bool = true) -> void:
 
 	var edit_track_index := _find_edit_track_index()
 	if edit_track_index == -1:
-		printerr("No timing control point track found in current animation")
+		_error(ErrorReason.MISSING_TIMING_TRACK)
 		return
 	
 	var control_point_count := _anim.track_get_key_count(edit_track_index)
 	if control_point_count < 2:
-		printerr("Not enough control points! At least 2 control points are needed")
+		_error(ErrorReason.INVALID_KEY_COUNT, "Not enough control points! At least 2 control points are needed")
 		return
 
 	var new_timing_data := {
@@ -319,11 +341,15 @@ func link(start_new_transaction: bool = true) -> void:
 	_transactions.set_anim_metadata(META_NAME_RETIMING_DATA, new_timing_data)
 
 func apply_timing_change(start_new_transaction: bool = true) -> void:
-	if !is_context_complete(): return
-	if !has_timing_data(): return
+	if !is_context_complete():
+		_error(ErrorReason.INCOMPLETE_CONTEXT)
+		return
+	if !has_timing_data():
+		_error(ErrorReason.NOT_INITIALIZED)
+		return
 	var timing_data := get_timing_data()
 	if !is_linked():
-		printerr("Cannot apply timing changes; timing track must be linked.")
+		_error(ErrorReason.INVALID_LINK_STATE, "Cannot apply timing changes; timing track must be linked.")
 		return
 
 	if start_new_transaction:
@@ -338,7 +364,7 @@ func apply_timing_change(start_new_transaction: bool = true) -> void:
 
 	var edit_track_index := _find_edit_track_index()
 	if edit_track_index == -1:
-		printerr("No timing control point track found in current animation")
+		_error(ErrorReason.MISSING_TIMING_TRACK)
 		return
 	
 	var control_point_count := get_control_point_count()
@@ -347,11 +373,11 @@ func apply_timing_change(start_new_transaction: bool = true) -> void:
 	var current_control_points : Array[float] = timing_data.current_control_points
 	
 	if _anim.track_get_key_count(edit_track_index) != control_point_count:
-		printerr("The control points track must have exactly %s keyframes! If you need a different number of control points, press Initialize Tracks and redesign the original control point track. In animation: '%s'" % [control_point_count, _anim_name])
+		_error(ErrorReason.INVALID_KEY_COUNT, "The control points track must have exactly %s keyframes! If you need a different number of control points, press Initialize Tracks and redesign the original control point track" % [control_point_count])
 		return
 	
 	if current_control_points.size() != control_point_count:
-		printerr("Mismatching array sizes between current_control_points and original_control_points. Likely a bug. Cannot apply timing changes")
+		_error(ErrorReason.OTHER, "Mismatching array sizes between current_control_points and original_control_points. Likely a bug. Cannot apply timing changes")
 		return
 
 	var old_times: Array[float] = current_control_points.duplicate()
@@ -381,7 +407,9 @@ func apply_timing_change(start_new_transaction: bool = true) -> void:
 	_transactions.set_anim_metadata(META_NAME_RETIMING_DATA, new_timing_data)
 
 func _restore_timing_after_reimport() -> void:
-	if !has_timing_data(): return
+	if !has_timing_data():
+		_error(ErrorReason.NOT_INITIALIZED)
+		return
 	var edit_track_index := _initialize_edit_track()
 	var timing_data := get_timing_data()
 
@@ -405,6 +433,24 @@ func _array_to_track_keys(times: Array[float], track_index: int) -> void:
 		var state := KeyState.time_value_pair(times[key_index], self.get_script())
 		_transactions.insert_key(track_index, state)
 
+func _error(reason: ErrorReason, message: String = "") -> void:
+	if !message:
+		match reason:
+			ErrorReason.INCOMPLETE_CONTEXT:
+				message = "No animation has been assigned to this Animation Timing Tool"
+			ErrorReason.NOT_INITIALIZED:
+				message = "The Animation Timing Tool hasn't been initialized for this animation; i.e. there is no timing track for it"
+			ErrorReason.INVALID_LINK_STATE:
+				message = "Invalid link state"
+			ErrorReason.MISSING_TIMING_TRACK:
+				message = "No timing control point track found in current animation"
+			ErrorReason.INVALID_KEY_COUNT:
+				message = "Invalid key count"
+			ErrorReason.OTHER:
+				pass
+	EditorInterface.get_editor_toaster().push_toast(message, EditorToaster.SEVERITY_ERROR)
+	printerr("[Animation Timing Tool | %s] %s (In animation: %s)" % [ErrorReason.find_key(reason), message, _anim_name])
+
 ### Engine callbacks
 
 func _validate_property(property: Dictionary) -> void:
@@ -420,6 +466,15 @@ func _hide_script_from_inspector() -> bool:
 
 func _hide_metadata_from_inspector() -> bool:
 	return true
+
+enum ErrorReason {
+	INCOMPLETE_CONTEXT,
+	NOT_INITIALIZED,
+	INVALID_LINK_STATE,
+	MISSING_TIMING_TRACK,
+	INVALID_KEY_COUNT,
+	OTHER
+}
 
 ### Transactions
 

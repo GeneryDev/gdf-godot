@@ -26,7 +26,7 @@ func disable() -> void:
 
 func _add_menu_items() -> void:
 	var editor_theme := EditorInterface.get_editor_theme()
-	_editor_controls.add_track_popup.add_icon_item(editor_theme.get_icon(&"Time", &"EditorIcons"), "Retiming Tracks...")
+	_editor_controls.add_track_popup.add_icon_item(editor_theme.get_icon(&"Time", &"EditorIcons"), "Timing Track...")
 	_retiming_tracks_popup_item_index = _editor_controls.add_track_popup.item_count-1
 
 func _remove_menu_items() -> void:
@@ -44,15 +44,24 @@ func _add_track(index: int) -> void:
 
 func _on_tracks_changed_defer() -> void:
 	if !_tracks_changed_queued:
-		RenderingServer.frame_post_draw.connect(_on_tracks_changed_and_drawn, CONNECT_ONE_SHOT)
+		if _editor_controls.track_vbox.is_visible_in_tree():
+			# If editor is visible, we can just wait until the frame is next drawn
+			if !RenderingServer.frame_post_draw.is_connected(_on_tracks_changed_and_drawn):
+				RenderingServer.frame_post_draw.connect(_on_tracks_changed_and_drawn, CONNECT_ONE_SHOT)
+		else:
+			# Editor not visible, so wait until it becomes visible
+			if !_editor_controls.track_vbox.visibility_changed.is_connected(_on_tracks_changed_defer):
+				_editor_controls.track_vbox.visibility_changed.connect(_on_tracks_changed_defer)
+			
 		_tracks_changed_queued = true
+		set_deferred(&"_tracks_changed_queued", false)
 
 func _on_tracks_changed_and_drawn() -> void:
 	_tracks_changed_queued = false
 	for track_edit: Control in _editor_controls.track_vbox.find_children("*","AnimationTrackEdit",true,false):
-		# print("Track edit: %s" % [track_edit])
 		var path : String = track_edit.get_tooltip(Vector2(100, 13))
 		if path.contains("metadata/retiming:") && !track_edit.has_meta("_timing_tool_initialized"):
+			# print("Track edit: %s" % [path])
 			track_edit.set_meta("_timing_tool_initialized", true)
 			_on_timing_track_edit_created(track_edit, path)
 
