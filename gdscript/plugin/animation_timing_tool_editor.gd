@@ -191,6 +191,7 @@ class TimingTrackOverlay extends Control:
 			_menu.set_item_tooltip(_menu.item_count-1, "Apply the current state of the keyframes to the timing of the animation.\nThis is done automatically when moving keyframes in this track while linked.")
 			_menu.add_icon_item(_revert_icon, "Revert", ACTION_REVERT)
 			_menu.set_item_tooltip(_menu.item_count-1, "Revert the timing of the animation to how it was when this track was last linked.")
+			_menu.set_item_disabled(_menu.item_count-1, !tool.has_applied_timing_changes())
 
 		_menu.add_separator()
 		_menu.add_icon_item(_remove_icon, "Remove Timing Track", ACTION_REMOVE)
