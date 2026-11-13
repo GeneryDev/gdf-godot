@@ -1,7 +1,7 @@
 ﻿@tool
 extends EditorInspectorPlugin
 
-var timing_tool_script: Script = load("res://addons/gdf-godot/gdscript/plugin/animation_timing_tool.gd")
+var timing_tool_script: Script = load(GdfEditorPlugin.PLUGIN_ROOT + "/gdscript/plugin/animations/animation_timing_tool.gd")
 
 var _tool: Object
 
@@ -35,8 +35,8 @@ func _add_buttons() -> void:
 	_add_button("Retime Reimported Animations", EditorInterface.get_editor_theme().get_icon(&"Load", &"EditorIcons"), func(): _tool.set_context_from_editor().retime_reimported_animations())
 	_add_padding(4)
 	_add_separator("Animation", EditorInterface.get_editor_theme().get_icon(&"Animation", &"EditorIcons"))
-	_add_button("Initialize", load("res://addons/gdf-godot/assets/icons/timing_tool_control_points.svg"), func(): _tool.set_context_from_editor().prompt_initialize())
-	_add_button("Apply Timing Change", load("res://addons/gdf-godot/assets/icons/timing_tool_update_timing.svg"), func(): _tool.set_context_from_editor().apply_timing_change())
+	_add_button("Initialize", load(GdfEditorPlugin.PLUGIN_ROOT + "/assets/icons/timing_tool_control_points.svg"), func(): _tool.set_context_from_editor().prompt_initialize())
+	_add_button("Apply Timing Change", load(GdfEditorPlugin.PLUGIN_ROOT + "/assets/icons/timing_tool_update_timing.svg"), func(): _tool.set_context_from_editor().apply_timing_change())
 	_add_button("Uninitialize", EditorInterface.get_editor_theme().get_icon(&"Remove", &"EditorIcons"), func(): _tool.set_context_from_editor().uninitialize())
 
 func _add_button(text: String, icon: Texture2D, callback: Callable) -> void:

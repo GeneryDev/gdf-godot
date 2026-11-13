@@ -1,4 +1,5 @@
 ﻿@tool
+class_name GdfEditorPlugin
 extends EditorPlugin
 
 static var instance: EditorPlugin
@@ -8,23 +9,26 @@ var animation_editor
 var _inspector_plugins : Array[EditorInspectorPlugin]
 var _resource_conversion_plugins : Array[EditorResourceConversionPlugin]
 
-var _animation_player_editor: Script = load(PLUGIN_ROOT + "/gdscript/plugin/animation_player_editor.gd")
+var _animation_player_editor: Script = load(PLUGIN_ROOT + "/gdscript/plugin/animations/animation_player_editor.gd")
 var _animation_timing_tool_editor
 
 func _enter_tree() -> void:
 	instance = self
 	
+	# C#
 	_inspector_plugins.append(load(PLUGIN_ROOT + "/GDF/Editor/ToolInspectorPlugin.cs").new())
-	_inspector_plugins.append(load(PLUGIN_ROOT + "/gdscript/plugin/animation_inspector_plugin.gd").new())
-	_inspector_plugins.append(load(PLUGIN_ROOT + "/gdscript/plugin/material_inspector_plugin.gd").new())
-	_inspector_plugins.append(load(PLUGIN_ROOT + "/gdscript/plugin/animation_timing_tool_inspector_plugin.gd").new())
-	_resource_conversion_plugins.append(load(PLUGIN_ROOT + "/gdscript/plugin/custom_material_to_shader_converter.gd").new())
-	_add_plugins(_inspector_plugins, add_inspector_plugin)
-	_add_plugins(_resource_conversion_plugins, add_resource_conversion_plugin)
-
-	_animation_timing_tool_editor = load(PLUGIN_ROOT + "/gdscript/plugin/animation_timing_tool_editor.gd").new()
+	# Animations
+	_inspector_plugins.append(load(PLUGIN_ROOT + "/gdscript/plugin/animations/animation_node_inspector_plugin.gd").new())
+	_inspector_plugins.append(load(PLUGIN_ROOT + "/gdscript/plugin/animations/animation_timing_tool_inspector_plugin.gd").new())
+	_animation_timing_tool_editor = load(PLUGIN_ROOT + "/gdscript/plugin/animations/animation_timing_tool_editor.gd").new()
 	if _animation_timing_tool_editor:
 		_animation_timing_tool_editor.enable()
+	# Materials
+	_inspector_plugins.append(load(PLUGIN_ROOT + "/gdscript/plugin/materials/material_inspector_plugin.gd").new())
+	_resource_conversion_plugins.append(load(PLUGIN_ROOT + "/gdscript/plugin/materials/custom_material_to_shader_converter.gd").new())
+	
+	_add_plugins(_inspector_plugins, add_inspector_plugin)
+	_add_plugins(_resource_conversion_plugins, add_resource_conversion_plugin)
 	
 	print("Initialized Genery Development Framework Editor Plugin (gdscript)")
 	SceneManager.AddProjectSettings()

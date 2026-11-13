@@ -31,8 +31,8 @@ public partial class GdfEditorPlugin : EditorPlugin
         Instance = this;
         AddInspectorPlugin(_toolInspectorPlugin = new ToolInspectorPlugin());
         AddInspectorPlugin(_animationInspectorPlugin = new AnimationInspectorPlugin());
-        AddInspectorPlugin(_materialInspectorPlugin = GD.Load<GDScript>($"{GdfConstants.PluginRoot}/gdscript/plugin/material_inspector_plugin.gd").New().As<EditorInspectorPlugin>());
-        AddResourceConversionPlugin(_customMaterialToShaderConverter = GD.Load<GDScript>($"{GdfConstants.PluginRoot}/gdscript/plugin/custom_material_to_shader_converter.gd").New().As<EditorResourceConversionPlugin>());
+        AddInspectorPlugin(_materialInspectorPlugin = GD.Load<GDScript>($"{GdfConstants.PluginRoot}/gdscript/plugin/materials/material_inspector_plugin.gd").New().As<EditorInspectorPlugin>());
+        AddResourceConversionPlugin(_customMaterialToShaderConverter = GD.Load<GDScript>($"{GdfConstants.PluginRoot}/gdscript/plugin/material_inspector_plugin/materials/custom_material_to_shader_converter.gd").New().As<EditorResourceConversionPlugin>());
         
         AnimationEditor ??= new AnimationPlayerEditor();
         

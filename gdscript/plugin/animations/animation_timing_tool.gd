@@ -39,7 +39,7 @@ func is_context_complete() -> bool:
 	return _mixer && _anim
 
 static func get_context_from_editor() -> Dictionary:
-	var animation_player_editor = load("res://addons/gdf-godot/gdscript/plugin/animation_player_editor.gd")
+	var animation_player_editor = load(GdfEditorPlugin.PLUGIN_ROOT + "/gdscript/plugin/animations/animation_player_editor.gd")
 	var mixer: AnimationMixer = animation_player_editor.current_animation_mixer
 	var anim: Animation = null
 	var anim_name = animation_player_editor.current_animation_name

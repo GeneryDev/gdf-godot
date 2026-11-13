@@ -1,7 +1,7 @@
 ﻿@tool
 extends RefCounted
 
-const timing_tool_script = preload("res://addons/gdf-godot/gdscript/plugin/animation_timing_tool.gd")
+const timing_tool_script = preload(GdfEditorPlugin.PLUGIN_ROOT + "/gdscript/plugin/animations/animation_timing_tool.gd")
 
 signal animation_data_updated()
 
@@ -302,7 +302,7 @@ class EditorControlCache extends RefCounted:
 	var length_slider: EditorSpinSlider
 	
 	func fetch() -> void:
-		editor = load("res://addons/gdf-godot/gdscript/plugin/animation_player_editor.gd")
+		editor = load(GdfEditorPlugin.PLUGIN_ROOT + "/gdscript/plugin/animations/animation_player_editor.gd")
 		
 		var editor_control: Control = editor.animation_editor_control
 		# editor_control.print_tree_pretty()
