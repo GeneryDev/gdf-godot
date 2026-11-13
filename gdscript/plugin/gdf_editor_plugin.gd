@@ -11,6 +11,7 @@ var _resource_conversion_plugins : Array[EditorResourceConversionPlugin]
 
 var _animation_player_editor: Script = load(PLUGIN_ROOT + "/gdscript/plugin/animations/animation_player_editor.gd")
 var _animation_timing_tool_editor
+var _animation_track_browser_editor
 
 func _enter_tree() -> void:
 	instance = self
@@ -23,6 +24,9 @@ func _enter_tree() -> void:
 	_animation_timing_tool_editor = load(PLUGIN_ROOT + "/gdscript/plugin/animations/animation_timing_tool_editor.gd").new()
 	if _animation_timing_tool_editor:
 		_animation_timing_tool_editor.enable()
+	_animation_track_browser_editor = load(PLUGIN_ROOT + "/gdscript/plugin/animations/animation_track_browser_editor.gd").new()
+	if _animation_track_browser_editor:
+		_animation_track_browser_editor.enable()
 	# Materials
 	_inspector_plugins.append(load(PLUGIN_ROOT + "/gdscript/plugin/materials/material_inspector_plugin.gd").new())
 	_resource_conversion_plugins.append(load(PLUGIN_ROOT + "/gdscript/plugin/materials/custom_material_to_shader_converter.gd").new())
@@ -39,6 +43,8 @@ func _exit_tree() -> void:
 
 	if _animation_timing_tool_editor:
 		_animation_timing_tool_editor.disable()
+	if _animation_track_browser_editor:
+		_animation_track_browser_editor.disable()
 
 	_remove_plugins(_inspector_plugins, remove_inspector_plugin)
 	_remove_plugins(_resource_conversion_plugins, remove_resource_conversion_plugin)
