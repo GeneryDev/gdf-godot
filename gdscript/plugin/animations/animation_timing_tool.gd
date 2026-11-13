@@ -441,6 +441,21 @@ func retime_reimported_animations() -> void:
 		retimed_count += 1
 	_info("Retimed %s animations" % [retimed_count])
 
+func force_fix_track_imported() -> void:
+	if !is_context_complete():
+		_error(ErrorReason.INCOMPLETE_CONTEXT)
+		return
+	if !has_timing_tracks():
+		return
+	# Forces the timing edit track to be imported, without undo-redo,
+	# to workaround a Godot bug where removing an imported track via the animation editor, and then undoing,
+	# would "forget" the imported state of the track and wrongly initialize it as false.
+	var edit_track_index := _find_edit_track_index()
+	if edit_track_index != -1 && !_anim.track_is_imported(edit_track_index):
+		# Bug was triggered
+		_anim.track_set_imported(edit_track_index, true)
+		_anim.emit_changed()
+
 func _get_all_animations() -> Array[Dictionary]:
 	var output: Array[Dictionary] = []
 	for library_name: StringName in _mixer.get_animation_library_list():

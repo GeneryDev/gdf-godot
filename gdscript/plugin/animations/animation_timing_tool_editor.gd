@@ -67,6 +67,10 @@ func _on_tracks_changed_and_drawn() -> void:
 			_on_timing_track_edit_created(track_edit, path)
 
 func _on_timing_track_edit_created(track_edit: Control, property_path: String) -> void:
+	var tool = timing_tool_script.new()
+	tool.set_context_from_editor()
+	tool.force_fix_track_imported()
+	
 	var overlay := timing_track_overlay.new()
 	overlay.name_limit_function = get_name_limit
 	overlay.set_meta("_owner", self) # keep self alive while overlay is in memory
