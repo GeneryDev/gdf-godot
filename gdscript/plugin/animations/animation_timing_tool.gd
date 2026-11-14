@@ -14,7 +14,6 @@ const TIME_TOLERANCE := 0.001
 var _anim: Animation
 var _mixer: AnimationMixer
 var _anim_name: StringName
-var _anim_root_node: Node
 
 var _transactions: Transactions
 var _undo_redo: EditorUndoRedoManager
@@ -28,15 +27,11 @@ func set_context(mixer: AnimationMixer, anim: Animation, anim_name: StringName):
 	_mixer = mixer
 	_anim = anim
 	_anim_name = anim_name
-	_anim_root_node = _mixer.get_node(_mixer.root_node) if _mixer else null
 	return self
 
 func set_context_from_editor():
 	var context := get_context_from_editor()
 	return set_context(context.mixer, context.anim, context.anim_name)
-
-func is_context_complete() -> bool:
-	return _mixer && _anim
 
 static func get_context_from_editor() -> Dictionary:
 	var animation_player_editor = load(GdfEditorPlugin.PLUGIN_ROOT + "/gdscript/plugin/animations/animation_player_editor.gd")
@@ -52,6 +47,7 @@ static func get_context_from_editor() -> Dictionary:
 	}
 
 func _find_edit_track_index() -> int:
+	if !_anim: return -1
 	for track_idx in range(_anim.get_track_count()):
 		var path := _anim.track_get_path(track_idx)
 		var prop_name : StringName = path.get_subname(path.get_subname_count() - 1)
@@ -65,13 +61,10 @@ func _find_edit_track_index() -> int:
 ### GETTERS
 
 func has_timing_tracks() -> bool:
-	if !is_context_complete(): return false
-
 	return _find_edit_track_index() != -1
 
 func has_timing_data() -> bool:
-	if !is_context_complete(): return false
-
+	if !_anim: return false
 	return _anim.has_meta(META_NAME_RETIMING_DATA) && _anim.get_meta(META_NAME_RETIMING_DATA) is Dictionary
 
 func get_timing_data() -> Dictionary:
@@ -98,7 +91,6 @@ func get_control_point_count() -> int:
 	return timing_data.original_control_points.size()
 
 func has_applied_timing_changes() -> bool:
-	if !is_context_complete(): return false
 	if !has_timing_data(): return false
 	if !has_control_points(): return false
 	var timing_data := get_timing_data()
@@ -123,10 +115,6 @@ func has_applied_timing_changes() -> bool:
 
 func prompt_initialize() -> void:
 	if has_applied_timing_changes():
-		if !is_context_complete():
-			_error(ErrorReason.INCOMPLETE_CONTEXT)
-			return
-		
 		var prompt := AcceptDialog.new()
 		prompt.theme = EditorInterface.get_editor_theme()
 		prompt.title = "Reinitialize Timing?"
@@ -164,10 +152,6 @@ func prompt_initialize() -> void:
 
 func prompt_unlink() -> void:
 	if has_applied_timing_changes():
-		if !is_context_complete():
-			_error(ErrorReason.INCOMPLETE_CONTEXT)
-			return
-
 		var prompt := AcceptDialog.new()
 		prompt.theme = EditorInterface.get_editor_theme()
 		prompt.title = "Unlink"
@@ -203,7 +187,7 @@ func prompt_unlink() -> void:
 		unlink()
 
 func initialize() -> void:
-	if !is_context_complete():
+	if !_anim:
 		_error(ErrorReason.INCOMPLETE_CONTEXT)
 		return
 
@@ -232,11 +216,13 @@ func _get_or_add_edit_track() -> int:
 
 func _initialize_edit_track() -> int:
 	var edit_track_index := _find_edit_track_index()
-	edit_track_index = _transactions.initialize_track(edit_track_index, &"edit_control_points", _mixer, _anim_root_node, self.get_script(), TrackState.blank(false, true))
+	edit_track_index = _transactions.initialize_track(edit_track_index, &"edit_control_points", TrackState.blank(false, true))
+	if _mixer:
+		_transactions.initialize_mixer_metadata(_mixer, self.get_script())
 	return edit_track_index
 
 func uninitialize() -> void:
-	if !is_context_complete():
+	if !_anim:
 		_error(ErrorReason.INCOMPLETE_CONTEXT)
 		return
 	if !has_timing_data() && !has_timing_tracks():
@@ -248,7 +234,7 @@ func uninitialize() -> void:
 	_transactions.set_anim_metadata(META_NAME_RETIMING_DATA, null)
 
 func revert() -> void:
-	if !is_context_complete():
+	if !_anim:
 		_error(ErrorReason.INCOMPLETE_CONTEXT)
 		return
 	if !has_timing_data():
@@ -269,7 +255,7 @@ func revert() -> void:
 	apply_timing_change(false)
 
 func unlink() -> void:
-	if !is_context_complete():
+	if !_anim:
 		_error(ErrorReason.INCOMPLETE_CONTEXT)
 		return
 	if !has_timing_data():
@@ -298,7 +284,7 @@ func unlink() -> void:
 	_transactions.set_anim_metadata(META_NAME_RETIMING_DATA, new_timing_data)
 
 func link(start_new_transaction: bool = true) -> void:
-	if !is_context_complete():
+	if !_anim:
 		_error(ErrorReason.INCOMPLETE_CONTEXT)
 		return
 	if !has_timing_data():
@@ -339,7 +325,7 @@ func link(start_new_transaction: bool = true) -> void:
 	_transactions.set_anim_metadata(META_NAME_RETIMING_DATA, new_timing_data)
 
 func apply_timing_change(start_new_transaction: bool = true) -> void:
-	if !is_context_complete():
+	if !_anim:
 		_error(ErrorReason.INCOMPLETE_CONTEXT)
 		return
 	if !has_timing_data():
@@ -429,7 +415,7 @@ func retime_reimported_animations() -> void:
 		return
 
 	var retimed_count := 0
-	for entry in _get_all_animations():
+	for entry in _get_all_animations(_mixer):
 		var anim: Animation = entry.anim
 		var anim_name: StringName = entry.anim_name
 		set_context(_mixer, anim, anim_name)
@@ -442,7 +428,7 @@ func retime_reimported_animations() -> void:
 	_info("Retimed %s animations" % [retimed_count])
 
 func force_fix_track_imported() -> void:
-	if !is_context_complete():
+	if !_anim:
 		_error(ErrorReason.INCOMPLETE_CONTEXT)
 		return
 	if !has_timing_tracks():
@@ -456,10 +442,12 @@ func force_fix_track_imported() -> void:
 		_anim.track_set_imported(edit_track_index, true)
 		_anim.emit_changed()
 
-func _get_all_animations() -> Array[Dictionary]:
+### Private Utility
+
+func _get_all_animations(mixer: AnimationMixer) -> Array[Dictionary]:
 	var output: Array[Dictionary] = []
-	for library_name: StringName in _mixer.get_animation_library_list():
-		var library := _mixer.get_animation_library(library_name)
+	for library_name: StringName in mixer.get_animation_library_list():
+		var library := mixer.get_animation_library(library_name)
 		for anim_name: StringName in library.get_animation_list():
 			var anim := library.get_animation(anim_name)
 			var full_anim_name := StringName("%s/%s" % [library_name, anim_name]) if library_name else anim_name
@@ -468,8 +456,6 @@ func _get_all_animations() -> Array[Dictionary]:
 				"anim_name": full_anim_name
 			})
 	return output
-
-### Private Utility
 
 func _track_keys_to_array(track_index: int) -> Array[float]:
 	var times : Array[float] = []
@@ -533,6 +519,8 @@ enum ErrorReason {
 ### Transactions
 
 class Transactions extends RefCounted:
+	const META_NAME_RETIMING := &"retiming"
+	
 	var _undo_redo: EditorUndoRedoManager
 	var _anim: Animation
 	var _action_name: String
@@ -556,30 +544,34 @@ class Transactions extends RefCounted:
 		_undo_redo.add_undo_method(_anim, &"emit_changed")
 		_undo_redo.commit_action()
 	
-	func initialize_track(track_index: int, property_name: StringName, mixer: AnimationMixer, anim_root_node: Node, tool_script: Script, state: TrackState) -> int:
+	func initialize_track(track_index: int, property_name: StringName, state: TrackState) -> int:
 		if track_index < 0:
-			var node_holding_resource := _get_animation_player(mixer, anim_root_node)
-			var meta_name := &"retiming"
 			
-			var property_path : NodePath = "%s:metadata/%s:%s" % [anim_root_node.get_path_to(node_holding_resource), meta_name, property_name]
+			var property_path : NodePath = ".:metadata/%s:%s" % [META_NAME_RETIMING, property_name]
 			# Add track
 			var new_index := _anim.get_track_count()
 			add_track(Animation.TrackType.TYPE_VALUE, new_index, property_path)
 			track_index = new_index
-			if !node_holding_resource.has_meta(meta_name) || node_holding_resource.get_meta(meta_name) == null:
-				var new_tool : Resource = tool_script.new()
-				_undo_redo.create_action("Initialize Animation Timing Tool", UndoRedo.MERGE_ALL, node_holding_resource)
-				_undo_redo.add_do_method(node_holding_resource, &"set_meta", meta_name, new_tool)
-				if !node_holding_resource.has_meta(meta_name):
-					_undo_redo.add_undo_method(node_holding_resource, &"remove_meta", meta_name)
-				else:
-					_undo_redo.add_undo_method(node_holding_resource, &"set_meta", meta_name, null)
-				_undo_redo.commit_action()
 		
 		update_track(track_index, state)
 		clear_track(track_index)
 		
 		return track_index
+	
+	func initialize_mixer_metadata(mixer: AnimationMixer, tool_script: Script) -> void:
+		if !mixer: return
+		var anim_root_node := mixer.get_node(mixer.root_node)
+		var meta_name := META_NAME_RETIMING
+		
+		if !anim_root_node.has_meta(meta_name) || anim_root_node.get_meta(meta_name) == null:
+			var new_tool : Resource = tool_script.new()
+			_undo_redo.create_action("Setup AnimationMixer for Timing Tool", UndoRedo.MERGE_ALL, anim_root_node)
+			_undo_redo.add_do_method(anim_root_node, &"set_meta", meta_name, new_tool)
+			if !anim_root_node.has_meta(meta_name):
+				_undo_redo.add_undo_method(anim_root_node, &"remove_meta", meta_name)
+			else:
+				_undo_redo.add_undo_method(anim_root_node, &"set_meta", meta_name, null)
+			_undo_redo.commit_action()
 	
 	func move_track(from_index: int, to_index: int) -> void:
 		create_action(true)
@@ -704,15 +696,6 @@ class Transactions extends RefCounted:
 				return remap(time, old_from, old_to, new_from, new_to)
 		printerr("Should have been impossible to get here")
 		return 0
-
-	func _get_animation_player(mixer: AnimationMixer, anim_root_node: Node) -> AnimationMixer:
-		var player: AnimationMixer = mixer
-		if player is AnimationTree:
-			player = player.get_node(player.anim_player)
-			if !player:
-				player = mixer
-
-		return player
 
 class KeyTransaction extends RefCounted:
 	var state: KeyState
