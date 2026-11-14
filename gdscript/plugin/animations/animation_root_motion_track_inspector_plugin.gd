@@ -1,8 +1,6 @@
 ﻿@tool
 extends EditorInspectorPlugin
 
-const META_NAME_CACHED_VALUE := &"_cached_value"
-
 func _can_handle(object: Object) -> bool:
 	if object is AnimationMixer:
 		return true
@@ -18,7 +16,6 @@ func _parse_property(object: Object, type: int, name: String, hint_type: int, hi
 			property_editor.set_object_and_property(object, name)
 			property_editor.selectable = true
 			property_editor.update_property()
-			property_editor.set_meta(META_NAME_CACHED_VALUE, object.get(name))
 			add_property_editor(name, property_editor, false, "Track (unrestricted)")
 			property_editor.property_changed.connect(_on_property_changed.bind(object))
 			return false

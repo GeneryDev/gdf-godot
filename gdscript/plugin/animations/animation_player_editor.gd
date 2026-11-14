@@ -54,7 +54,8 @@ static func _prepare_to_access_editor():
 	_animation_picker = _animation_editor.find_children("*","OptionButton", true, false)[0]
 	_time_control = _animation_editor.find_children("*","SpinBox", true, false)[0]
 
-static func _update_editing_mixer(mixer: AnimationMixer) -> void:
+static func update_editing_mixer(object: Object) -> void:
+	var mixer := object as AnimationMixer if object is AnimationMixer else null
 	if mixer:
 		_editing_animation_mixer = mixer
 		print("Editing animation mixer: %s" % [_editing_animation_mixer])
@@ -62,7 +63,7 @@ static func _update_editing_mixer(mixer: AnimationMixer) -> void:
 	elif _editing_animation_mixer && _editing_animation_mixer.is_inside_tree():
 		_editing_mixer_unselected_but_still_in_tree = true
 		print("Deselected mixer, but still in tree")
-	else:
+	elif _editing_animation_mixer:
 		_editing_animation_mixer = null
 		print("No animation mixer active")
 		_editing_mixer_unselected_but_still_in_tree = false
