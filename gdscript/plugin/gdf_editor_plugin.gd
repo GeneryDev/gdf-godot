@@ -27,6 +27,7 @@ func _enter_tree() -> void:
 	_animation_track_browser_editor = load(PLUGIN_ROOT + "/gdscript/plugin/animations/animation_track_browser_editor.gd").new()
 	if _animation_track_browser_editor:
 		_animation_track_browser_editor.enable()
+	_inspector_plugins.append(load(PLUGIN_ROOT + "/gdscript/plugin/animations/animation_root_mode_inspector_plugin.gd").new())
 	# Materials
 	_inspector_plugins.append(load(PLUGIN_ROOT + "/gdscript/plugin/materials/material_inspector_plugin.gd").new())
 	_resource_conversion_plugins.append(load(PLUGIN_ROOT + "/gdscript/plugin/materials/custom_material_to_shader_converter.gd").new())
