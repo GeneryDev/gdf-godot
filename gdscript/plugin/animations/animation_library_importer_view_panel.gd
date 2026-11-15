@@ -356,7 +356,8 @@ func _perform_action(id: int, anim_name: StringName) -> void:
 	
 	match id:
 		ACTION_EDIT_RESOURCE:
-			EditorInterface.edit_resource(anim)
+			EditorInterface.edit_resource.call_deferred(anim)
+			_edit_animation(anim_name)
 		ACTION_REMOVE_ANIM:
 			undo_redo.create_action("Remove Animation from Library", UndoRedo.MERGE_DISABLE, library, false, true)
 			undo_redo.add_do_method(library, &"remove_animation", anim_name)
@@ -373,6 +374,22 @@ func _perform_action(id: int, anim_name: StringName) -> void:
 		ACTION_SHOW_IN_FILESYSTEM:
 			EditorInterface.select_file(anim.resource_path)
 			EditorInterface.get_file_system_dock().make_visible()
+
+func _edit_animation(anim_name: StringName) -> void:
+	if !anim_name: return
+	var library := _library
+	var anim := library.get_animation(anim_name) if anim_name else null
+	if !anim: return
+	
+	var editor = load(GdfEditorPlugin.PLUGIN_ROOT + "/gdscript/plugin/animations/animation_player_editor.gd")
+	var mixer: AnimationMixer = editor.current_animation_mixer
+	if mixer:
+		for library_name in mixer.get_animation_library_list():
+			if mixer.get_animation_library(library_name) == library:
+				var full_anim_name = library_name + "/" + anim_name if library_name else anim_name
+				editor.make_visible()
+				editor.current_animation_name = full_anim_name
+				return
 
 func _show_detail(anim_name: StringName) -> void:
 	var library := _library

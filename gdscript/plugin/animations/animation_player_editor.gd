@@ -30,6 +30,7 @@ static var current_animation_name: StringName:
 		for i in range(_animation_picker.item_count):
 			if _animation_picker.get_item_text(i) == value:
 				_animation_picker.selected = i
+				_animation_picker.item_selected.emit(i)
 				return
 
 static var current_animation_mixer: AnimationMixer:
@@ -53,6 +54,10 @@ static func _prepare_to_access_editor():
 	_animation_editor = EditorInterface.get_base_control().find_children("Animation","AnimationPlayerEditor", true, false)[0]
 	_animation_picker = _animation_editor.find_children("*","OptionButton", true, false)[0]
 	_time_control = _animation_editor.find_children("*","SpinBox", true, false)[0]
+
+static func make_visible():
+	_prepare_to_access_editor()
+	_animation_editor.make_visible()
 
 static func update_editing_mixer(object: Object) -> void:
 	var mixer := object as AnimationMixer if object is AnimationMixer else null
