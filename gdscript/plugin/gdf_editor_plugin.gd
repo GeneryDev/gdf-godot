@@ -31,6 +31,7 @@ func _enter_tree() -> void:
 	_inspector_plugins.append(load(PLUGIN_ROOT + "/gdscript/plugin/animations/animation_root_motion_track_inspector_plugin.gd").new())
 	_animation_tree_ducking_inspector_plugin = load(PLUGIN_ROOT + "/gdscript/plugin/animations/animation_tree_ducking_inspector_plugin.gd").new()
 	_inspector_plugins.append(_animation_tree_ducking_inspector_plugin)
+	_inspector_plugins.append(load(PLUGIN_ROOT + "/gdscript/plugin/animations/animation_library_importer_inspector_plugin.gd").new())
 	# Materials
 	_inspector_plugins.append(load(PLUGIN_ROOT + "/gdscript/plugin/materials/material_inspector_plugin.gd").new())
 	_resource_conversion_plugins.append(load(PLUGIN_ROOT + "/gdscript/plugin/materials/custom_material_to_shader_converter.gd").new())

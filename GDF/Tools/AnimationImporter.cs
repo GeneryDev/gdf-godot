@@ -8,7 +8,6 @@ using Godot;
 namespace GDF.Tools;
 
 [Tool]
-[GlobalClass]
 [Icon(GdfIcons.ToolCog)]
 public partial class AnimationImporter : Node
 {
