@@ -22,7 +22,6 @@ var _mixer: AnimationMixer
 var _anim_name: StringName
 
 var _transactions: Transactions
-var _undo_redo: EditorUndoRedoManager
 
 func _init():
 	resource_name = "Animation Timing Tool"
@@ -244,13 +243,14 @@ func _transaction_initialize_mixer_metadata(mixer: AnimationMixer, tool_script: 
 
 	if !anim_root_node.has_meta(meta_name) || anim_root_node.get_meta(meta_name) == null:
 		var new_tool : Resource = tool_script.new()
-		_undo_redo.create_action("Setup AnimationMixer for Timing Tool", UndoRedo.MERGE_ALL, anim_root_node)
-		_undo_redo.add_do_method(anim_root_node, &"set_meta", meta_name, new_tool)
+		var undo_redo := EditorInterface.get_editor_undo_redo()
+		undo_redo.create_action("Setup AnimationMixer for Timing Tool", UndoRedo.MERGE_ALL, anim_root_node)
+		undo_redo.add_do_method(anim_root_node, &"set_meta", meta_name, new_tool)
 		if !anim_root_node.has_meta(meta_name):
-			_undo_redo.add_undo_method(anim_root_node, &"remove_meta", meta_name)
+			undo_redo.add_undo_method(anim_root_node, &"remove_meta", meta_name)
 		else:
-			_undo_redo.add_undo_method(anim_root_node, &"set_meta", meta_name, null)
-		_undo_redo.commit_action()
+			undo_redo.add_undo_method(anim_root_node, &"set_meta", meta_name, null)
+		undo_redo.commit_action()
 
 func uninitialize() -> void:
 	if !_anim:

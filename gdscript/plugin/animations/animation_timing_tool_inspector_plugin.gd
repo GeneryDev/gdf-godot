@@ -6,6 +6,7 @@ var timing_tool_script: Script = load(GdfEditorPlugin.PLUGIN_ROOT + "/gdscript/p
 var _tool: Object
 
 func _can_handle(object: Object) -> bool:
+	if !object: return false
 	if object.is_class(&"AnimationTrackKeyEdit") || object.is_class(&"AnimationMultiTrackKeyEdit"):
 		return &"value" in object && object.value is Script && object.value == timing_tool_script
 	if is_instance_of(object, timing_tool_script):

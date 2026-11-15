@@ -1,4 +1,4 @@
-﻿@tool
+@tool
 extends RefCounted
 
 static var _animation_editor: Control

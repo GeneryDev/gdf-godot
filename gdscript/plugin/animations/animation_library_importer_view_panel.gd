@@ -23,9 +23,11 @@ var _detail_unselected_container: Control
 var _detail_name_label: Label
 var _detail_storage_button: MenuButton
 var _detail_inherit_button: OptionButton
-var _detail_reimport_button: Button 
+var _detail_reimport_button: Button
 
-var _current_animation_in_detail: StringName
+var _current_animation_name_in_detail: StringName
+var _current_animation_in_detail: Animation
+var _detail_refresh_queued := false
 
 var icons: Dictionary = {}
 
@@ -72,7 +74,7 @@ func _build_header() -> Control:
 	new_animation_button.text = "New Animation"
 	new_animation_button.icon = theme.get_icon(&"Add",&"EditorIcons")
 	new_animation_button.theme_type_variation = &"InspectorActionButton"
-	new_animation_button.pressed.connect(library.new_animation)
+	new_animation_button.pressed.connect(library.dialog_new_animation)
 	return header
 
 func _build_tree() -> Control:
@@ -114,6 +116,7 @@ func _build_detail_panel() -> Control:
 		reimport_all_button.icon = icons.Import
 		reimport_all_button.text = "Reimport All"
 		reimport_all_button.theme_type_variation = &"InspectorActionButton"
+		reimport_all_button.pressed.connect(library.reimport_all, CONNECT_DEFERRED)
 	if true:
 		# Selected panel
 		var vbox := VBoxContainer.new()
@@ -156,7 +159,7 @@ func _build_detail_panel() -> Control:
 		var resource_button := MenuButton.new()
 		name_panel_hbox.add_child(resource_button)
 		resource_button.icon = icons.GuiTabMenuHl
-		resource_button.get_popup().id_pressed.connect(func(id): _perform_action(id, _current_animation_in_detail), CONNECT_DEFERRED)
+		resource_button.get_popup().id_pressed.connect(func(id): _perform_action(id, _current_animation_name_in_detail), CONNECT_DEFERRED)
 		_add_resource_context_menu_actions(resource_button.get_popup())
 		resource_button.get_popup().add_separator()
 		resource_button.get_popup().add_icon_item(icons.Remove, tr("Remove from Library"), ACTION_REMOVE_ANIM)
@@ -177,7 +180,7 @@ func _build_detail_panel() -> Control:
 		storage_button.flat = false
 		storage_button.size_flags_horizontal = SIZE_EXPAND_FILL
 		_add_resource_context_menu_actions(storage_button.get_popup())
-		storage_button.get_popup().id_pressed.connect(func(id: int): _perform_action(id, _current_animation_in_detail), CONNECT_DEFERRED)
+		storage_button.get_popup().id_pressed.connect(func(id: int): _perform_action(id, _current_animation_name_in_detail), CONNECT_DEFERRED)
 	
 		var inherit_row := HBoxContainer.new()
 		vbox.add_child(inherit_row)
@@ -199,6 +202,7 @@ func _build_detail_panel() -> Control:
 		for anim_name in library.get_source_animation_list():
 			inherit_button.add_item(anim_name)
 			inherit_button.set_item_metadata(inherit_button.item_count-1, anim_name)
+		inherit_button.item_selected.connect(_on_inherit_selected, CONNECT_DEFERRED)
 			
 		var padding := Control.new()
 		vbox.add_child(padding)
@@ -208,20 +212,28 @@ func _build_detail_panel() -> Control:
 		var action_container := HFlowContainer.new()
 		vbox.add_child(action_container)
 		action_container.alignment = FlowContainer.ALIGNMENT_CENTER
-		
+
+		var edit_button := Button.new()
+		action_container.add_child(edit_button)
+		edit_button.icon = icons.Edit
+		edit_button.text = "Edit"
+		edit_button.theme_type_variation = &"InspectorActionButton"
+		edit_button.pressed.connect(func(): _perform_action(ACTION_EDIT_RESOURCE, _current_animation_name_in_detail), CONNECT_DEFERRED)
+
 		var reimport_button := Button.new()
 		action_container.add_child(reimport_button)
 		_detail_reimport_button = reimport_button
 		reimport_button.icon = icons.Import
 		reimport_button.text = "Reimport"
 		reimport_button.theme_type_variation = &"InspectorActionButton"
+		reimport_button.pressed.connect(func(): _perform_action(ACTION_REIMPORT, _current_animation_name_in_detail), CONNECT_DEFERRED)
 	
 	return detail_panel
 
 func _populate_tree(filter: String = "") -> void:
 	var library := _library
 	var tree := _tree
-	var _prev_selected_anim_name := tree.get_selected().get_metadata(COLUMN_NAME) if tree.get_selected() else _current_animation_in_detail
+	var _prev_selected_anim_name := tree.get_selected().get_metadata(COLUMN_NAME) if tree.get_selected() else _current_animation_name_in_detail
 	var _prev_selected_column := tree.get_selected_column()
 	
 	tree.clear()
@@ -336,6 +348,13 @@ func _show_tree_item_context_menu(item: TreeItem, global_position: Vector2) -> v
 	
 	menu.popup()
 
+func _on_inherit_selected(index: int) -> void:
+	if !_current_animation_name_in_detail: return
+	var inherit_anim_name := _detail_inherit_button.get_item_metadata(index)
+	_library.set_animation_inheritance(_current_animation_name_in_detail, inherit_anim_name, true)
+	
+	_edit_animation(_current_animation_name_in_detail)
+
 func _add_animation_context_menu_actions(menu: PopupMenu, anim_name: StringName) -> void:
 	menu.add_icon_item(icons.Import, tr("Reimport"), ACTION_REIMPORT)
 	menu.set_item_disabled(menu.item_count-1, _library.get_inheriting_from_animation(_library.get_animation(anim_name)) == &"")
@@ -372,8 +391,10 @@ func _perform_action(id: int, anim_name: StringName) -> void:
 			undo_redo.add_undo_method(library, &"add_animation", anim_name, anim)
 			undo_redo.commit_action()
 		ACTION_SHOW_IN_FILESYSTEM:
-			EditorInterface.select_file(anim.resource_path)
+			EditorInterface.select_file(anim.resource_path.get_slice("::",0))
 			EditorInterface.get_file_system_dock().make_visible()
+		ACTION_REIMPORT:
+			library.reimport_animation(anim_name)
 
 func _edit_animation(anim_name: StringName) -> void:
 	if !anim_name: return
@@ -388,14 +409,19 @@ func _edit_animation(anim_name: StringName) -> void:
 			if mixer.get_animation_library(library_name) == library:
 				var full_anim_name = library_name + "/" + anim_name if library_name else anim_name
 				editor.make_visible()
-				editor.current_animation_name = full_anim_name
+				editor.set_deferred(&"current_animation_name", full_anim_name)
 				return
 
 func _show_detail(anim_name: StringName) -> void:
 	var library := _library
 	var anim := library.get_animation(anim_name) if anim_name else null
 
-	_current_animation_in_detail = anim_name
+	_current_animation_name_in_detail = anim_name
+	if _current_animation_in_detail:
+		_current_animation_in_detail.changed.disconnect(_refresh_detail_deferred)
+	_current_animation_in_detail = anim
+	if _current_animation_in_detail:
+		_current_animation_in_detail.changed.connect(_refresh_detail_deferred)
 	
 	if !anim:
 		_detail_main_container.visible = false
@@ -417,3 +443,12 @@ func _show_detail(anim_name: StringName) -> void:
 			_detail_inherit_button.select(item_index)
 	
 	_detail_reimport_button.disabled = inheriting_from_animation.is_empty()
+
+func _refresh_detail_deferred() -> void:
+	if _detail_refresh_queued: return
+	_detail_refresh_queued = true
+	set_deferred(&"_detail_refresh_queued", false)
+	_refresh_detail.call_deferred()
+
+func _refresh_detail() -> void:
+	_show_detail(_current_animation_name_in_detail)

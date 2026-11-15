@@ -4,6 +4,7 @@ extends EditorInspectorPlugin
 const META_NAME_METADATA: StringName = &"gdf_metadata"
 
 func _can_handle(object: Object) -> bool:
+	if !object: return false
 	if GdfAnimationNodeMetadata.Supports(object):
 		return true
 	if GdfAnimationTransitionMetadata.Supports(object):
