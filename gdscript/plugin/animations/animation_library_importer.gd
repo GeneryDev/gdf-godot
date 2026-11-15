@@ -2,6 +2,11 @@
 class_name AnimationLibraryImporter
 extends AnimationLibrary
 
+const AnimationTransactionAPI : Script = preload(GdfEditorPlugin.PLUGIN_ROOT + "/gdscript/plugin/animations/animation_transaction_api.gd")
+const Transactions := AnimationTransactionAPI.Transactions
+const KeyState := AnimationTransactionAPI.KeyState
+const TrackState := AnimationTransactionAPI.TrackState
+
 const META_NAME_INHERITING_FROM_ANIMATION := &"inheriting_from_animation"
 
 @export_file("*.gltf","*.glb","*.fbx","*.blend")
