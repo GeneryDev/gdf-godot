@@ -1,11 +1,20 @@
-﻿using Godot;
+﻿namespace GDF.Attributes.Impl;
 
-namespace GDF.Attributes;
-
-public class StackableBitField: StackableValue<uint, (uint Value, ModificationOperator Operator, uint Mask)>
+public class BitFieldAttribute: Attribute<uint, (uint Value, BitFieldAttribute.ModificationOperator Operator, uint Mask)>
 {
+    public uint BaseValue
+    {
+        get => _baseValue;
+        set
+        {
+            if (_baseValue == value) return;
+            _baseValue = value;
+            MarkDirty();
+        }
+    }
     public override uint CurrentValue => GetComputed().Param.Value;
-    public uint BaseValue;
+    
+    private uint _baseValue;
 
     protected override (uint Value, ModificationOperator Operator, uint Mask) GetInitialParam()
     {
@@ -28,10 +37,8 @@ public class StackableBitField: StackableValue<uint, (uint Value, ModificationOp
             case ModificationOperator.Or:
                 mergedValue = (current.Param.Value & ~incoming.Param.Mask) | ((current.Param.Value | incoming.Param.Value) & incoming.Param.Mask);
                 break;
-            case ModificationOperator.Add:
-            case ModificationOperator.Multiply:
             default:
-                GD.PushError($"Operation '{incoming.Param.Operator}' not supported for stackable value of type {GetType()}");
+                GdfLogger.Error($"Operation '{incoming.Param.Operator}' not supported for attribute of type {GetType()}");
                 mergedValue = current.Param.Value;
                 break;
         }
@@ -41,5 +48,12 @@ public class StackableBitField: StackableValue<uint, (uint Value, ModificationOp
             Param = (mergedValue, ModificationOperator.Set, current.Param.Mask | incoming.Param.Mask),
             Token = incoming.Token
         };
+    }
+
+    public enum ModificationOperator
+    {
+        Set,
+        And,
+        Or
     }
 }

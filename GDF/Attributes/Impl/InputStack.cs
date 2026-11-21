@@ -1,9 +1,8 @@
 ﻿using System;
-using Godot;
 
-namespace GDF.Attributes;
+namespace GDF.Attributes.Impl;
 
-public class InputStack : StackableValue<Empty, InputGroupMode>
+public class InputStack : Attribute<Empty, InputGroupMode>
 {
     public override Empty CurrentValue => default;
 
@@ -18,7 +17,7 @@ public class InputStack : StackableValue<Empty, InputGroupMode>
         return current;
     }
 
-    public bool HasControl(StackableValueToken token)
+    public bool HasControl(AttributeModifierToken token)
     {
         if (!AssertTokenOwn(token)) return false;
         var computed = GetComputed();
@@ -59,20 +58,17 @@ public enum InputGroupMode
 
 public static class InputStackExtensions
 {
-    public static void Set(this StackableValue<Empty, InputGroupMode> target, StackableValueToken token, InputGroupMode inputGroupMode)
+    public static void Set(this InputStack target, AttributeModifierToken token, InputGroupMode inputGroupMode)
     {
         target.Modify(token, inputGroupMode);
     }
-    public static StackableValueTokenTyped<Empty, InputGroupMode> Set(this StackableValueTokenTyped<Empty, InputGroupMode> token, InputGroupMode inputGroupMode)
+    public static AttributeModifierTokenTyped<InputStack> Set(this AttributeModifierTokenTyped<InputStack> token, InputGroupMode inputGroupMode)
     {
         return token.Modify(inputGroupMode);
     }
     
-    public static bool HasControl(this StackableValueTokenTyped<Empty, InputGroupMode> token)
+    public static bool HasControl(this AttributeModifierTokenTyped<InputStack> token)
     {
-        if (token.Target is InputStack stack)
-            return stack.HasControl(token);
-        GD.PrintErr("Called HasControl on a token not belonging to an input stack!");
-        return false;
+        return token.Target.HasControl(token);
     }
 }

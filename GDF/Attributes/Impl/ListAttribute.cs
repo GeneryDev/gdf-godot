@@ -1,9 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
-namespace GDF.Attributes;
+namespace GDF.Attributes.Impl;
 
-public class StackableList<T> : StackableValue<List<T>, StackableList<T>.ListModification>
+public class ListAttribute<T> : Attribute<List<T>, ListAttribute<T>.ListModification>
 {
     public override List<T> CurrentValue => GetComputed().Param.ElementList;
 
@@ -67,28 +66,28 @@ public class StackableList<T> : StackableValue<List<T>, StackableList<T>.ListMod
     }
 }
 
-public static class StackableListExtensions
+public static class ListAttributeExtensions
 {
-    public static void Set<T>(this StackableValue<List<T>, StackableList<T>.ListModification> target, StackableValueToken token, int group, T value)
+    public static void Set<T>(this ListAttribute<T> target, AttributeModifierToken token, int group, T value)
     {
-        target.Modify(token, new StackableList<T>.ListModification(group)
+        target.Modify(token, new ListAttribute<T>.ListModification(group)
         {
             SingleElement = value
         });
     }
     
-    public static StackableValueTokenTyped<List<T>, StackableList<T>.ListModification> Set<T>(this StackableValueTokenTyped<List<T>, StackableList<T>.ListModification> token, int group, T value)
+    public static AttributeModifierTokenTyped<ListAttribute<T>> Set<T>(this AttributeModifierTokenTyped<ListAttribute<T>> token, int group, T value)
     {
         token.Target.Set(token, group, value);
         return token;
     }
     
-    public static void Set<T>(this StackableValue<List<T>, StackableList<T>.ListModification> target, StackableValueToken token, int group, List<T> values)
+    public static void Set<T>(this ListAttribute<T> target, AttributeModifierToken token, int group, List<T> values)
     {
-        target.Modify(token, new StackableList<T>.ListModification(group, values));
+        target.Modify(token, new ListAttribute<T>.ListModification(group, values));
     }
     
-    public static StackableValueTokenTyped<List<T>, StackableList<T>.ListModification> Set<T>(this StackableValueTokenTyped<List<T>, StackableList<T>.ListModification> token, int group, List<T> values)
+    public static AttributeModifierTokenTyped<ListAttribute<T>> Set<T>(this AttributeModifierTokenTyped<ListAttribute<T>> token, int group, List<T> values)
     {
         token.Target.Set(token, group, values);
         return token;

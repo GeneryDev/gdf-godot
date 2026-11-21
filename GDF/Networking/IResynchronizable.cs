@@ -18,7 +18,7 @@ public static class ResynchronizableExt
     {
         if (resync is not Node node) return;
         if (node.IsMultiplayerAuthority())
-            //Nothing to be done
+            // Nothing to be done
             return;
 
         // Not multiplayer authority.
