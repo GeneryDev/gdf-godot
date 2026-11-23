@@ -58,15 +58,6 @@ public enum InputGroupMode
 
 public static class InputStackExtensions
 {
-    public static void Set(this InputStack target, AttributeModifierToken token, InputGroupMode inputGroupMode)
-    {
-        target.Modify(token, inputGroupMode);
-    }
-    public static AttributeModifierTokenTyped<InputStack> Set(this AttributeModifierTokenTyped<InputStack> token, InputGroupMode inputGroupMode)
-    {
-        return token.Modify(inputGroupMode);
-    }
-    
     public static bool HasControl(this AttributeModifierTokenTyped<InputStack> token)
     {
         return token.Target.HasControl(token);

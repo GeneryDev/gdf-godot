@@ -24,18 +24,18 @@ public class Test
         };
 
         floatAttribute.CreateToken("multiply 2", 1)
-            .Multiply(2);
+            .Modify(new Mod.Multiply<float>(2));
 
         Console.WriteLine(floatAttribute.CurrentValue);
 
         floatAttribute.CreateToken("add 10", 0)
-            .Add(10f)
+            .Modify(new Mod.Add<float>(10f))
             .SetWeight(0.5f);
 
         Console.WriteLine(floatAttribute.CurrentValue);
 
         floatAttribute.CreateToken("set 100", 3)
-            .Set(100)
+            .Modify(new Mod.Set<int>(100))
             .SetWeight(0.5f);
 
         Console.WriteLine(floatAttribute.CurrentValue);
@@ -54,9 +54,9 @@ public class Test
 
         var mouseModeAttribute = new Attribute<Godot.Input.MouseModeEnum>(Godot.Input.MouseModeEnum.Visible);
         mouseModeAttribute.CreateToken("Capture", 2)
-            .Set(Godot.Input.MouseModeEnum.Captured);
+            .Modify(Godot.Input.MouseModeEnum.Captured);
         mouseModeAttribute.CreateToken("Confine", 0)
-            .Set(Godot.Input.MouseModeEnum.Confined);
+            .Modify(Godot.Input.MouseModeEnum.Confined);
 
         Console.WriteLine(mouseModeAttribute.CurrentValue);
     }
@@ -102,24 +102,24 @@ public class Test
         };
 
         floatAttribute.CreateToken("multiply 1.1", 1)
-            .Multiply(1.1f);
+            .Modify(new Mod.Multiply<float>(1.1f));
         floatAttribute.CreateToken("multiply 1.2", 1)
-            .Multiply(1.2f);
+            .Modify(new Mod.Multiply<float>(1.2f));
         floatAttribute.CreateToken("multiply 1.3", 1)
-            .Multiply(1.3f);
+            .Modify(new Mod.Multiply<float>(1.3f));
         floatAttribute.CreateToken("multiply 1.4", 1)
-            .Multiply(1.4f);
+            .Modify(new Mod.Multiply<float>(1.4f));
 
         Console.WriteLine(floatAttribute.CurrentValue);
 
         floatAttribute.CreateToken("add 1", 0)
-            .Add(1);
+            .Modify(new Mod.Add<int>(1));
         floatAttribute.CreateToken("add 2", 0)
-            .Add(2);
+            .Modify(new Mod.Add<int>(2));
         floatAttribute.CreateToken("add 3", 0)
-            .Add(3);
+            .Modify(new Mod.Add<int>(3));
         floatAttribute.CreateToken("add 4", 0)
-            .Add(4);
+            .Modify(new Mod.Add<int>(4));
 
         Console.WriteLine(floatAttribute.CurrentValue);
         
