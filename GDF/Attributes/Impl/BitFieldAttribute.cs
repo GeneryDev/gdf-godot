@@ -1,6 +1,6 @@
 ﻿namespace GDF.Attributes.Impl;
 
-public class BitFieldAttribute: Attribute<uint, (uint Value, BitFieldAttribute.ModificationOperator Operator, uint Mask)>
+public class BitFieldAttribute: Attribute<uint, BitFieldModificationStep, BitFieldModifierChain>
 {
     public uint BaseValue
     {
@@ -16,25 +16,28 @@ public class BitFieldAttribute: Attribute<uint, (uint Value, BitFieldAttribute.M
     
     private uint _baseValue;
 
-    protected override (uint Value, ModificationOperator Operator, uint Mask) GetInitialParam()
+    protected override BitFieldModificationStep GetInitialParam()
     {
-        return (BaseValue, ModificationOperator.Set, 0);
+        return new (BaseValue, BitFieldModificationStep.ModificationOperator.Set, 0);
     }
     
-    protected override void Reduce(ref Modification current, in Modification incoming, float weight)
+}
+public class BitFieldModifierChain: ModifierChain<BitFieldModificationStep>
+{
+    protected override void Reduce(ref Step current, in Step incoming, float weight)
     {
         if (weight <= 0) return;
 
         uint mergedValue;
         switch (incoming.Param.Operator)
         {
-            case ModificationOperator.Set:
+            case BitFieldModificationStep.ModificationOperator.Set:
                 mergedValue = (current.Param.Value & ~incoming.Param.Mask) | (incoming.Param.Value & incoming.Param.Mask);
                 break;
-            case ModificationOperator.And:
+            case BitFieldModificationStep.ModificationOperator.And:
                 mergedValue = (current.Param.Value & ~incoming.Param.Mask) | ((current.Param.Value & incoming.Param.Value) & incoming.Param.Mask);
                 break;
-            case ModificationOperator.Or:
+            case BitFieldModificationStep.ModificationOperator.Or:
                 mergedValue = (current.Param.Value & ~incoming.Param.Mask) | ((current.Param.Value | incoming.Param.Value) & incoming.Param.Mask);
                 break;
             default:
@@ -43,17 +46,31 @@ public class BitFieldAttribute: Attribute<uint, (uint Value, BitFieldAttribute.M
                 break;
         }
 
-        current = new Modification()
+        current = new Step()
         {
-            Param = (mergedValue, ModificationOperator.Set, current.Param.Mask | incoming.Param.Mask),
+            Param = new (mergedValue, BitFieldModificationStep.ModificationOperator.Set, current.Param.Mask | incoming.Param.Mask),
             Token = incoming.Token
         };
     }
+}
+
+public struct BitFieldModificationStep
+{
+    public uint Value;
+    public ModificationOperator Operator;
+    public uint Mask;
 
     public enum ModificationOperator
     {
         Set,
         And,
         Or
+    }
+
+    public BitFieldModificationStep(uint value, ModificationOperator @operator, uint mask)
+    {
+        Value = value;
+        Operator = @operator;
+        Mask = mask;
     }
 }

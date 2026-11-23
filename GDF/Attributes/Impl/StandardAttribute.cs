@@ -1,9 +1,15 @@
 ﻿using System;
+using Godot;
 
 namespace GDF.Attributes.Impl;
 
-public abstract class StandardAttribute<T> : Attribute<T, ModificationOperation<T>>,
-    IAttributeModifiable<T, ModificationOperation<T>> where T : IEquatable<T>
+public abstract class StandardAttribute<T, TChain> :
+    Attribute<T, ModificationOperation<T>, TChain>,
+    IModifiable<T>
+    where T : IEquatable<T>
+    where TChain :
+        StandardModifierChain<T>,
+        new()
 {
     public T BaseValue
     {
@@ -15,8 +21,12 @@ public abstract class StandardAttribute<T> : Attribute<T, ModificationOperation<
             MarkDirty();
         }
     }
-    public Func<T, T, T> DefaultFunction { get; set; }
-    
+    public Func<T, T, T> DefaultFunction
+    {
+        get => ModifierChain.DefaultFunction;
+        set => ModifierChain.DefaultFunction = value;
+    }
+
     public override T CurrentValue => GetComputed().Param.AuxValue;
     
     private T _baseValue;
@@ -32,9 +42,28 @@ public abstract class StandardAttribute<T> : Attribute<T, ModificationOperation<
         return new ModificationOperation<T>(BaseValue);
     }
 
+    public static implicit operator T(StandardAttribute<T, TChain> attribute)
+    {
+        return attribute.CurrentValue;
+    }
+
+    public void Modify(ModifierToken token, T value)
+    {
+        ModifierChain.Modify(token, value);
+    }
+}
+
+public abstract class StandardModifierChain<T> :
+    ModifierChain<ModificationOperation<T>>,
+    IModifiable<T, ModificationOperation<T>>
+    where T :
+        IEquatable<T>
+{
+    public Func<T, T, T> DefaultFunction { get; set; }
+    
     protected abstract T Lerp(T a, T b, float weight);
 
-    protected override void Reduce(ref Modification current, in Modification incoming, float weight)
+    protected override void Reduce(ref Step current, in Step incoming, float weight)
     {
         if (weight == 0) return;
 
@@ -71,35 +100,67 @@ public abstract class StandardAttribute<T> : Attribute<T, ModificationOperation<
         current.Param = new ModificationOperation<T>(returnValue);
     }
 
-    public static implicit operator T(StandardAttribute<T> attribute)
-    {
-        return attribute.CurrentValue;
-    }
-
-    ModificationOperation<T> IAttributeModifiable<T, ModificationOperation<T>>.InToParam(T value)
+    ModificationOperation<T> IModifiable<T, ModificationOperation<T>>.InToParam(T value)
     {
         return new ModificationOperation<T>(DefaultFunction, value);
     }
 }
 
-public interface ITypedStandardAttribute<T> :
-    IAttributeModifiable<T, ModificationOperation<T>>,
-    IAttributeModifiable<Mod.Set<T>, ModificationOperation<T>>,
-    IAttributeModifiable<Func<T, T, T>, ModificationOperation<T>>
+public interface ITypedStandardAttribute<T, TChain> :
+    IAttribute<TChain>,
+    IModifiable<T>,
+    IModifiable<Mod.Set<T>>,
+    IModifiable<Func<T, T, T>>
+    where T : IEquatable<T>
+    where TChain :
+        StandardModifierChain<T>,
+        IModifiable<Mod.Set<T>>,
+        IModifiable<Func<T, T, T>>
+{
+    void IModifiable<T>.Modify(ModifierToken token, T value)
+    {
+        GetModifierChain().Modify(token, value);
+    }
+
+    void IModifiable<Mod.Set<T>>.Modify(ModifierToken token, Mod.Set<T> value)
+    {
+        GetModifierChain().Modify(token, value);
+    }
+
+    void IModifiable<Func<T, T, T>>.Modify(ModifierToken token, Func<T, T, T> value)
+    {
+        GetModifierChain().Modify(token, value);
+    }
+}
+
+public interface ITypedStandardModifierChain<T> :
+    IModifiable<T, ModificationOperation<T>>,
+    IModifiable<Mod.Set<T>, ModificationOperation<T>>,
+    IModifiable<Func<T, T, T>, ModificationOperation<T>>,
+    
+    IModifierComputable<T>
+
     where T : IEquatable<T>
 {
-    ModificationOperation<T> IAttributeModifiable<T, ModificationOperation<T>>.InToParam(T value)
+    ModificationOperation<T> IModifiable<T, ModificationOperation<T>>.InToParam(T value)
+    {
+        return new ModificationOperation<T>(value);
+    }
+    ModificationOperation<T> IModifiable<Mod.Set<T>, ModificationOperation<T>>.InToParam(Mod.Set<T> value)
+    {
+        return new ModificationOperation<T>((a, _) => a, value.Operand);
+    }
+    ModificationOperation<T> IModifiable<Func<T, T, T>, ModificationOperation<T>>.InToParam(Func<T, T, T> value)
     {
         return new ModificationOperation<T>(value);
     }
 
-    ModificationOperation<T> IAttributeModifiable<Mod.Set<T>, ModificationOperation<T>>.InToParam(Mod.Set<T> value)
+    T IModifierComputable<T>.Compute(in T initial)
     {
-        return new ModificationOperation<T>((a, _) => a, value.Operand);
-    }
-    ModificationOperation<T> IAttributeModifiable<Func<T, T, T>, ModificationOperation<T>>.InToParam(Func<T, T, T> value)
-    {
-        return new ModificationOperation<T>(value);
+        return ((StandardModifierChain<T>)this).Compute(new StandardModifierChain<T>.Step()
+        {
+            Param = new ModificationOperation<T>(initial)
+        }).Param.AuxValue;
     }
 }
 

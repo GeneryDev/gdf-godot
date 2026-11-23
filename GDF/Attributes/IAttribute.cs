@@ -1,41 +1,54 @@
 ﻿namespace GDF.Attributes;
 
-public interface IAttribute
+public interface IModifierChain
 {
-    public AttributeModifierToken CreateToken(string description, float order = 0);
-    public bool ClearModification(AttributeModifierToken token);
-    public void SetWeight(AttributeModifierToken token, float weight);
-    public void SetIntegrityChecker(AttributeModifierToken token, IntegrityChecker integrityChecker);
+    public ModifierToken CreateToken(string description, float order = 0);
+    public bool ClearModification(ModifierToken token);
+    public void SetWeight(ModifierToken token, float weight);
+    public void SetIntegrityChecker(ModifierToken token, IntegrityChecker integrityChecker);
     void CheckIntegrity(IntegrityCheckParams param);
-    public bool HasModification(AttributeModifierToken token);
+    public bool HasModification(ModifierToken token);
     public int GetEditCount();
 }
+public interface IAttribute : IModifierChain
+{
+}
+public interface IAttribute<TChain> : IAttribute
+    where TChain : IModifierChain
+{
+    public TChain GetModifierChain();
+}
 
-public interface IAttributeModifiable<in TIn, out TParam> : IAttributeModifiable<TIn>
+public interface IModifiable<in TIn, out TParam> : IModifiable<TIn>
 {
     public TParam InToParam(TIn value);
 
-    void IAttributeModifiable<TIn>.Modify(AttributeModifierToken token, TIn value)
+    void IModifiable<TIn>.Modify(ModifierToken token, TIn value)
     {
-        if (this is IAttributeModifiable<TParam> paramModifiable)
+        if (this is IModifiable<TParam> paramModifiable)
         {
             paramModifiable.Modify(token, InToParam(value));
         }
         else
         {
-            GdfLogger.Error($"Failed to call Modify on {this.GetType().Name}. Attribute type must implement {nameof(IAttributeModifiable<TParam>)} to properly implement {nameof(IAttributeModifiable<TIn,TParam>)}.");
+            GdfLogger.Error($"Failed to call Modify on {this.GetType().Name}. Attribute type must implement {nameof(IModifiable<TParam>)} to properly implement {nameof(IModifiable<TIn,TParam>)}.");
         }
     }
 }
 
-public interface IAttributeModifiable<in T>
+public interface IModifiable<in T>
 {
-    public void Modify(AttributeModifierToken token, T value);
+    public void Modify(ModifierToken token, T value);
 }
 
 public interface IAttributeComputable<out T>
 {
     public T CurrentValue { get; }
+}
+
+public interface IModifierComputable<T>
+{
+    public T Compute(in T initial);
 }
 
 public delegate IntegrityCheckResult IntegrityChecker(ref IntegrityCheckParams param);

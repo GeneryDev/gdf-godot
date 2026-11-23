@@ -30,7 +30,7 @@ public partial class StandardAttributeBlueprint : AttributeBlueprint
     [Export(PropertyHint.EnumSuggestion,"Set")] public string DefaultFunction = "Set";
 
     [Export(PropertyHint.Enum,"Linear,Radians,Degrees")]
-    public int FloatInterpolationMode = FloatAttribute.InterpolationModeLinear;
+    public int FloatInterpolationMode = FloatModifierChain.InterpolationModeLinear;
     
     private TypeEnum _type = TypeEnum.Float;
 

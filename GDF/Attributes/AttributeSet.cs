@@ -61,7 +61,7 @@ public class AttributeSet<TKey> : IAttributeSet<TKey>
 
     public bool IsAttributeModifiable<T>(TKey id)
     {
-        return IsAttribute<IAttributeModifiable<T>>(id);
+        return IsAttribute<IModifiable<T>>(id);
     }
 
     public T GetValue<T>(TKey id)
@@ -97,7 +97,7 @@ public class AttributeSetModifier<TKey>
         set => SetIntegrityChecker(value);
     }
 
-    private readonly Dictionary<TKey, AttributeModifierToken> _modifierTokens = new();
+    private readonly Dictionary<TKey, ModifierToken> _modifierTokens = new();
 
     public AttributeSetModifier(AttributeSet<TKey> attributeSet, string description, float defaultOrder)
     {
@@ -110,7 +110,7 @@ public class AttributeSetModifier<TKey>
     {
         var attr = AttributeSet.GetAttribute(id);
         if (attr == null) return this;
-        if (attr is not IAttributeModifiable<T> modifiable)
+        if (attr is not IModifiable<T> modifiable)
         {
             GdfLogger.Error($"Attribute with ID '{id}' is not modifiable using type {typeof(T).Name}");
             return this;
@@ -151,7 +151,7 @@ public class AttributeSetModifier<TKey>
         return this;
     }
 
-    private void SyncNewToken(in AttributeModifierToken token)
+    private void SyncNewToken(in ModifierToken token)
     {
         token.SetWeight(_weight);
         token.SetIntegrityChecker(_integrityChecker);

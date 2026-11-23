@@ -14,6 +14,6 @@ public interface IAttributeSet<in TKey>
     }
     public bool IsAttributeModifiable<T>(TKey id)
     {
-        return GetAttribute(id) is IAttributeModifiable<T>;
+        return GetAttribute(id) is IModifiable<T>;
     }
 }

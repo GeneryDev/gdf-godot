@@ -18,7 +18,7 @@ public partial class AttributeModifierResource : Resource
         ResourceLocalToScene = true;
     }
 
-    public bool Modify(AttributeModifierToken token)
+    public bool Modify(ModifierToken token)
     {
         var operandType = OperandType != Variant.Type.Nil ? OperandType : Operand.VariantType;
         return operandType switch
@@ -66,7 +66,7 @@ public partial class AttributeModifierResource : Resource
         };
     }
 
-    private bool ModifyTyped<[MustBeVariant] T>(AttributeModifierToken token, Variant operandVariant)
+    private bool ModifyTyped<[MustBeVariant] T>(ModifierToken token, Variant operandVariant)
     {
         var functionName = Function;
         var operand = operandVariant.As<T>();
@@ -74,7 +74,7 @@ public partial class AttributeModifierResource : Resource
         {
             case "Set":
             {
-                if (token.Target is IAttributeModifiable<Mod.Set<T>> modifiable)
+                if (token.Target is IModifiable<Mod.Set<T>> modifiable)
                 {
                     modifiable.Modify(token, new Mod.Set<T>(operand));
                     return true;
@@ -83,7 +83,7 @@ public partial class AttributeModifierResource : Resource
             }
             case "Add":
             {
-                if (token.Target is IAttributeModifiable<Mod.Add<T>> modifiable)
+                if (token.Target is IModifiable<Mod.Add<T>> modifiable)
                 {
                     modifiable.Modify(token, new Mod.Add<T>(operand));
                     return true;
@@ -92,7 +92,7 @@ public partial class AttributeModifierResource : Resource
             }
             case "Multiply":
             {
-                if (token.Target is IAttributeModifiable<Mod.Multiply<T>> modifiable)
+                if (token.Target is IModifiable<Mod.Multiply<T>> modifiable)
                 {
                     modifiable.Modify(token, new Mod.Multiply<T>(operand));
                     return true;
@@ -101,7 +101,7 @@ public partial class AttributeModifierResource : Resource
             }
             case "And":
             {
-                if (token.Target is IAttributeModifiable<Mod.And<T>> modifiable)
+                if (token.Target is IModifiable<Mod.And<T>> modifiable)
                 {
                     modifiable.Modify(token, new Mod.And<T>(operand));
                     return true;
@@ -110,7 +110,7 @@ public partial class AttributeModifierResource : Resource
             }
             case "Or":
             {
-                if (token.Target is IAttributeModifiable<Mod.Or<T>> modifiable)
+                if (token.Target is IModifiable<Mod.Or<T>> modifiable)
                 {
                     modifiable.Modify(token, new Mod.Or<T>(operand));
                     return true;
@@ -119,7 +119,7 @@ public partial class AttributeModifierResource : Resource
             }
             case "Blend":
             {
-                if (token.Target is IAttributeModifiable<Mod.Blend<T>> modifiable)
+                if (token.Target is IModifiable<Mod.Blend<T>> modifiable)
                 {
                     modifiable.Modify(token, new Mod.Blend<T>(operand));
                     return true;

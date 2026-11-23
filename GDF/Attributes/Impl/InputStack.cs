@@ -2,27 +2,19 @@
 
 namespace GDF.Attributes.Impl;
 
-public class InputStack : Attribute<Empty, InputGroupMode>
+public class InputStack : Attribute<Empty, InputGroupMode, InputStack.Reducer>
 {
     public override Empty CurrentValue => default;
 
     protected override InputGroupMode GetInitialParam() => default;
 
-    protected override void Reduce(ref Modification current, in Modification incoming, float weight)
+    public bool HasControl(ModifierToken token)
     {
-        if ((incoming.Param & InputGroupMode.BlocksInput) != 0 && weight > 0)
-        {
-            current = incoming;
-        }
-    }
-
-    public bool HasControl(AttributeModifierToken token)
-    {
-        if (!AssertTokenOwn(token)) return false;
+        if (!ModifierChain.AssertTokenOwn(token)) return false;
         var computed = GetComputed();
 
-        int blockingTokenIndex = !computed.Token.IsEmpty ? ModIndexOfToken(computed.Token) : -1;
-        int requestedTokenIndex = ModIndexOfToken(token);
+        int blockingTokenIndex = !computed.Token.IsEmpty ? ModifierChain.StepIndexOfToken(computed.Token) : -1;
+        int requestedTokenIndex = ModifierChain.StepIndexOfToken(token);
         
         if (requestedTokenIndex < blockingTokenIndex)
         {
@@ -42,6 +34,22 @@ public class InputStack : Attribute<Empty, InputGroupMode>
             return true;
         }
     }
+
+    public class Reducer : ModifierChain<InputGroupMode>
+    {
+        protected override void Reduce(ref Step current, in Step incoming, float weight)
+        {
+            if ((incoming.Param & InputGroupMode.BlocksInput) != 0 && weight > 0)
+            {
+                current = incoming;
+            }
+        }
+
+        public new int StepIndexOfToken(ModifierToken token)
+        {
+            return base.StepIndexOfToken(token);
+        }
+    }
 }
 
 [Flags]
@@ -57,7 +65,7 @@ public enum InputGroupMode
 
 public static class InputStackExtensions
 {
-    public static bool HasControl(this AttributeModifierTokenTyped<InputStack> token)
+    public static bool HasControl(this ModifierTokenTyped<InputStack> token)
     {
         return token.Target.HasControl(token);
     }

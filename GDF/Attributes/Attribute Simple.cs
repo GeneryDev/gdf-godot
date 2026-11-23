@@ -1,6 +1,6 @@
 ﻿namespace GDF.Attributes;
 
-public class Attribute<T> : Attribute<T, T>
+public class Attribute<T> : Attribute<T, T, SimpleModifierChain<T>>
 {
     public T BaseValue
     {
@@ -12,7 +12,6 @@ public class Attribute<T> : Attribute<T, T>
         }
     }
 
-    public float WeightThreshold = 1.0f;
     public override T CurrentValue => GetComputed().Param;
 
     private T _baseValue;
@@ -28,8 +27,13 @@ public class Attribute<T> : Attribute<T, T>
     {
         return BaseValue;
     }
+}
 
-    protected override void Reduce(ref Modification current, in Modification incoming, float weight)
+public class SimpleModifierChain<T> : ModifierChain<T>
+{
+    public float WeightThreshold = 1.0f;
+
+    protected override void Reduce(ref Step current, in Step incoming, float weight)
     {
         if (weight >= WeightThreshold)
             current = incoming;

@@ -1,24 +1,52 @@
 ﻿using System;
+using Godot;
 
 namespace GDF.Attributes.Impl;
 
-public partial class FloatAttribute : StandardAttribute<float>,
-    ITypedStandardAttribute<float>,
-    IAttributeModifiable<int, ModificationOperation<float>>,
-    IAttributeModifiable<Mod.Set<int>, ModificationOperation<float>>,
-    IAttributeModifiable<Mod.Add<float>, ModificationOperation<float>>,
-    IAttributeModifiable<Mod.Multiply<float>, ModificationOperation<float>>,
-    IAttributeModifiable<Mod.Add<int>, ModificationOperation<float>>,
-    IAttributeModifiable<Mod.Multiply<int>, ModificationOperation<float>>
+public partial class FloatAttribute :
+    StandardAttribute<float, FloatModifierChain>,
+    ITypedStandardAttribute<float, FloatModifierChain>
 {
+    public int InterpolationMode
+    {
+        get => ModifierChain.InterpolationMode;
+        set
+        {
+            if (ModifierChain.InterpolationMode == value) return;
+            ModifierChain.InterpolationMode = value;
+            MarkDirty();
+        }
+    }
+
+    public FloatAttribute() {}
+    public FloatAttribute(float baseValue) : base(baseValue) {}
+    
+    public abstract class Functions : FloatModifierChain.Functions;
+}
+public partial class FloatModifierChain : StandardModifierChain<float>,
+    ITypedStandardModifierChain<float>,
+    IModifiable<int, ModificationOperation<float>>,
+    IModifiable<Mod.Set<int>, ModificationOperation<float>>,
+    IModifiable<Mod.Add<float>, ModificationOperation<float>>,
+    IModifiable<Mod.Multiply<float>, ModificationOperation<float>>,
+    IModifiable<Mod.Add<int>, ModificationOperation<float>>,
+    IModifiable<Mod.Multiply<int>, ModificationOperation<float>>
+{
+    private int _interpolationMode = InterpolationModeLinear;
     public const int InterpolationModeLinear = 0;
     public const int InterpolationModeRadians = 1;
     public const int InterpolationModeDegrees = 2;
 
-    public int InterpolationMode = InterpolationModeLinear;
-
-    public FloatAttribute() {}
-    public FloatAttribute(float baseValue) : base(baseValue) {}
+    public int InterpolationMode
+    {
+        get => _interpolationMode;
+        set
+        {
+            if (_interpolationMode == value) return;
+            _interpolationMode = value;
+            MarkDirty();
+        }
+    }
 
     protected override float Lerp(float a, float b, float weight)
     {
@@ -30,37 +58,42 @@ public partial class FloatAttribute : StandardAttribute<float>,
         };
     }
 
-    ModificationOperation<float> IAttributeModifiable<int, ModificationOperation<float>>.InToParam(int value)
+    ModificationOperation<float> IModifiable<int, ModificationOperation<float>>.InToParam(int value)
     {
         return new ModificationOperation<float>(value);
     }
 
-    ModificationOperation<float> IAttributeModifiable<Impl.Mod.Set<int>, ModificationOperation<float>>.InToParam(Impl.Mod.Set<int> value)
+    ModificationOperation<float> IModifiable<Mod.Set<int>, ModificationOperation<float>>.InToParam(Mod.Set<int> value)
     {
         return new ModificationOperation<float>(Functions.Set, value.Operand);
     }
 
-    ModificationOperation<float> IAttributeModifiable<Impl.Mod.Add<float>, ModificationOperation<float>>.InToParam(Impl.Mod.Add<float> value)
+    ModificationOperation<float> IModifiable<Mod.Add<float>, ModificationOperation<float>>.InToParam(Mod.Add<float> value)
     {
         return new ModificationOperation<float>(Functions.Add, value.Operand);
     }
 
-    ModificationOperation<float> IAttributeModifiable<Impl.Mod.Multiply<float>, ModificationOperation<float>>.InToParam(Impl.Mod.Multiply<float> value)
+    ModificationOperation<float> IModifiable<Mod.Multiply<float>, ModificationOperation<float>>.InToParam(Mod.Multiply<float> value)
     {
         return new ModificationOperation<float>(Functions.Multiply, value.Operand);
     }
 
-    ModificationOperation<float> IAttributeModifiable<Impl.Mod.Add<int>, ModificationOperation<float>>.InToParam(Impl.Mod.Add<int> value)
+    ModificationOperation<float> IModifiable<Mod.Add<int>, ModificationOperation<float>>.InToParam(Mod.Add<int> value)
     {
         return new ModificationOperation<float>(Functions.Add, value.Operand);
     }
 
-    ModificationOperation<float> IAttributeModifiable<Impl.Mod.Multiply<int>, ModificationOperation<float>>.InToParam(Impl.Mod.Multiply<int> value)
+    ModificationOperation<float> IModifiable<Mod.Multiply<int>, ModificationOperation<float>>.InToParam(Mod.Multiply<int> value)
     {
         return new ModificationOperation<float>(Functions.Multiply, value.Operand);
     }
 
-    public static class Functions
+    public float Compute(in int initial)
+    {
+        return this.Compute((float)initial);
+    }
+
+    public class Functions
     {
         public static readonly Func<float, float, float> Set = (_, incoming) => incoming;
         public static readonly Func<float, float, float> Add = (current, incoming) => current + incoming;
@@ -99,30 +132,36 @@ public partial class FloatAttribute : StandardAttribute<float>,
     }
 }
 
-public partial class BoolAttribute : StandardAttribute<bool>,
-    ITypedStandardAttribute<bool>,
-    IAttributeModifiable<Mod.And<bool>, ModificationOperation<bool>>,
-    IAttributeModifiable<Mod.Or<bool>, ModificationOperation<bool>>
+public partial class BoolAttribute :
+    StandardAttribute<bool, BoolModifierChain>,
+    ITypedStandardAttribute<bool, BoolModifierChain>
 {
     public BoolAttribute() {}
     public BoolAttribute(bool baseValue) : base(baseValue) {}
 
+    public abstract class Functions : BoolModifierChain.Functions;
+}
+public partial class BoolModifierChain : StandardModifierChain<bool>,
+    ITypedStandardModifierChain<bool>,
+    IModifiable<Mod.And<bool>, ModificationOperation<bool>>,
+    IModifiable<Mod.Or<bool>, ModificationOperation<bool>>
+{
     protected override bool Lerp(bool a, bool b, float weight)
     {
         return weight < 1 ? a : b;
     }
 
-    ModificationOperation<bool> IAttributeModifiable<Impl.Mod.And<bool>, ModificationOperation<bool>>.InToParam(Impl.Mod.And<bool> value)
+    ModificationOperation<bool> IModifiable<Mod.And<bool>, ModificationOperation<bool>>.InToParam(Mod.And<bool> value)
     {
         return new ModificationOperation<bool>(Functions.And, value.Operand);
     }
 
-    ModificationOperation<bool> IAttributeModifiable<Impl.Mod.Or<bool>, ModificationOperation<bool>>.InToParam(Impl.Mod.Or<bool> value)
+    ModificationOperation<bool> IModifiable<Mod.Or<bool>, ModificationOperation<bool>>.InToParam(Mod.Or<bool> value)
     {
         return new ModificationOperation<bool>(Functions.Or, value.Operand);
     }
 
-    public static class Functions
+    public abstract class Functions
     {
         public static readonly Func<bool, bool, bool> Set = (_, incoming) => incoming;
         public static readonly Func<bool, bool, bool> And = (current, incoming) => current && incoming;
@@ -141,42 +180,48 @@ public partial class BoolAttribute : StandardAttribute<bool>,
     }
 }
 
-public partial class IntAttribute: StandardAttribute<int>,
-    ITypedStandardAttribute<int>,
-    IAttributeModifiable<Mod.Add<int>, ModificationOperation<int>>,
-    IAttributeModifiable<Mod.Multiply<int>, ModificationOperation<int>>,
-    IAttributeModifiable<Mod.And<int>, ModificationOperation<int>>,
-    IAttributeModifiable<Mod.Or<int>, ModificationOperation<int>>
+public partial class IntAttribute :
+    StandardAttribute<int, IntModifierChain>,
+    ITypedStandardAttribute<int, IntModifierChain>
 {
     public IntAttribute() {}
     public IntAttribute(int baseValue) : base(baseValue) {}
     
+    public abstract class Functions : IntModifierChain.Functions;
+}
+public partial class IntModifierChain: StandardModifierChain<int>,
+    ITypedStandardModifierChain<int>,
+    IModifiable<Mod.Add<int>, ModificationOperation<int>>,
+    IModifiable<Mod.Multiply<int>, ModificationOperation<int>>,
+    IModifiable<Mod.And<int>, ModificationOperation<int>>,
+    IModifiable<Mod.Or<int>, ModificationOperation<int>>
+{
     protected override int Lerp(int a, int b, float weight)
     {
         return (int)(a + (b - a) * weight);
     }
     
-    ModificationOperation<int> IAttributeModifiable<Impl.Mod.Add<int>, ModificationOperation<int>>.InToParam(Impl.Mod.Add<int> value)
+    ModificationOperation<int> IModifiable<Mod.Add<int>, ModificationOperation<int>>.InToParam(Mod.Add<int> value)
     {
         return new ModificationOperation<int>(Functions.Add, value.Operand);
     }
 
-    ModificationOperation<int> IAttributeModifiable<Impl.Mod.Multiply<int>, ModificationOperation<int>>.InToParam(Impl.Mod.Multiply<int> value)
+    ModificationOperation<int> IModifiable<Mod.Multiply<int>, ModificationOperation<int>>.InToParam(Mod.Multiply<int> value)
     {
         return new ModificationOperation<int>(Functions.Multiply, value.Operand);
     }
 
-    ModificationOperation<int> IAttributeModifiable<Impl.Mod.And<int>, ModificationOperation<int>>.InToParam(Impl.Mod.And<int> value)
+    ModificationOperation<int> IModifiable<Mod.And<int>, ModificationOperation<int>>.InToParam(Mod.And<int> value)
     {
         return new ModificationOperation<int>(Functions.And, value.Operand);
     }
 
-    ModificationOperation<int> IAttributeModifiable<Impl.Mod.Or<int>, ModificationOperation<int>>.InToParam(Impl.Mod.Or<int> value)
+    ModificationOperation<int> IModifiable<Mod.Or<int>, ModificationOperation<int>>.InToParam(Mod.Or<int> value)
     {
         return new ModificationOperation<int>(Functions.Or, value.Operand);
     }
     
-    public static class Functions
+    public class Functions
     {
         public static readonly Func<int, int, int> Set = (_, incoming) => incoming;
         public static readonly Func<int, int, int> Add = (current, incoming) => current + incoming;

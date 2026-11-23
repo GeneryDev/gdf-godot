@@ -169,7 +169,7 @@ public partial class AttributeWatcher : Node, IResynchronizable
             GdfLogger.Error($"Failed to start observing attribute '{attributeId}': Attribute is not computable as Variant.");
             return;
         }
-        if (attr is not IAttributeModifiable<Variant> modifiable)
+        if (attr is not IModifiable<Variant> modifiable)
         {
             GdfLogger.Error($"Failed to start observing attribute '{attributeId}': Attribute is not modifiable as Variant.");
             return;

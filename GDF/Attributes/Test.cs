@@ -12,12 +12,16 @@ public class Test
 {
     public static void Main()
     {
-        // TestBase();
-        TestProfiling();
+        TestBase();
+        // TestProfiling();
     }
 
     private static void TestBase()
     {
+        var doubler = new FloatModifierChain();
+        doubler.CreateToken("Double",1).Modify(new Mod.Multiply<float>(2));
+        Console.WriteLine(doubler.Compute(69));
+        
         var floatAttribute = new FloatAttribute()
         {
             BaseValue = 100
@@ -44,11 +48,11 @@ public class Test
 
         var listAttribute = new ListAttribute<string>();
         listAttribute.CreateToken("add foo")
-            .Set(1, "foo");
+            .Modify(new ListModifierChain<string>.ListModification(1, "foo"));
         listAttribute.CreateToken("add bar")
-            .Set(1, "bar");
+            .Modify(new ListModifierChain<string>.ListModification(1, "bar"));
         listAttribute.CreateToken("add bar", -1)
-            .Set(1, new List<string>() {"red", "green", "blue"});
+            .Modify(new ListModifierChain<string>.ListModification(1, new List<string>() {"red", "green", "blue"}));
 
         Console.WriteLine($"[{string.Join(",", listAttribute.CurrentValue)}]");
 
@@ -125,7 +129,7 @@ public class Test
         
         var randToken = floatAttribute.CreateToken("randomize", 0);
         var rand = new Random();
-        (floatAttribute as IAttributeModifiable<Func<float, float, float>>).Modify(randToken, (float a, float b) => a + rand.NextSingle()*100);
+        floatAttribute.Modify(randToken, (float a, float b) => a + rand.NextSingle()*100);
 
         var sw = new Stopwatch();
         sw.Restart();

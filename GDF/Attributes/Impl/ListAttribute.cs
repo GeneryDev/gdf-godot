@@ -2,19 +2,22 @@
 
 namespace GDF.Attributes.Impl;
 
-public class ListAttribute<T> : Attribute<List<T>, ListAttribute<T>.ListModification>
+public class ListAttribute<T> : Attribute<List<T>, ListModifierChain<T>.ListModification, ListModifierChain<T>>
 {
     public override List<T> CurrentValue => GetComputed().Param.ElementList;
 
     private readonly List<T> _list = new();
 
-    protected override ListModification GetInitialParam()
+    protected override ListModifierChain<T>.ListModification GetInitialParam()
     {
         _list.Clear();
-        return new ListModification(0, _list);
+        return new ListModifierChain<T>.ListModification(0, _list);
     }
+}
 
-    protected override void Reduce(ref Modification current, in Modification incoming, float weight)
+public class ListModifierChain<T> : ModifierChain<ListModifierChain<T>.ListModification>
+{
+    protected override void Reduce(ref Step current, in Step incoming, float weight)
     {
         if (weight == 0) return;
 
@@ -63,33 +66,5 @@ public class ListAttribute<T> : Attribute<List<T>, ListAttribute<T>.ListModifica
                 this.ElementList.Add(incoming.SingleElement);
             }
         }
-    }
-}
-
-public static class ListAttributeExtensions
-{
-    public static void Set<T>(this ListAttribute<T> target, AttributeModifierToken token, int group, T value)
-    {
-        target.Modify(token, new ListAttribute<T>.ListModification(group)
-        {
-            SingleElement = value
-        });
-    }
-    
-    public static AttributeModifierTokenTyped<ListAttribute<T>> Set<T>(this AttributeModifierTokenTyped<ListAttribute<T>> token, int group, T value)
-    {
-        token.Target.Set(token, group, value);
-        return token;
-    }
-    
-    public static void Set<T>(this ListAttribute<T> target, AttributeModifierToken token, int group, List<T> values)
-    {
-        target.Modify(token, new ListAttribute<T>.ListModification(group, values));
-    }
-    
-    public static AttributeModifierTokenTyped<ListAttribute<T>> Set<T>(this AttributeModifierTokenTyped<ListAttribute<T>> token, int group, List<T> values)
-    {
-        token.Target.Set(token, group, values);
-        return token;
     }
 }
