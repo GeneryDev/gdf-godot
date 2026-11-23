@@ -89,9 +89,9 @@ public abstract class Attribute<TValue, TParam>: IAttribute, IAttributeModifiabl
 
     public void CheckIntegrity(IntegrityCheckParams param)
     {
-        for (var index = 0; index < _modifications.Count; index++)
+        for (var i = 0; i < _modifications.Count; i++)
         {
-            var modification = _modifications[index];
+            var modification = _modifications[i];
             if (modification.IntegrityChecker == null) continue;
             
             int editCountBeforeCheck = _editCount;
@@ -103,8 +103,8 @@ public abstract class Attribute<TValue, TParam>: IAttribute, IAttributeModifiabl
                     GdfLogger.Error($"Failed integrity check for attribute modifier token '{modification.Token.Description}': {result.ResultMessage}. Removing.");
                     if (_editCount == editCountBeforeCheck)
                     {
-                        _modifications.RemoveAt(index);
-                        index--;
+                        _modifications.RemoveAt(i);
+                        i--;
                         MarkDirty();
                     }
                     else
@@ -112,7 +112,7 @@ public abstract class Attribute<TValue, TParam>: IAttribute, IAttributeModifiabl
                         // The attribute was changed externally during the integrity check,
                         // likely by the integrity checker itself.
                         // Restart the checks from the beginning.
-                        index = -1;
+                        i = -1;
                         continue;
                     }
                 }
@@ -131,9 +131,12 @@ public abstract class Attribute<TValue, TParam>: IAttribute, IAttributeModifiabl
             Param = GetInitialParam(),
             Weight = 1.0f
         };
-        foreach (var mod in _modifications)
+        // for is faster than foreach here 
+        int count = _modifications.Count;
+        for (var i = 0; i < count; i++)
         {
-            current = Reduce(current, mod, mod.Weight);
+            var mod = _modifications[i];
+            Reduce(ref current, mod, mod.Weight);
         }
 
         _computedModification = current;
@@ -187,7 +190,7 @@ public abstract class Attribute<TValue, TParam>: IAttribute, IAttributeModifiabl
         return true;
     }
 
-    protected abstract Modification Reduce(in Modification current, in Modification incoming, float weight);
+    protected abstract void Reduce(ref Modification current, in Modification incoming, float weight);
 
     protected struct Modification
     {

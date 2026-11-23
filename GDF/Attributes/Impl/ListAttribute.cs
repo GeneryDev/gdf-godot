@@ -14,18 +14,18 @@ public class ListAttribute<T> : Attribute<List<T>, ListAttribute<T>.ListModifica
         return new ListModification(0, _list);
     }
 
-    protected override Modification Reduce(in Modification current, in Modification incoming, float weight)
+    protected override void Reduce(ref Modification current, in Modification incoming, float weight)
     {
-        if (weight == 0) return current;
+        if (weight == 0) return;
 
-        if (incoming.Param.Group < current.Param.Group) return current;
+        if (incoming.Param.Group < current.Param.Group) return;
         if (incoming.Param.Group > current.Param.Group) current.Param.ElementList.Clear();
 
         current.Param.AddFrom(incoming.Param);
 
         var result = current;
         result.Param.Group = incoming.Param.Group;
-        return result;
+        current = result;
     }
 
     public struct ListModification

@@ -34,9 +34,9 @@ public abstract class StandardAttribute<T> : Attribute<T, ModificationOperation<
 
     protected abstract T Lerp(T a, T b, float weight);
 
-    protected override Modification Reduce(in Modification current, in Modification incoming, float weight)
+    protected override void Reduce(ref Modification current, in Modification incoming, float weight)
     {
-        if (weight == 0) return current;
+        if (weight == 0) return;
 
         T targetValue;
         
@@ -68,9 +68,7 @@ public abstract class StandardAttribute<T> : Attribute<T, ModificationOperation<
         if (weight == 1) returnValue = targetValue;
         else returnValue = Lerp(current.Param.AuxValue, targetValue, weight);
 
-        return new Modification() { 
-            Param = new ModificationOperation<T>(returnValue)
-        };
+        current.Param = new ModificationOperation<T>(returnValue);
     }
 
     public static implicit operator T(StandardAttribute<T> attribute)
@@ -105,10 +103,10 @@ public interface ITypedStandardAttribute<T> :
     }
 }
 
-public struct ModificationOperation<T>
+public readonly struct ModificationOperation<T>
 {
-    public T AuxValue;
-    public Func<T, T, T> Function;
+    public readonly T AuxValue;
+    public readonly Func<T, T, T> Function;
 
     public ModificationOperation(T auxValue)
     {

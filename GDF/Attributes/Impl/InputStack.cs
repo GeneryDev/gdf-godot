@@ -8,13 +8,12 @@ public class InputStack : Attribute<Empty, InputGroupMode>
 
     protected override InputGroupMode GetInitialParam() => default;
 
-    protected override Modification Reduce(in Modification current, in Modification incoming, float weight)
+    protected override void Reduce(ref Modification current, in Modification incoming, float weight)
     {
         if ((incoming.Param & InputGroupMode.BlocksInput) != 0 && weight > 0)
         {
-            return incoming;
+            current = incoming;
         }
-        return current;
     }
 
     public bool HasControl(AttributeModifierToken token)

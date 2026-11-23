@@ -21,9 +21,9 @@ public class BitFieldAttribute: Attribute<uint, (uint Value, BitFieldAttribute.M
         return (BaseValue, ModificationOperator.Set, 0);
     }
     
-    protected override Modification Reduce(in Modification current, in Modification incoming, float weight)
+    protected override void Reduce(ref Modification current, in Modification incoming, float weight)
     {
-        if (weight <= 0) return current;
+        if (weight <= 0) return;
 
         uint mergedValue;
         switch (incoming.Param.Operator)
@@ -43,7 +43,7 @@ public class BitFieldAttribute: Attribute<uint, (uint Value, BitFieldAttribute.M
                 break;
         }
 
-        return new Modification()
+        current = new Modification()
         {
             Param = (mergedValue, ModificationOperator.Set, current.Param.Mask | incoming.Param.Mask),
             Token = incoming.Token

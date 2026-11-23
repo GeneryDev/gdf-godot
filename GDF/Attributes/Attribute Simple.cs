@@ -29,8 +29,9 @@ public class Attribute<T> : Attribute<T, T>
         return BaseValue;
     }
 
-    protected override Modification Reduce(in Modification current, in Modification incoming, float weight)
+    protected override void Reduce(ref Modification current, in Modification incoming, float weight)
     {
-        return weight < WeightThreshold ? current : incoming;
+        if (weight >= WeightThreshold)
+            current = incoming;
     }
 }
