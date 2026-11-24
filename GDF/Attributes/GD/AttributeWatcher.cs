@@ -8,6 +8,7 @@ using Godot.Collections;
 namespace GDF.Attributes;
 
 [GlobalClass]
+[Icon($"{GdfConstants.IconRoot}/attribute_watcher.svg")]
 public partial class AttributeWatcher : Node, IResynchronizable
 {
     [Signal]

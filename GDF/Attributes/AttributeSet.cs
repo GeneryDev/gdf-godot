@@ -77,7 +77,7 @@ public class AttributeSet<TKey> : IAttributeSet<TKey>
     }
 }
 
-public class AttributeSetModifier<TKey>
+public partial class AttributeSetModifier<TKey>
 {
     public IAttributeSet<TKey> AttributeSet;
     public string Description;

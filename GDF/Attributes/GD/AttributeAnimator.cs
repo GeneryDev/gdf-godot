@@ -6,6 +6,8 @@ using Godot.Collections;
 namespace GDF.Attributes;
 
 [Tool]
+[GlobalClass]
+[Icon($"{GdfConstants.IconRoot}/attribute_animator.svg")]
 public partial class AttributeAnimator : Node
 {
     [Signal]
