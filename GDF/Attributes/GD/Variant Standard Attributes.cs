@@ -8,13 +8,15 @@ public interface IVariantStandardAttribute<[MustBeVariant] T, TChain> :
     IAttribute<TChain>,
     IModifiable<Variant>,
     IModifiable<Mod.Set<Variant>>,
-    IModifiable<Func<Variant, Variant, Variant>>
+    IModifiable<Func<Variant, Variant, Variant>>,
+    IModifiable<IModifyInvoker>
     where T : IEquatable<T>
     where TChain :
         StandardModifierChain<T>,
         IModifiable<Variant>,
         IModifiable<Mod.Set<Variant>>,
-        IModifiable<Func<Variant, Variant, Variant>>
+        IModifiable<Func<Variant, Variant, Variant>>,
+        IModifiable<IModifyInvoker>
 {
     void IModifiable<Variant>.Modify(ModifierToken token, Variant value)
     {
@@ -30,21 +32,43 @@ public interface IVariantStandardAttribute<[MustBeVariant] T, TChain> :
     {
         GetModifierChain().Modify(token, value);
     }
+
+    void IModifiable<IModifyInvoker>.Modify(ModifierToken token, IModifyInvoker value)
+    {
+        GetModifierChain().Modify(token, value);
+    }
 }
 
 public interface IVariantStandardModifierChain<[MustBeVariant] T> :
-    IModifiable<Variant, ModificationOperation<T>>,
+    IModifiable<Variant>,
     IModifiable<Mod.Set<Variant>, ModificationOperation<T>>,
     IModifiable<Func<Variant, Variant, Variant>, ModificationOperation<T>>,
+    IModifiable<IModifyInvoker>,
     
     IModifierComputable<Variant>
 
     where T : IEquatable<T>
 {
-    ModificationOperation<T> IModifiable<Variant, ModificationOperation<T>>.InToParam(Variant value)
+    void IModifiable<Variant>.Modify(ModifierToken token, Variant value)
     {
-        return new ModificationOperation<T>(value.As<T>());
+        if (value.VariantType == Variant.Type.Object &&
+            value.AsGodotObject() is IModifyInvoker modifierResource)
+        {
+            modifierResource.Modify(token);
+        }
+        else
+        {
+            if (this is IModifiable<ModificationOperation<T>> paramModifiable)
+            {
+                paramModifiable.Modify(token, new ModificationOperation<T>(value.As<T>()));
+            }
+            else
+            {
+                GdfLogger.Error($"Failed to call Modify on {this.GetType().Name}. Attribute type must implement {nameof(IModifiable<ModificationOperation<T>>)} to properly implement {nameof(IVariantStandardModifierChain<T>)}.");
+            }
+        }
     }
+
     ModificationOperation<T> IModifiable<Mod.Set<Variant>, ModificationOperation<T>>.InToParam(Mod.Set<Variant> value)
     {
         return new ModificationOperation<T>((a, _) => a, value.Operand.As<T>());
@@ -61,6 +85,11 @@ public interface IVariantStandardModifierChain<[MustBeVariant] T> :
             // ReSharper disable once PossiblyImpureMethodCallOnReadonlyVariable
             Param = new ModificationOperation<T>(initial.As<T>())
         }).Param.AuxValue);
+    }
+
+    void IModifiable<IModifyInvoker>.Modify(ModifierToken token, IModifyInvoker value)
+    {
+        value.Modify(token);
     }
 }
 
