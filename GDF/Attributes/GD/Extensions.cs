@@ -4,7 +4,7 @@ namespace GDF.Attributes;
 
 public static class AttributeSetModifierExtensions
 {
-    public static AttributeSetModifier<StringName> BindToNode(this AttributeSetModifier<StringName> set, Node node)
+    public static AttributeSetModifier<TKey> BindToNode<TKey>(this AttributeSetModifier<TKey> set, Node node)
     {
         if (node != null)
         {
