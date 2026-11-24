@@ -1,5 +1,4 @@
 ﻿using GDF.Data;
-using GDF.PropertyStacks;
 using GDF.UI;
 using Godot;
 
@@ -52,9 +51,7 @@ public partial class ScreenTransition : Screen, IDataContext
     [Export]
     public bool BlockedInternal = false;
 
-    public bool BlockedGlobal => GlobalPropertyStack.InstanceExists &&
-                                 (GlobalPropertyStack.Instance?.GetEffectiveValue("hold_screen_transitions",
-                                     false) ?? false);
+    public bool BlockedGlobal => ScreenTransitionSystem.InstanceExists && ScreenTransitionSystem.Instance.HoldScreenTransitions;
 
     public bool BlockedDebug => (OS.HasFeature("debug") && Godot.Input.IsKeyPressed(Key.H));
     

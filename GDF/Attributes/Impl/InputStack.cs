@@ -2,9 +2,10 @@
 
 namespace GDF.Attributes.Impl;
 
-public class InputStack : Attribute<Empty, InputGroupMode, InputStack.Reducer>
+public partial class InputStack : Attribute<ModifierToken, InputGroupMode, InputStack.Reducer>, IAttributeComputable<int>
 {
-    public override Empty CurrentValue => default;
+    public override ModifierToken CurrentValue => GetComputed().Token;
+    int IAttributeComputable<int>.CurrentValue => CurrentValue.Id;
 
     protected override InputGroupMode GetInitialParam() => default;
 
@@ -68,5 +69,11 @@ public static class InputStackExtensions
     public static bool HasControl(this ModifierTokenTyped<InputStack> token)
     {
         return token.Target.HasControl(token);
+    }
+
+    public static bool HasControl(this BulkModifier bulkModifier, InputStack stack)
+    {
+        var token = bulkModifier.GetTokenForAttribute(stack);
+        return token.HasValue && stack.HasControl(token.Value);
     }
 }

@@ -27,6 +27,11 @@ public class Attribute<T> : Attribute<T, T, SimpleModifierChain<T>>
     {
         return BaseValue;
     }
+
+    public static implicit operator T(Attribute<T> attribute)
+    {
+        return attribute.CurrentValue;
+    }
 }
 
 public class SimpleModifierChain<T> : ModifierChain<T>

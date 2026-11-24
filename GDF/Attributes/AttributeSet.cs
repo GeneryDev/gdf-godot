@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using GDF.Attributes.Impl;
 
 namespace GDF.Attributes;
 
@@ -31,11 +32,6 @@ public class AttributeSet<TKey> : IAttributeSet<TKey>
         {
             attr.CheckIntegrity(param);
         }
-    }
-
-    public AttributeSetModifier<TKey> CreateSetModifier(string description, float order = 0)
-    {
-        return new AttributeSetModifier<TKey>(this, description, order);
     }
 
     public IAttribute GetAttribute(TKey id)
@@ -77,9 +73,8 @@ public class AttributeSet<TKey> : IAttributeSet<TKey>
     }
 }
 
-public partial class AttributeSetModifier<TKey>
+public partial class BulkModifier
 {
-    public IAttributeSet<TKey> AttributeSet;
     public string Description;
     public float DefaultOrder;
 
@@ -97,56 +92,58 @@ public partial class AttributeSetModifier<TKey>
         set => SetIntegrityChecker(value);
     }
 
-    private readonly Dictionary<TKey, ModifierToken> _modifierTokens = new();
+    private readonly List<(IAttribute Attribute, ModifierToken Token)> _modifierTokens = new();
 
-    public AttributeSetModifier(AttributeSet<TKey> attributeSet, string description, float defaultOrder)
+    public BulkModifier(string description, float defaultOrder = 0)
     {
-        AttributeSet = attributeSet;
         Description = description;
         DefaultOrder = defaultOrder;
     }
 
-    public AttributeSetModifier<TKey> Modify<T>(TKey id, T value)
+    public BulkModifier Modify<T>(IAttribute attr, T value)
     {
-        var attr = AttributeSet.GetAttribute(id);
         if (attr == null) return this;
         if (attr is not IModifiable<T> modifiable)
         {
-            GdfLogger.Error($"Attribute with ID '{id}' is not modifiable using type {typeof(T).Name}");
+            GdfLogger.Error($"Attribute {attr} is not modifiable using type {typeof(T).Name}");
             return this;
         }
 
-        if (_modifierTokens.TryGetValue(id, out var token))
+        foreach (var existing in _modifierTokens)
         {
-            modifiable.Modify(token, value);
+            if (existing.Attribute != attr) continue;
+            
+            // existing
+            modifiable.Modify(existing.Token, value);
+            return this;
         }
-        else
-        {
-            token = attr.CreateToken(Description, DefaultOrder);
-            _modifierTokens[id] = token;
-            modifiable.Modify(token, value);
-            SyncNewToken(token);
-        }
+        
+        // new token
+
+        var token = attr.CreateToken(Description, DefaultOrder);
+        _modifierTokens.Add((attr, token));
+        modifiable.Modify(token, value);
+        SyncNewToken(token);
 
         return this;
     }
 
-    public AttributeSetModifier<TKey> SetWeight(float weight)
+    public BulkModifier SetWeight(float weight)
     {
         _weight = weight;
-        foreach(var token in _modifierTokens.Values)
+        foreach(var entry in _modifierTokens)
         {
-            token.SetWeight(weight);
+            entry.Token.SetWeight(weight);
         }
         return this;
     }
 
-    public AttributeSetModifier<TKey> SetIntegrityChecker(IntegrityChecker integrityChecker)
+    public BulkModifier SetIntegrityChecker(IntegrityChecker integrityChecker)
     {
         _integrityChecker = integrityChecker;
-        foreach(var token in _modifierTokens.Values)
+        foreach(var entry in _modifierTokens)
         {
-            token.SetIntegrityChecker(integrityChecker);
+            entry.Token.SetIntegrityChecker(integrityChecker);
         }
         return this;
     }
@@ -157,41 +154,67 @@ public partial class AttributeSetModifier<TKey>
         token.SetIntegrityChecker(_integrityChecker);
     }
 
-    public bool ModifiesAttribute(TKey id)
+    public bool ModifiesAttribute(IAttribute attr)
     {
-        return _modifierTokens.ContainsKey(id);
+        foreach (var entry in _modifierTokens)
+        {
+            if (entry.Attribute == attr) return true;
+        }
+
+        return false;
     }
 
-    public AttributeSetModifier<TKey> Clear(TKey id)
+    public BulkModifier Clear(IAttribute attr)
     {
-        if (_modifierTokens.TryGetValue(id, out var token))
+        for (var index = 0; index < _modifierTokens.Count; index++)
         {
-            token.Target.ClearModification(token);
-            _modifierTokens.Remove(id);
+            var entry = _modifierTokens[index];
+            if (entry.Attribute == attr)
+            {
+                entry.Token.Target.ClearModification(entry.Token);
+                _modifierTokens.RemoveAt(index);
+                index--;
+            }
         }
 
         return this;
     }
 
-    public AttributeSetModifier<TKey> Clear()
+    public BulkModifier Clear()
     {
-        foreach(var token in _modifierTokens.Values)
+        foreach(var entry in _modifierTokens)
         {
-            token.Target.ClearModification(token);
+            entry.Token.Target.ClearModification(entry.Token);
         }
         _modifierTokens.Clear();
         
         return this;
     }
+
+    public BulkModifier Discard()
+    {
+        Clear();
+        return null;
+    }
+
+    public ModifierToken? GetTokenForAttribute(IAttribute attr)
+    {
+        foreach(var entry in _modifierTokens)
+        {
+            if (entry.Attribute == attr) return entry.Token;
+        }
+
+        return null;
+    }
 }
 
 public static class AttributeSetExtensions
 {
-    public static bool TryModify<TKey, T>(this AttributeSetModifier<TKey> setModifier, TKey id, T value)
+    public static bool TryModify<T>(this BulkModifier bulkModifier, IAttribute attr, T value)
     {
-        if (setModifier.AttributeSet.IsAttributeModifiable<T>(id))
+        if (attr is IModifiable<T>)
         {
-            setModifier.Modify(id, value);
+            bulkModifier.Modify(attr, value);
             return true;
         }
 

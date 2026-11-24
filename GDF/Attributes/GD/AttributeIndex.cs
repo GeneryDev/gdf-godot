@@ -48,11 +48,6 @@ public partial class AttributeIndex : Node, IAttributeSet<StringName>
         AttributeSet.CheckIntegrity(param);
     }
 
-    public AttributeSetModifier<StringName> CreateSetModifier(string description, float order = 0)
-    {
-        return AttributeSet.CreateSetModifier(description, order);
-    }
-
     public IAttribute GetAttribute(StringName id)
     {
         return AttributeSet.GetAttribute(id);

@@ -1,31 +1,32 @@
 ﻿using System.Collections.Generic;
 using System.Reflection;
+using GDF.Attributes.Impl;
 
 // ReSharper disable once CheckNamespace
-namespace GDF;
+namespace GDF.Input;
 
-public static partial class InputGroups
+public partial class InputGroups
 {
-    private static string[] _all;
+    private Dictionary<string, InputStack> _all;
     
-    public static string[] GetAll()
+    public Dictionary<string, InputStack> GetAll()
     {
-        if (_all == null)
+        if (_all != null) return _all;
+        
+        _all = new Dictionary<string, InputStack>();
+        var inputGroupsClass = typeof(InputGroups);
+        var fields =
+            inputGroupsClass.GetFields(BindingFlags.Instance | BindingFlags.DeclaredOnly | BindingFlags.Public);
+        foreach (var field in fields)
         {
-            var list = new List<string>();
-            var inputGroupsClass = typeof(InputGroups);
-            var fields =
-                inputGroupsClass.GetFields(BindingFlags.Static | BindingFlags.DeclaredOnly | BindingFlags.Public);
-            foreach (var field in fields)
-            {
-                if (field.FieldType != typeof(string)) continue;
-                if (!field.IsLiteral) continue;
-                list.Add((string)field.GetRawConstantValue());
-            }
-
-            _all = list.ToArray();
+            if (field.FieldType != typeof(InputStack)) continue;
+            _all[field.Name] = (InputStack)field.GetValue(this);
         }
-
         return _all;
+    }
+
+    public InputStack Get(string name)
+    {
+        return GetAll()[name];
     }
 }

@@ -1,19 +1,21 @@
-﻿using Godot;
+﻿using GDF.Util;
+using Godot;
 
-namespace GDF.PropertyStacks;
+namespace GDF.Attributes;
 
 [GlobalClass]
-[Icon($"{GdfConstants.IconRoot}/property_stack.png")]
-public partial class GlobalPropertyStack : PropertyStack
+[Icon($"{GdfConstants.IconRoot}/attribute_index.svg")]
+[SingletonUsage(SingletonUsage.Autoload)]
+public partial class GlobalAttributeIndex : AttributeIndex
 {
-    public static GlobalPropertyStack Instance
+    public static GlobalAttributeIndex Instance
     {
         get
         {
             if (_instance == null)
                 if (!Engine.IsEditorHint())
                     GD.PushError(
-                        $"There's no singleton node instance for '{nameof(GlobalPropertyStack)}'. Make sure to add one to autoload.");
+                        $"There's no singleton node instance for '{nameof(GlobalAttributeIndex)}'. Make sure to add one to autoload.");
             if (Engine.IsEditorHint() && !IsInstanceValid(_instance)) _instance = null;
             return _instance;
         }
@@ -21,7 +23,7 @@ public partial class GlobalPropertyStack : PropertyStack
 
     public static bool InstanceExists => _instance != null;
 
-    private static GlobalPropertyStack _instance;
+    private static GlobalAttributeIndex _instance;
 
     public override void _EnterTree()
     {

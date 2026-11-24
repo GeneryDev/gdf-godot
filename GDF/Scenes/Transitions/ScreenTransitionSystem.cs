@@ -1,5 +1,7 @@
-﻿using GDF.Data;
-using GDF.IO;
+﻿using System.Collections.Generic;
+using GDF.Attributes;
+using GDF.Attributes.Impl;
+using GDF.Data;
 using GDF.Util;
 using Godot;
 
@@ -7,8 +9,13 @@ namespace GDF.Scenes.Transitions;
 
 [GlobalClass]
 [SingletonUsage(SingletonUsage.Autoload)]
-public partial class ScreenTransitionSystem : SingletonNode<ScreenTransitionSystem>
+public partial class ScreenTransitionSystem : SingletonNode<ScreenTransitionSystem>, IIndexableAttributeSet
 {
+    public BoolAttribute HoldScreenTransitions = new BoolAttribute(false)
+    {
+        DefaultFunction = BoolModifierChain.Functions.Or
+    };
+
     private ScreenTransition _activeTransition;
     private ScreenTransitions _transitionsLibrary;
 
@@ -71,5 +78,10 @@ public partial class ScreenTransitionSystem : SingletonNode<ScreenTransitionSyst
         public InitialTransitionState()
         {
         }
+    }
+
+    public void CollectAttributes(Dictionary<StringName, IAttribute> output)
+    {
+        output["hold_screen_transitions"] = HoldScreenTransitions;
     }
 }

@@ -5,8 +5,6 @@ using GDF.Data.Static;
 using GDF.Input;
 using GDF.Multiplayer;
 using GDF.Networking;
-using GDF.PropertyStacks;
-using GDF.PropertyStacks.Extensions;
 using GDF.Util;
 using Godot;
 
@@ -58,8 +56,7 @@ public partial class UserInterface : Node, IResynchronizable
     [Export] public bool ReplicateToPeers = true;
 
     public int ExclusiveToPlayerId = -1;
-    public PropertyFrame RequireFrameControl;
-    public string RequireFrameControlPropertyId = GdfConstants.UserInterfaceRequiredInputGroup;
+    public Func<bool> ControlRequirement;
 
     private Dictionary<int, PlayerFocusState> _playerFocusStates = new();
     private Dictionary<int, PlayerInputState> _playerInputStates = new();
@@ -429,7 +426,7 @@ public partial class UserInterface : Node, IResynchronizable
 
     public bool HasControl()
     {
-        return RequireFrameControl == null || RequireFrameControl.HasControl(RequireFrameControlPropertyId);
+        return ControlRequirement == null || ControlRequirement();
     }
 
     public GdfPlayerInput GetPlayerInput(int playerId)

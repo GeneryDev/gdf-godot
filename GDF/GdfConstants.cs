@@ -1,5 +1,5 @@
-﻿using GDF.Networking;
-using Godot;
+﻿using GDF.Input;
+using GDF.Networking;
 
 namespace GDF;
 
@@ -37,13 +37,7 @@ public static class GdfConstants
     /// <summary>
     /// The input group string that should be required for the player to navigate UserInterfaces.
     /// </summary>
-    public const string UserInterfaceRequiredInputGroup = InputGroups.Default;
-
-    /// <summary>
-    /// The stack property ID corresponding to the window's mouse mode in the global property stack.
-    /// Used by various systems to change the mouse mode.
-    /// </summary>
-    public const string MouseModeGlobalPropertyId = "mouse_mode";
+    public const string UserInterfaceRequiredInputGroup = nameof(InputGroups.Default);
 }
 
 /// <summary>
@@ -53,14 +47,4 @@ public static class GdfConstants
 public static class RpcChannels
 {
     public static readonly RpcChannelPreset Default = new(GdfConstants.DefaultRpcTransferChannel);
-}
-
-/// <summary>
-/// Holds user-configurable, named, input groups. These are used for capturing inputs on layers.
-/// These constants are found through Reflection.
-/// </summary>
-public static partial class InputGroups
-{
-    public const string Default = "input_group_default";
-    public const string Mouse = "input_group_mouse";
 }

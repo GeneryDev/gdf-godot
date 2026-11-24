@@ -20,6 +20,11 @@ public class BitFieldAttribute: Attribute<uint, BitFieldModificationStep, BitFie
     {
         return new (BaseValue, BitFieldModificationStep.ModificationOperator.Set, 0);
     }
+
+    public static implicit operator uint(BitFieldAttribute attribute)
+    {
+        return attribute.CurrentValue;
+    }
     
 }
 public class BitFieldModifierChain: ModifierChain<BitFieldModificationStep>

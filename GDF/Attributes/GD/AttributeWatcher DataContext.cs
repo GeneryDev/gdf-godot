@@ -9,8 +9,10 @@ public partial class AttributeWatcher : IDataContext
 
     bool IDataContext.GetContextVariable(string key, string input, ref Variant output, IDataQueryOptions options)
     {
-        if (_observedAttributes.TryGetValue(key, out var attr) && attr is IAttributeComputable<Variant> computable)
+        foreach (var watched in _observations)
         {
+            if (watched.AttributeId != key ||
+                watched.Attribute is not IAttributeComputable<Variant> computable) continue;
             output = computable.CurrentValue;
             return true;
         }

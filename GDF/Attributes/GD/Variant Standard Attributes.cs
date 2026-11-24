@@ -9,7 +9,10 @@ public interface IVariantStandardAttribute<[MustBeVariant] T, TChain> :
     IModifiable<Variant>,
     IModifiable<Mod.Set<Variant>>,
     IModifiable<Func<Variant, Variant, Variant>>,
-    IModifiable<IModifyInvoker>
+    IModifiable<IModifyInvoker>,
+    
+    IAttributeComputable<Variant>
+    
     where T : IEquatable<T>
     where TChain :
         StandardModifierChain<T>,
@@ -37,6 +40,8 @@ public interface IVariantStandardAttribute<[MustBeVariant] T, TChain> :
     {
         GetModifierChain().Modify(token, value);
     }
+
+    Variant IAttributeComputable<Variant>.CurrentValue => Variant.From(((IAttributeComputable<T>)this).CurrentValue);
 }
 
 public interface IVariantStandardModifierChain<[MustBeVariant] T> :
@@ -94,6 +99,8 @@ public interface IVariantStandardModifierChain<[MustBeVariant] T> :
 }
 
 public partial class FloatAttribute :
+    IVariantStandardAttribute<float, FloatModifierChain>,
+
     IModifiable<Mod.Add<Variant>>,
     IModifiable<Mod.Multiply<Variant>>
 {
@@ -124,6 +131,8 @@ public partial class FloatModifierChain :
 }
 
 public partial class BoolAttribute :
+    IVariantStandardAttribute<bool, BoolModifierChain>,
+    
     IModifiable<Mod.And<Variant>>,
     IModifiable<Mod.Or<Variant>>
 {
@@ -154,6 +163,8 @@ public partial class BoolModifierChain :
 }
 
 public partial class IntAttribute :
+    IVariantStandardAttribute<int, IntModifierChain>,
+    
     IModifiable<Mod.Add<Variant>>,
     IModifiable<Mod.Multiply<Variant>>,
     IModifiable<Mod.And<Variant>>,
@@ -209,6 +220,8 @@ public partial class IntModifierChain :
 
 public partial class ColorAttribute :
     StandardAttribute<Color, ColorModifierChain>,
+    ITypedStandardAttribute<Color, ColorModifierChain>,
+    IVariantStandardAttribute<Color, ColorModifierChain>,
     IModifiable<Mod.Add<Color>>,
     IModifiable<Mod.Multiply<Color>>,
     IModifiable<Mod.Blend<Color>>,
@@ -322,6 +335,8 @@ public class ColorModifierChain : StandardModifierChain<Color>,
 
 public partial class Vector2Attribute :
     StandardAttribute<Vector2, Vector2ModifierChain>,
+    ITypedStandardAttribute<Vector2, Vector2ModifierChain>,
+    IVariantStandardAttribute<Vector2, Vector2ModifierChain>,
     IModifiable<Mod.Add<Vector2>>,
     IModifiable<Mod.Multiply<Vector2>>,
     IModifiable<Mod.Add<Variant>>,
@@ -406,6 +421,8 @@ public class Vector2ModifierChain: StandardModifierChain<Vector2>,
 
 public partial class Vector3Attribute :
     StandardAttribute<Vector3, Vector3ModifierChain>,
+    ITypedStandardAttribute<Vector3, Vector3ModifierChain>,
+    IVariantStandardAttribute<Vector3, Vector3ModifierChain>,
     IModifiable<Mod.Add<Vector3>>,
     IModifiable<Mod.Multiply<Vector3>>,
     IModifiable<Mod.Add<Variant>>,
@@ -490,6 +507,8 @@ public class Vector3ModifierChain: StandardModifierChain<Vector3>,
 
 public partial class Vector4Attribute :
     StandardAttribute<Vector4, Vector4ModifierChain>,
+    ITypedStandardAttribute<Vector4, Vector4ModifierChain>,
+    IVariantStandardAttribute<Vector4, Vector4ModifierChain>,
     IModifiable<Mod.Add<Vector4>>,
     IModifiable<Mod.Multiply<Vector4>>,
     IModifiable<Mod.Add<Variant>>,
@@ -574,6 +593,8 @@ public class Vector4ModifierChain: StandardModifierChain<Vector4>,
 
 public partial class QuaternionAttribute :
     StandardAttribute<Quaternion, QuaternionModifierChain>,
+    ITypedStandardAttribute<Quaternion, QuaternionModifierChain>,
+    IVariantStandardAttribute<Quaternion, QuaternionModifierChain>,
     IModifiable<Mod.Add<Quaternion>>,
     IModifiable<Mod.Multiply<Quaternion>>,
     IModifiable<Mod.Add<Variant>>,

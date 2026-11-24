@@ -31,7 +31,7 @@ public partial class AttributeAnimator : Node
             _active = value;
             if (value)
             {
-                if(IsInsideTree() && _setModifier == null) CreateSetModifier();
+                if(IsInsideTree() && _bulkModifier == null) CreateBulkModifier();
             }
             else
             {
@@ -47,7 +47,7 @@ public partial class AttributeAnimator : Node
         set
         {
             _weight = value;
-            _setModifier?.SetWeight(value);
+            _bulkModifier?.SetWeight(value);
         }
     }
 
@@ -71,7 +71,7 @@ public partial class AttributeAnimator : Node
     // TODO allow assigning remote attribute indices
     private ComponentCache<AttributeIndex> _attributeIndex = new();
     
-    private AttributeSetModifier<StringName> _setModifier;
+    private BulkModifier _bulkModifier;
     private float _weight = 1.0f;
     private bool _active = false;
 
@@ -82,15 +82,15 @@ public partial class AttributeAnimator : Node
     {
         base._EnterTree();
         if (Engine.IsEditorHint()) return;
-        if (Active && _setModifier == null)
+        if (Active && _bulkModifier == null)
         {
-            CreateSetModifier();
+            CreateBulkModifier();
         }
     }
     
-    private void CreateSetModifier()
+    private void CreateBulkModifier()
     {
-        if (_setModifier != null)
+        if (_bulkModifier != null)
         {
             return;
         }
@@ -101,35 +101,37 @@ public partial class AttributeAnimator : Node
 
         if (_attributeIndex.Get(this) is not { } index) return;
 
-        _setModifier = index.CreateSetModifier($"{nameof(AttributeAnimator)} [{Name}]", order: Order).BindToNode(this);
+        _bulkModifier = new BulkModifier($"{nameof(AttributeAnimator)} [{Name}]", Order).BindToNode(this);
         
-        _setModifier.SetWeight(Weight);
+        _bulkModifier.SetWeight(Weight);
 
-        UpdateSetModifier(_setModifier);
+        UpdateSetModifier(_bulkModifier);
         EmitSignalBecameActive();
     }
 
-    private void UpdateSetModifier(AttributeSetModifier<StringName> frame)
+    private void UpdateSetModifier(BulkModifier frame)
     {
         if (frame == null) return;
         if (Modifiers != null)
-            foreach ((var key, IModifyInvoker modifierRes) in Modifiers)
+            foreach ((var id, IModifyInvoker modifierRes) in Modifiers)
             {
                 if (modifierRes is AttributeModifierWithValueSource vs)
                 {
                     vs.SetSourceNode(this);
                 }
 
-                if (!_setModifier.TryModify(key, modifierRes))
-                    if (!_setModifier.TryModify(key, modifierRes))
-                        _setModifier.Modify(key, Variant.From(modifierRes));
+                var attr = _attributeIndex.Get(this)?.GetAttribute(id);
+
+                if (!_bulkModifier.TryModify(attr, modifierRes))
+                    if (!_bulkModifier.TryModify(attr, modifierRes))
+                        _bulkModifier.Modify(attr, Variant.From(modifierRes));
             }
     }
 
     private void ClearSetModifier()
     {
-        if (_setModifier == null) return;
-        _setModifier = _setModifier.Clear();
+        if (_bulkModifier == null) return;
+        _bulkModifier = _bulkModifier.Clear();
         EmitSignalBecameInactive();
     }
 
@@ -149,9 +151,9 @@ public partial class AttributeAnimator : Node
     {
         if (Engine.IsEditorHint()) return;
         
-        if (Active && _setModifier == null) CreateSetModifier();
-        if (Active && _setModifier != null) UpdateSetModifier(_setModifier);
-        if (!Active && _setModifier != null) ClearSetModifier();
+        if (Active && _bulkModifier == null) CreateBulkModifier();
+        if (Active && _bulkModifier != null) UpdateSetModifier(_bulkModifier);
+        if (!Active && _bulkModifier != null) ClearSetModifier();
     }
 
     public override void _ExitTree()

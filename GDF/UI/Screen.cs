@@ -1,9 +1,10 @@
 ﻿using System;
+using GDF.Attributes;
+using GDF.Attributes.Impl;
+using GDF.Input;
 using GDF.Logical;
 using GDF.Multiplayer;
 using GDF.Networking;
-using GDF.PropertyStacks;
-using GDF.PropertyStacks.Definitions.Specialized;
 using GDF.Util;
 using Godot;
 
@@ -66,7 +67,7 @@ public partial class Screen : Control
     }
 
     public NodePath OriginalNodePath;
-    public PropertyFrame ControlFrame;
+    public BulkModifier ControlFrame;
 
     private ScreenPlaceholder _placeholder;
     private bool _customInstantiated = false;
@@ -78,7 +79,7 @@ public partial class Screen : Control
     public bool Shadowed = false;
     
     private int _exclusiveToPlayerId = -1;
-    private PropertyFrame _globalFrame;
+    private BulkModifier _globalFrame;
     private CanvasLayer _layer;
 
     public override void _Ready()
@@ -122,15 +123,7 @@ public partial class Screen : Control
         if (!ShowingInTree && (_placeholder?.PrepareScreenToEnterTree() ?? true))
         {
             // Prepare controls
-            var affectedStack = Mode switch
-            {
-                ScreenModeEnum.Overlay => GlobalPropertyStack.Instance,
-                ScreenModeEnum.Modal => GlobalPropertyStack.Instance,
-                ScreenModeEnum.NonModal => PerPlayerPropertyStacks.GetForPlayer(ExclusiveToPlayerId),
-                ScreenModeEnum.ParallelLane => PerPlayerPropertyStacks.GetForPlayer(ExclusiveToPlayerId),
-                ScreenModeEnum.PassthroughNonModal => PerPlayerPropertyStacks.GetForPlayer(ExclusiveToPlayerId),
-                _ => throw new ArgumentOutOfRangeException()
-            };
+            var affectedGroups = GetAffectedInputGroups();
             var inputGroupMode = Mode switch
             {
                 ScreenModeEnum.Overlay => InputGroupMode.PassThrough,
@@ -140,38 +133,38 @@ public partial class Screen : Control
                 ScreenModeEnum.PassthroughNonModal => InputGroupMode.PassThrough,
                 _ => throw new ArgumentOutOfRangeException()
             };
-            ControlFrame ??= affectedStack?.NewFrame($"Screen: {Name}", GetEffectiveOrder())
+            ControlFrame ??= new BulkModifier($"Screen: {Name}", GetEffectiveOrder())
                 .BindToNode(this);
 
-            foreach (string id in InputGroups.GetAll())
-                ControlFrame?.Set(id, inputGroupMode);
+            foreach (var stack in affectedGroups.GetAll().Values)
+                ControlFrame?.Modify(stack, inputGroupMode);
 
             if (MouseMode != -1)
             {
-                var cursorFrame = affectedStack is GlobalPropertyStack
+                var cursorFrame = affectedGroups == PlayerInputGroups.Global
                     ? ControlFrame
-                    : (_globalFrame = GlobalPropertyStack.Instance.NewFrame($"Screen Cursor: {Name}")
-                        .BindToNode(this));
-                cursorFrame?.Set(GdfConstants.MouseModeGlobalPropertyId, (Godot.Input.MouseModeEnum)MouseMode);
+                    : _globalFrame = new BulkModifier($"Screen Cursor: {Name}")
+                        .BindToNode(this);
+                cursorFrame?.Modify(EngineAttributes.Instance.MouseMode, (Godot.Input.MouseModeEnum)MouseMode);
             }
 
             if (UserInterface != null)
             {
                 UserInterface.ExclusiveToPlayerId = ExclusiveToPlayerId;
-                if (Mode == ScreenModeEnum.ParallelLane && UserInterface.RequireFrameControl == null)
+                if (Mode == ScreenModeEnum.ParallelLane && UserInterface.ControlRequirement == null)
                 {
                     var modalParent = FindAncestorScreen(this);
                     if (modalParent?.Mode == ScreenModeEnum.Modal)
-                        UserInterface.RequireFrameControl = modalParent?.ControlFrame;
-                    if (UserInterface.RequireFrameControl == null)
+                        UserInterface.ControlRequirement = modalParent.HasControl;
+                    if (UserInterface.ControlRequirement == null)
                         GD.PushWarning(
-                            $"Parallel Lane Screen {Name} does not have the user interface's {nameof(UserInterface.RequireFrameControl)} set, and no modal parent screen.\nBe sure to spawn it with a 'Make Screen Parallel Lane Of' property set in the ObjectSpawner!");
+                            $"Parallel Lane Screen {Name} does not have the user interface's {nameof(UserInterface.ControlRequirement)} set, and no modal parent screen.\nBe sure to spawn it with a 'Make Screen Parallel Lane Of' property set in the ObjectSpawner!");
                 }
 
-                UserInterface.RequireFrameControl ??= ControlFrame;
+                UserInterface.ControlRequirement ??= this.HasControl;
             }
 
-            _globalFrame = GlobalPropertyStack.Instance.NewFrame($"Screen: {Name} Cursor");
+            _globalFrame = new BulkModifier($"Screen: {Name} Cursor");
 
             Visible = true;
             Showing = true;
@@ -188,6 +181,19 @@ public partial class Screen : Control
         {
             Showing = true;
         }
+    }
+
+    private InputGroups GetAffectedInputGroups()
+    {
+        return Mode switch
+        {
+            ScreenModeEnum.Overlay => PlayerInputGroups.Global,
+            ScreenModeEnum.Modal => PlayerInputGroups.Global,
+            ScreenModeEnum.NonModal => PlayerInputGroups.GetForPlayer(ExclusiveToPlayerId),
+            ScreenModeEnum.ParallelLane => PlayerInputGroups.GetForPlayer(ExclusiveToPlayerId),
+            ScreenModeEnum.PassthroughNonModal => PlayerInputGroups.GetForPlayer(ExclusiveToPlayerId),
+            _ => throw new ArgumentOutOfRangeException()
+        };
     }
 
     public int GetEffectiveOrder()
@@ -211,8 +217,8 @@ public partial class Screen : Control
     {
         if (IsInsideTree() && (ShowingInTree || Visible || FadingOut))
         {
-            if (ControlFrame != null && UserInterface?.RequireFrameControl == ControlFrame && UserInterface != null)
-                UserInterface.RequireFrameControl = null;
+            if (ControlFrame != null && UserInterface?.ControlRequirement == this.HasControl && UserInterface != null)
+                UserInterface.ControlRequirement = null;
             RemoveFrames();
 
             if (AutomaticLayering)
@@ -231,8 +237,8 @@ public partial class Screen : Control
 
     private void RemoveFrames()
     {
-        ControlFrame = ControlFrame?.Remove();
-        _globalFrame = _globalFrame?.Remove();
+        ControlFrame = ControlFrame?.Discard();
+        _globalFrame = _globalFrame?.Discard();
     }
 
     public void FadeOutScreen()
@@ -249,8 +255,8 @@ public partial class Screen : Control
         {
             if (ControlFrame != null && Mode is ScreenModeEnum.Modal or ScreenModeEnum.NonModal)
             {
-                foreach (string id in InputGroups.GetAll())
-                    ControlFrame.Set(id, InputGroupMode.Disable);
+                foreach (var stack in GetAffectedInputGroups().GetAll().Values)
+                    ControlFrame?.Modify(stack, InputGroupMode.Disable);
             }
 
             ShowingInTree = false;
@@ -395,7 +401,12 @@ public partial class Screen : Control
     public void MakeParallelLaneOf(Screen modalParent)
     {
         if (UserInterface != null)
-            UserInterface.RequireFrameControl = modalParent.ControlFrame;
+            UserInterface.ControlRequirement = modalParent.HasControl;
+    }
+
+    public bool HasControl()
+    {
+        return ControlFrame == null || ControlFrame.HasControl(GetAffectedInputGroups().Get(GdfConstants.UserInterfaceRequiredInputGroup));
     }
 
     public Node GetOriginalOwner()

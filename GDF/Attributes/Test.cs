@@ -68,23 +68,27 @@ public class Test
     private static void TestSets()
     {
         var attributes = new AttributeSet<string>();
-        
-        attributes.RegisterAttribute("max_health", new FloatAttribute(100) {DefaultFunction = FloatAttribute.Functions.Multiply});
-        attributes.RegisterAttribute("invulnerable", new BoolAttribute(false) {DefaultFunction = BoolAttribute.Functions.Or});
-        attributes.RegisterAttribute("walk_speed", new FloatAttribute(1.8f) {DefaultFunction = FloatAttribute.Functions.Multiply});
-        attributes.RegisterAttribute("can_attack", new BoolAttribute(true) {DefaultFunction = BoolAttribute.Functions.And});
+
+        IAttribute maxHealth;
+        IAttribute invulnerable;
+        IAttribute walkSpeed;
+        IAttribute canAttack;
+        attributes.RegisterAttribute("max_health", maxHealth = new FloatAttribute(100) {DefaultFunction = FloatAttribute.Functions.Multiply});
+        attributes.RegisterAttribute("invulnerable", invulnerable = new BoolAttribute(false) {DefaultFunction = BoolAttribute.Functions.Or});
+        attributes.RegisterAttribute("walk_speed", walkSpeed = new FloatAttribute(1.8f) {DefaultFunction = FloatAttribute.Functions.Multiply});
+        attributes.RegisterAttribute("can_attack", canAttack = new BoolAttribute(true) {DefaultFunction = BoolAttribute.Functions.And});
 
         PrintAttributes();
 
-        attributes.CreateSetModifier("Freeze", 2)
-            .Modify("walk_speed", new Mod.Multiply<float>(0.2f))
-            .Modify("can_attack", false);
+        new BulkModifier("Freeze", 2)
+            .Modify(walkSpeed, new Mod.Multiply<float>(0.2f))
+            .Modify(canAttack, false);
         
         PrintAttributes();
 
-        attributes.CreateSetModifier("Dodge", 1)
-            .Modify("walk_speed", Variant.From(1.5f))
-            .Modify("invulnerable", true);
+        new BulkModifier("Dodge", 1)
+            .Modify(walkSpeed, Variant.From(1.5f))
+            .Modify(invulnerable, true);
         
         PrintAttributes();
 

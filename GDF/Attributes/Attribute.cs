@@ -110,6 +110,3 @@ public abstract class Attribute<TValue, TParam, TChain> :
         return ModifierChain.Compute(initial);
     }
 }
-
-[StructLayout(LayoutKind.Explicit)]
-public struct Empty {}
