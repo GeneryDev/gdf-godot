@@ -1,5 +1,6 @@
 ﻿using GDF.Attributes.Impl;
 using GDF.Composition;
+using GDF.DocHints;
 using GDF.Networking;
 using GDF.Util;
 using Godot;
@@ -20,11 +21,12 @@ public partial class AttributeWatcher : Node, IResynchronizable
 
     [Export] public UpdateModeEnum UpdateMode = UpdateModeEnum.Idle;
     
-    [ExportGroup("Network","Network")]
-    [Export] public Array<string> NetworkSyncedAttributes = new();
+    [UsedOnlyAtInitialization([CommonAccessTimes.Ready])]
+    [Export] public Array<StringName> ObservedAttributes = new();
     
-    [ExportGroup("Advanced")]
-    [Export] public Array<string> AutoObservedAttributes;
+    [ExportGroup("Network","Network")]
+    [UsedOnlyAtInitialization([CommonAccessTimes.Ready])]
+    [Export] public Array<StringName> NetworkSyncedAttributes = new();
     
     private readonly System.Collections.Generic.Dictionary<string, WatchedAttributeState> _prevObservedStates = new();
     private AttributeSetModifier<StringName> _networkSyncedFrame;
@@ -200,9 +202,9 @@ public partial class AttributeWatcher : Node, IResynchronizable
         base._Ready();
         
         if (NetworkSyncedAttributes is { Count: > 0 })
-            foreach(StringName attributeId in NetworkSyncedAttributes) StartObserving(attributeId);
-        if (AutoObservedAttributes is { Count: > 0 })
-            foreach(StringName attributeId in AutoObservedAttributes) StartObserving(attributeId);
+            foreach(var attributeId in NetworkSyncedAttributes) StartObserving(attributeId);
+        if (ObservedAttributes is { Count: > 0 })
+            foreach(var attributeId in ObservedAttributes) StartObserving(attributeId);
         
         this.RequestResync();
     }

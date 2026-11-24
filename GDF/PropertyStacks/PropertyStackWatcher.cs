@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using GDF.DocHints;
 using GDF.Util;
 using Godot;
 using Godot.Collections;
@@ -34,10 +35,12 @@ public partial class PropertyStackWatcher : Node
     [Export] public string CurrentCamera3DPropertyId;
     
     [ExportGroup("Network","Network")]
+    [UsedOnlyAtInitialization]
     [Export] public Array<string> NetworkSyncedProperties = new();
     [Export] public int NetworkChannel = GdfConstants.DefaultRpcTransferChannel;
     
     [ExportGroup("Advanced")]
+    [UsedOnlyAtInitialization]
     [Export] public Array<string> AutoObservedProperties;
     
     private System.Collections.Generic.Dictionary<string, WatchedPropertyState> _prevObservedStates;

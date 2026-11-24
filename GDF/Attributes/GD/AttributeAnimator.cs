@@ -1,4 +1,5 @@
 ﻿using GDF.Composition;
+using GDF.DocHints;
 using GDF.Logical.Values;
 using Godot;
 using Godot.Collections;
@@ -62,6 +63,7 @@ public partial class AttributeAnimator : Node
         }
     }
     
+    [UsedOnlyAtInitialization([CommonAccessTimes.Other])]
     [Export] public int Order = 0;
 
     [Export] public UpdateModeEnum UpdateMode = UpdateModeEnum.Idle;

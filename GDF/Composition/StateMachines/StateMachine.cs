@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using GDF.DocHints;
 using GDF.Networking;
 using GDF.Util;
 using Godot;
@@ -13,6 +14,7 @@ public partial class StateMachine : Node
     [Signal]
     public delegate void StateChangedEventHandler(State from, State to);
 
+    [UsedOnlyAtInitialization([CommonAccessTimes.Ready])]
     [Export] public State InitialState;
 
     [Export] public bool AllowRoutinesOutsideStateMachine = false;

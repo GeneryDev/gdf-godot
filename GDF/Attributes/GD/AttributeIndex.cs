@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using GDF.Composition;
+using GDF.DocHints;
 using Godot;
 using Godot.Collections;
 
@@ -9,6 +10,7 @@ namespace GDF.Attributes;
 [Icon($"{GdfConstants.IconRoot}/attribute_index.svg")]
 public partial class AttributeIndex : Node, IAttributeSet<StringName>
 {
+    [UsedOnlyAtInitialization([CommonAccessTimes.SceneInstantiation, CommonAccessTimes.EnterTree])]
     [Export] public Array<AttributeBlueprint> AttributeBlueprints = new();
     
     public readonly AttributeSet<StringName> AttributeSet = new();
@@ -87,6 +89,16 @@ public partial class AttributeIndex : Node, IAttributeSet<StringName>
         foreach(var attributeSet in this.GetComponents<IIndexableAttributeSet>())
         {
             attributeSet.CollectAttributes(dict);
+            foreach (var (id, attribute) in dict)
+            {
+                RegisterAttribute(id, attribute);
+            }
+            dict.Clear();
+        }
+
+        foreach (var blueprint in AttributeBlueprints)
+        {
+            blueprint.CreateAttributes(dict);
             foreach (var (id, attribute) in dict)
             {
                 RegisterAttribute(id, attribute);

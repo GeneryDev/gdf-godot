@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using GDF.DocHints;
 using GDF.PropertyStacks.Internal;
 using GDF.Util;
 using Godot;
@@ -15,9 +16,11 @@ public partial class PropertyStack : Node
     private static readonly List<PropertyStack> AllActiveStacks = new();
     
     [Export]
+    [UsedOnlyAtInitialization]
     public PropertyRegistry PropertyRegistry;
     
     [Export]
+    [UsedOnlyAtInitialization]
     public Godot.Collections.Dictionary<string, Variant> OverrideDefaultValues;
     
     public IEnumerable<string> PropertyIds => _properties.Keys;

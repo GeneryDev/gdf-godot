@@ -19,6 +19,7 @@ func _enter_tree() -> void:
 	
 	# C#
 	_inspector_plugins.append(load(PLUGIN_ROOT + "/GDF/Editor/ToolInspectorPlugin.cs").new())
+	_inspector_plugins.append(load(PLUGIN_ROOT + "/GDF/Editor/DocHintInspectorPlugin.cs").new())
 	# Animations
 	_inspector_plugins.append(load(PLUGIN_ROOT + "/gdscript/plugin/animations/animation_node_inspector_plugin.gd").new())
 	_inspector_plugins.append(load(PLUGIN_ROOT + "/gdscript/plugin/animations/animation_timing_tool_inspector_plugin.gd").new())
